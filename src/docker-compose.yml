@@ -1,0 +1,8 @@
+version: "3"
+services: 
+  shoot:
+    build:
+      context: "./ShootTheMoon"
+      dockerfile: "ShootTheMoon/Dockerfile"
+    ports: 
+      - "8000:80"
