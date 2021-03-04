@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace ShootTheMoon.Models
+namespace ShootTheMoon.Game
 {
     public class ShootTheMoonDeck : Deck
     {
@@ -27,7 +27,7 @@ namespace ShootTheMoon.Models
 
         public int Copies { get; set; } 
 
-        public ShootTheMoonDeck(int copies = 1, bool shuffle = false)
+        public ShootTheMoonDeck(int copies = 1, bool shuffle = true)
         {
             Copies = copies;
             Cards = new List<Card>();

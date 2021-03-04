@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using ShootTheMoon.Game;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,7 +23,8 @@ namespace ShootTheMoon.Controllers
         [ProducesResponseType(200)]
         public IActionResult Test()
         {
-            return Ok("Hello World!");
+            ShootTheMoonDeck deck = new ShootTheMoonDeck();
+            return Ok(deck);
         }
     }
 }
