@@ -14,14 +14,14 @@
 docker-compose up
 ```
 
-### Starting backend locally
+### Starting the backend locally
 
 ```sh
 cd backend/ShootTheMoon/ShootTheMoon
 dotnet run
 ```
 
-### Staring frontend locally
+### Staring the frontend locally
 
 ```sh
 cd frontend/shoot-client
