@@ -1,0 +1,11 @@
+version: "3"
+services: 
+  shoot-backend:
+    container_name: shoot-backend
+    build:
+      context: "./backend/ShootTheMoon"
+      dockerfile: "ShootTheMoon/Dockerfile"
+    ports: 
+      - "8000:80"
+    environment:
+      ENABLE_SWAGGER: "true"
