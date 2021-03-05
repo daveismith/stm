@@ -4,12 +4,29 @@
 
 ### Prerequisites
 
-* Docker
+* docker
+* nodejs
+* dotnetcore
   
-### Starting the service
+### Starting the service containers
 
 ```sh
 docker-compose up
+```
+
+### Starting backend locally
+
+```sh
+cd backend/ShootTheMoon/ShootTheMoon
+dotnet run
+```
+
+### Staring frontend locally
+
+```sh
+cd frontend/shoot-client
+npm install
+npm start
 ```
 
 ### Swagger Documentation
