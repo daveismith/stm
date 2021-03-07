@@ -23,7 +23,7 @@ namespace ShootTheMoon.Controllers
         [ProducesResponseType(200)]
         public IActionResult Test()
         {
-            ShootTheMoonDeck deck = new ShootTheMoonDeck();
+            Deck deck = new Deck();
             return Ok(deck);
         }
     }

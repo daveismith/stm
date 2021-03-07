@@ -1,0 +1,13 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace ShootTheMoon.Game
+{
+    public class Bid
+    {
+        public int Number { get; set; }
+        public Trump Trump { get; set; }
+    }
+}
