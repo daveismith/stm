@@ -5,10 +5,12 @@
 ### Prerequisites
 
 * docker
-* nodejs
 * dotnetcore
+* nodejs
   
 ### Starting the service containers
+
+By default the backend runs on port 8000 and the frontend runs on port 8001
 
 ```sh
 docker-compose up
@@ -21,7 +23,7 @@ cd backend/ShootTheMoon/ShootTheMoon
 dotnet run
 ```
 
-### Staring the frontend locally
+### Starting the frontend locally
 
 ```sh
 cd frontend/shoot-client
