@@ -5,24 +5,6 @@ namespace ShootTheMoon.Game
 {
     public class Deck
     {
-        public static readonly List<Suit> Suits = new List<Suit>
-        {
-            new Suit {ShortName = "S", LongName = "Spades" },
-            new Suit {ShortName = "H", LongName = "Hearts" },
-            new Suit {ShortName = "C", LongName = "Clubs" },
-            new Suit {ShortName = "D", LongName = "Diamonds" }
-        };
-
-        public static readonly List<Rank> Ranks = new List<Rank>
-        {
-            new Rank { Value = 9, ShortName = "9", LongName = "Nine" },
-            new Rank { Value = 10, ShortName = "10", LongName = "Ten" },
-            new Rank { Value = 11, ShortName = "J", LongName = "Jack" },
-            new Rank { Value = 12, ShortName = "Q", LongName = "Queen" },
-            new Rank { Value = 13, ShortName = "K", LongName = "King" },
-            new Rank { Value = 14, ShortName = "A", LongName = "Ace" }
-        };
-
         public int Copies { get; set; }
         public IList<Card> Cards { get; set; }
         private static Random random = new Random();
@@ -34,9 +16,9 @@ namespace ShootTheMoon.Game
 
             for (int i = 0; i < copies; i++)
             {
-                foreach (var suit in Suits)
+                foreach (var suit in Suit.Suits)
                 {
-                    foreach (var rank in Ranks)
+                    foreach (var rank in Rank.Ranks)
                     {
                         Cards.Add(new Card { Suit = suit, Rank = rank });
                     }
