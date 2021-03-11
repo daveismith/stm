@@ -5,16 +5,16 @@ namespace ShootTheMoon.Game
 {
     public class Deck
     {
-        public int Copies { get; set; }
+        public int NumDuplicateCards { get; set; }
         public IList<Card> Cards { get; set; }
         private static Random random = new Random();
         
-        public Deck(int copies = 1, bool shuffle = true)
+        public Deck(int numDuplicateCards = 1, bool shuffle = true)
         {
-            Copies = copies;
+            NumDuplicateCards = numDuplicateCards;
             Cards = new List<Card>();
 
-            for (int i = 0; i < copies; i++)
+            for (int i = 0; i < numDuplicateCards; i++)
             {
                 foreach (var suit in Suit.Suits)
                 {

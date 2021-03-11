@@ -16,6 +16,7 @@ namespace ShootTheMoon.Game
             { "High",  new Trump {Name = "High"} },
             { "Low",  new Trump {Name = "Low"} }
         };
+
         public string Name { get; set; }
         public Suit Suit { get; set; }
 
