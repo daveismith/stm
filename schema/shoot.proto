@@ -1,0 +1,193 @@
+syntax = "proto3";
+
+// [START csharp_declaration]
+// option csharp_namespace = "My.Sample.Namespace";
+// [END csharp_declaration]
+
+// [START messages]
+
+
+
+enum Trump {
+	SPADES = 0;
+	HEARTS = 1;
+	DIAMONDS = 2;
+	CLUBS = 3;
+	HIGH = 4;
+	LOW = 5;
+}
+
+message Card {
+	enum Suit {
+		SPADES = 0;
+		HEARTS = 1;
+		DIAMONDS = 2;
+		CLUBS = 3;
+	}
+
+	enum Rank {
+		SEVEN = 0;
+		EIGHT = 1;
+		NINE = 2;
+		TEN = 3;
+		JACK = 4;
+		QUEEN = 5;
+		KING = 6;
+		ACE = 7;
+	}
+
+	Suit suit = 1;
+	Rank rank = 2;
+}
+
+message Status {
+	bool success = 1;
+	int32 error_num = 2;
+	string error_text = 3;
+}
+	
+message SeatDetails {
+	uint32 seat = 1;
+	bool ready = 2;
+	bool empty = 3;
+	bool human = 4;
+	string name = 5;
+}
+
+message SeatsList {
+	repeated SeatDetails seats = 1;
+}
+
+message JoinGameRequest {
+}
+
+message SetReadyStatusRequest {
+	bool ready = 1;
+}
+
+message StartGame {
+}
+
+message Hand {
+	repeated Card hand = 1;
+	uint32 dealer = 2;
+}
+
+message BidRequest {
+}
+
+message Bid {
+	uint32 tricks = 1;
+	uint32 shoot_num = 2;
+	Trump trump = 3;
+	uint32 seat = 4;
+}
+
+message BidList {
+	repeated Bid bids = 1;
+	uint32 current_bidder = 2;
+}
+
+message TakeSeatRequest {
+	uint32 seat = 1;
+}
+
+message AssignBotRequest {
+	uint32 seat = 1;
+}
+
+message TransferRequest {
+	uint32 from_seat = 1;
+	uint32 to_seat = 2;
+}
+
+message Transfer {
+	uint32 from_seat = 1;
+	uint32 to_seat = 2;
+	Card card = 3;
+}
+
+message ThrowawayRequest {
+}
+
+message ThrowawayResponse {
+	bool finished = 1;
+	Card card_removed = 2;
+}
+
+message PlayCardRequest {
+	uint32 seat = 1;
+	uint32 timeout = 2;
+}
+
+message UpdateTimeout {
+	uint32 seat = 1;
+	uint32 timeout = 2;
+}
+
+message PlayedCard {
+	uint32 order = 1;
+	uint32 seat = 2;
+	Card card = 3;
+}
+
+message PlayedCards {
+	repeated PlayedCard cards = 1;
+	uint32 winning_seat = 2;
+}
+
+message Tricks {
+	uint32 team_1 = 1;
+	uint32 team_2 = 2;
+}
+
+message Scores {
+	uint32 team_1 = 1;
+	uint32 team_2 = 2;
+}
+
+message EndGame {
+	uint32 winning_team = 1;
+}
+
+message LeaveGameRequest {
+}
+
+message Notification {
+	oneof notification {
+		Status status = 1;
+		SeatsList seat_list = 2;
+		SeatDetails seat_update = 3;
+		StartGame start_game = 4;
+		Hand hand = 5;
+		BidRequest bid_request = 6;
+		Bid bid = 7;
+		BidList bid_list = 8;
+		TransferRequest transfer_request = 9;
+		Transfer transfer = 10;
+		ThrowawayRequest throwaway_request = 11;
+		PlayCardRequest play_card_request = 12;
+		UpdateTimeout update_timeout = 13;
+		PlayedCards played_cards = 14;
+		Tricks tricks = 15;
+		Scores scores = 16;
+		EndGame end_game = 17;
+	}
+}
+// [END messages]
+
+// [START services]
+
+service ShootServer {
+	rpc JoinGame( JoinGameRequest ) returns ( stream Notification );
+	rpc TakeSeat( TakeSeatRequest ) returns ( Status );
+	rpc AssignBot( AssignBotRequest ) returns ( Status );
+	rpc SetReadyStatus( SetReadyStatusRequest ) returns ( Status );
+	rpc CreateBid( Bid ) returns ( Status );
+	rpc TransferCard( Transfer ) returns ( Status );
+	rpc ThrowawayCard( Card ) returns ( ThrowawayResponse );
+	rpc PlayCard( Card ) returns ( Status );
+	rpc LeaveGame( LeaveGameRequest ) returns ( Status );
+}
+
+// [END services]
