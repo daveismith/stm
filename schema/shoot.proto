@@ -26,12 +26,14 @@ message Card {
 	}
 
 	enum Rank {
-		NINE = 0;
-		TEN = 1;
-		JACK = 2;
-		QUEEN = 3;
-		KING = 4;
-		ACE = 5;
+		SEVEN = 0;
+		EIGHT = 1;
+		NINE = 2;
+		TEN = 3;
+		JACK = 4;
+		QUEEN = 5;
+		KING = 6;
+		ACE = 7;
 	}
 
 	Suit suit = 1;
