@@ -1,8 +1,19 @@
 import { Engine, Scene } from "@babylonjs/core";
 import React, { useEffect, useRef } from "react";
-export default (props) => {
+
+const SceneComponent = (props) => {
   const reactCanvas = useRef(null);
-  const { antialias, engineOptions, adaptToDeviceRatio, sceneOptions, onRender, onSceneReady, ...rest } = props;
+  
+  const { 
+    antialias, 
+    engineOptions, 
+    adaptToDeviceRatio, 
+    sceneOptions, 
+    onRender, 
+    onSceneReady, 
+    ...rest 
+  } = props;
+
   useEffect(() => {
     if (reactCanvas.current) {
       const engine = new Engine(reactCanvas.current, antialias, engineOptions, adaptToDeviceRatio);
@@ -31,6 +42,9 @@ export default (props) => {
         }
       };
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reactCanvas]);
   return <canvas ref={reactCanvas} {...rest} />;
 };
+
+export default SceneComponent;
