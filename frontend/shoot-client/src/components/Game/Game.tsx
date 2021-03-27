@@ -1,5 +1,5 @@
 import React from "react";
-import GameControls from "./GameControls";
+import GameControls from "./GameControls/GameControls";
 import SceneComponent from "./SceneComponent";
 import { onSceneReady, onRender } from "./SceneFunctions";
 import "./Game.css";

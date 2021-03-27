@@ -1,0 +1,35 @@
+import React from "react";
+import TextBubble from "../../../Common/TextBubble";
+import styled from 'styled-components';
+
+interface ITeamScoreProps {
+    label: string;
+    t1Text: string;
+    t1Color: string;
+    t2Text: string;
+    t2Color: string;
+}
+
+const TeamScore: React.FC<ITeamScoreProps> = (props: ITeamScoreProps) => {
+      
+    const StyledRoot = styled.div`
+        margin: 24px auto;
+    `;
+
+    const StyledLabel = styled.div`
+        color: #ffffff;
+    `;
+
+    return (  
+        <StyledRoot>
+            <StyledLabel>
+                {props.label}
+            </StyledLabel>
+            <br />
+            <TextBubble text={props.t1Text} color={props.t1Color}></TextBubble>
+            <TextBubble text={props.t2Text} color={props.t2Color}></TextBubble>
+        </StyledRoot>
+    );
+};
+
+export default TeamScore;
