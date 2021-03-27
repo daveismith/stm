@@ -17,7 +17,11 @@ const TeamScore: React.FC<ITeamScoreProps> = (props: ITeamScoreProps) => {
     `;
 
     const StyledLabel = styled.div`
-        color: #ffffff;
+        color: #a9a9a9;
+    `;
+
+    const StyledTextBubble = styled.div`
+        margin: 10px;
     `;
 
     return (  
@@ -25,9 +29,10 @@ const TeamScore: React.FC<ITeamScoreProps> = (props: ITeamScoreProps) => {
             <StyledLabel>
                 {props.label}
             </StyledLabel>
-            <br />
-            <TextBubble text={props.t1Text} color={props.t1Color}></TextBubble>
-            <TextBubble text={props.t2Text} color={props.t2Color}></TextBubble>
+            <StyledTextBubble>
+                <TextBubble text={props.t1Text} color={props.t1Color}></TextBubble>
+                <TextBubble text={props.t2Text} color={props.t2Color}></TextBubble>
+            </StyledTextBubble>
         </StyledRoot>
     );
 };
