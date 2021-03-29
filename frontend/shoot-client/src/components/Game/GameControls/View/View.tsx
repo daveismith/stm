@@ -18,6 +18,12 @@ const View: React.FC = () => {
         margin: 10px;
     `;
 
+	const StyledButton = styled(ToggleButton)({
+	    '& span': {
+            color: 'white'
+	    }
+	});
+
     const viewChange = (event :object, value: any) => {
         setGameState({...gameState, sceneView: value === "2D" ? false : true });
     }
@@ -29,8 +35,8 @@ const View: React.FC = () => {
             </div>
             <StyledButtonGroup>
                 <ToggleButtonGroup onChange={viewChange} value={gameState.sceneView ? "3D" : "2D"} exclusive >
-                    <ToggleButton value="2D" >2D</ToggleButton>
-                    <ToggleButton value="3D" >3D</ToggleButton>
+					<StyledButton value="2D" >2D</StyledButton>
+                    <StyledButton value="3D" >3D</StyledButton>
                 </ToggleButtonGroup>
             </StyledButtonGroup>
         </StyledRoot>
