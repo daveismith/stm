@@ -59,7 +59,11 @@ message SeatsList {
 }
 
 message JoinGameRequest {
-	string id = 1;
+	string uuid = 1;
+}
+
+message JoinGameResponse {
+	string token = 1;
 }
 
 message SetReadyStatusRequest {
@@ -157,22 +161,23 @@ message LeaveGameRequest {
 message Notification {
 	oneof notification {
 		StatusResponse status = 1;
-		SeatsList seat_list = 2;
-		SeatDetails seat_update = 3;
-		StartGame start_game = 4;
-		Hand hand = 5;
-		BidRequest bid_request = 6;
-		Bid bid = 7;
-		BidList bid_list = 8;
-		TransferRequest transfer_request = 9;
-		Transfer transfer = 10;
-		ThrowawayRequest throwaway_request = 11;
-		PlayCardRequest play_card_request = 12;
-		UpdateTimeout update_timeout = 13;
-		PlayedCards played_cards = 14;
-		Tricks tricks = 15;
-		Scores scores = 16;
-		EndGame end_game = 17;
+		JoinGameResponse join_response = 2;
+		SeatsList seat_list = 3;
+		SeatDetails seat_update = 4;
+		StartGame start_game = 5;
+		Hand hand = 6;
+		BidRequest bid_request = 7;
+		Bid bid = 8;
+		BidList bid_list = 9;
+		TransferRequest transfer_request = 10;
+		Transfer transfer = 11;
+		ThrowawayRequest throwaway_request = 12;
+		PlayCardRequest play_card_request = 13;
+		UpdateTimeout update_timeout = 14;
+		PlayedCards played_cards = 15;
+		Tricks tricks = 16;
+		Scores scores = 17;
+		EndGame end_game = 18;
 	}
 }
 // [END messages]
