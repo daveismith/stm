@@ -30,8 +30,8 @@ const TeamScore: React.FC<ITeamScoreProps> = (props: ITeamScoreProps) => {
                 {props.label}
             </StyledLabel>
             <StyledTextBubble>
-                <TextBubble text={props.t1Text} color={props.t1Color}></TextBubble>
-                <TextBubble text={props.t2Text} color={props.t2Color}></TextBubble>
+                <TextBubble size="small" text={props.t1Text} color={props.t1Color}></TextBubble>
+                <TextBubble size="small" text={props.t2Text} color={props.t2Color}></TextBubble>
             </StyledTextBubble>
         </StyledRoot>
     );
