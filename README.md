@@ -23,6 +23,13 @@ cd backend/ShootTheMoon/ShootTheMoon
 dotnet run
 ```
 
+### Starting the proxy locally
+
+```sh
+cd proxy
+docker run -it --rm --name envoy -p 8080:8080 -v $(pwd)/envoy-dev.yaml:/etc/envoy/envoy.yaml envoyproxy/envoy:v1.17-latest
+```
+
 ### Starting the frontend locally
 
 ```sh
@@ -35,4 +42,13 @@ npm start
 
 ```sh
 localhost:8000/swagger/index.html
+```
+
+### Generating Typescript Files from schema
+
+This assumes that you've got protoc and the appropriate extension for generating the gRPC-web services installed and in your path. You can find more info at [grpc-web github](https://github.com/grpc/grpc-web) in the code generator plugin section.
+
+```sh
+cd frontend/shoot-client
+protoc -I ../../backend/ShootTheMoon/ShootTheMoon/schema shoot.proto --js_out=import_style=commonjs,binary:src/components/App --grpc-web_out=import_style=typescript,mode=grpcwebtext:src/components/App
 ```
