@@ -18,7 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Protobuf Include="../../../schema/shoot.proto" Link="shoot.proto" />
+    <Protobuf Include="schema/shoot.proto" Link="shoot.proto" />
   </ItemGroup>
 
 </Project>

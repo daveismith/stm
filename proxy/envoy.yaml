@@ -46,5 +46,5 @@ static_resources:
           - endpoint:
               address:
                 socket_address: 
-                  address: host.docker.internal
+                  address: shoot-backend
                   port_value: 30051
