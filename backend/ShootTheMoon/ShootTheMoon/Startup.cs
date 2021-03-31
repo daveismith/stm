@@ -43,11 +43,11 @@ namespace ShootTheMoon
                 app.UseDeveloperExceptionPage();
             }
 
-            if (Configuration["ENABLE_SWAGGER"] == "true")
-            {
+            //if (Configuration["ENABLE_SWAGGER"] == "true")
+            //{
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "ShootTheMoon v1"));
-            }
+            //}
 
             app.UseRouting();
 

@@ -29,6 +29,7 @@ namespace ShootTheMoon.Game
         public Game(GameSettings gameSettings)
         {
             Uuid = Guid.NewGuid().ToString();
+            Clients = new List<Client>();
             Players = new Client[gameSettings.NumPlayersPerTeam * 2];
             Score = new List<int> { 0, 0 };
 
