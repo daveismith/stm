@@ -9,32 +9,44 @@ import {
     PointerEventTypes,
     Scene,
     Vector3,
+    Vector4,
     StandardMaterial,
     CubeTexture,
     Color3,
-    Texture
+    Texture,
+    Quaternion,
+    SSAORenderingPipeline
 } from "@babylonjs/core";
 
-import skyTexture1 from "./resources/images/skybox/skybox_nx.jpg";
-import skyTexture2 from "./resources/images/skybox/skybox_ny.jpg";
-import skyTexture3 from "./resources/images/skybox/skybox_nz.jpg";
-import skyTexture4 from "./resources/images/skybox/skybox_px.jpg";
-import skyTexture5 from "./resources/images/skybox/skybox_py.jpg";
-import skyTexture6 from "./resources/images/skybox/skybox_pz.jpg";
+import {
+    GUI3DManager,
+    MeshButton3D
+} from "@babylonjs/gui";
+
+import wallTexture from "./resources/images/wall.jpg";
+import groundTexture from "./resources/images/ground.png";
+import wallNormalTexture from "./resources/images/wall_normal.jpg";
+import groundNormalTexture from "./resources/images/ground_normal.png";
+import ceilingTexture from "./resources/images/ceiling.jpg";
+import ceilingNormalTexture from "./resources/images/ceiling_normal.jpg";
+import tableTexture from "./resources/images/table.png";
 import cardTextures from "./resources/images/cards.png";
 
+export {};
+
 class GameSettings {
-    static roomSize = 48;
+    static roomSize = 72;
     static tableRadius = 5;
     static tableHeight = 9;
     static players = 6;
     static deck: Mesh[] = [];
-    static deckPosition = new Vector3(1.5, GameSettings.tableHeight + 0.01, -1.5);
+    static deckPosition = new Vector3(1.5, GameSettings.tableHeight + 0.01, 1.5);
     static deckSize = 48;
     static playerDealPositions: Vector3[] = [];
     static playMatPositions: Vector3[] = [];
     static handPositions: Vector3[] = [];
     static handRadius = new Vector3(2, 0, 1);
+    static handCounter: number = 0; //FOR DEVELOPMENT ONLY
 }
 
 const gaussianRandom = () => {
@@ -45,36 +57,91 @@ const gaussianRandom = () => {
     );
 };
 
-const buildSky = (scene: Scene) => {
-    const skybox = MeshBuilder.CreateBox("skyBox", {size:GameSettings.roomSize}, scene);
-    skybox.position.y = GameSettings.roomSize/2;
-    const skyboxMaterial = new StandardMaterial("skyBox", scene);
-    skyboxMaterial.backFaceCulling = false;
-    skyboxMaterial.reflectionTexture = new CubeTexture("", scene, null, false, [skyTexture1, skyTexture2, skyTexture3, skyTexture4, skyTexture5, skyTexture6]);
-    skyboxMaterial.reflectionTexture.coordinatesMode = Texture.SKYBOX_MODE;
-    skyboxMaterial.diffuseColor = new Color3(0, 0, 0);
-    skyboxMaterial.specularColor = new Color3(0, 0, 0);
-    skybox.material = skyboxMaterial;
+const baseRotation = (seat: number) => {
+    const x = 0;
+    const y = -1/2 * Math.PI + 2 * Math.PI * seat / GameSettings.players;  //Rotations are offset by -PI/2
+    const z = 0;
+
+    return new Vector3(x, y, z);
+}
+
+const buildRoom = (scene: Scene) => {
+    const wallMaterial = new StandardMaterial("wallMaterial", scene);
+    wallMaterial.diffuseTexture = new Texture(wallTexture, scene);
+    wallMaterial.bumpTexture = new Texture(wallNormalTexture, scene);
+    wallMaterial.bumpTexture.level = 3;
+    wallMaterial.useParallax = true;
+    wallMaterial.useParallaxOcclusion = true;
+    wallMaterial.parallaxScaleBias = 0.2;
+
+    const backWall = MeshBuilder.CreatePlane("backWall", {size:GameSettings.roomSize});
+    backWall.position.z = GameSettings.roomSize / 2;
+    backWall.position.y = GameSettings.roomSize / 2;
+    backWall.material = wallMaterial;
+
+    const frontWall = MeshBuilder.CreatePlane("frontWall", {size:GameSettings.roomSize});
+    frontWall.position.z = -1 * GameSettings.roomSize / 2;
+    frontWall.position.y = GameSettings.roomSize / 2;
+    frontWall.rotation.y = Math.PI;
+    frontWall.material = wallMaterial;
+
+    const leftWall = MeshBuilder.CreatePlane("leftWall", {size:GameSettings.roomSize});
+    leftWall.position.x = -GameSettings.roomSize / 2;
+    leftWall.position.y = GameSettings.roomSize / 2;
+    leftWall.rotation.y = -Math.PI / 2;
+    leftWall.material = wallMaterial;
+
+    const rightWall = MeshBuilder.CreatePlane("rightWall", {size:GameSettings.roomSize});
+    rightWall.position.x = GameSettings.roomSize / 2;
+    rightWall.position.y = GameSettings.roomSize / 2;
+    rightWall.rotation.y = Math.PI / 2;
+    rightWall.material = wallMaterial;
+
+    const groundMaterial = new StandardMaterial("groundMaterial", scene);
+    groundMaterial.diffuseTexture = new Texture(groundTexture, scene);
+    groundMaterial.bumpTexture = new Texture(groundNormalTexture, scene);
+    groundMaterial.useParallax = true;
+    groundMaterial.useParallaxOcclusion = true;
+    groundMaterial.parallaxScaleBias = 0.2;
+
+    const ground = MeshBuilder.CreateGround("ground", {width:GameSettings.roomSize, height:GameSettings.roomSize});
+    ground.material = groundMaterial;
+
+    const ceilingMaterial = new StandardMaterial("ceilingMaterial", scene);
+    ceilingMaterial.diffuseTexture = new Texture(ceilingTexture, scene);
+    ceilingMaterial.bumpTexture = new Texture(ceilingNormalTexture, scene);
+    ceilingMaterial.useParallax = true;
+    ceilingMaterial.useParallaxOcclusion = true;
+    ceilingMaterial.parallaxScaleBias = 0.2;
+
+    const ceiling = MeshBuilder.CreatePlane("ceiling", {size:GameSettings.roomSize});
+    ceiling.position.y = GameSettings.roomSize;
+    ceiling.rotation.x = -Math.PI / 2;
+    ceiling.material = ceilingMaterial;
+
 }
 
 const buildTable = (scene: Scene) => {
-    //Build cross-section of table
-    const tableOutline = [
-        new Vector3(0, 0, 0),
-        new Vector3(GameSettings.tableRadius, 0, 0),
-        new Vector3(GameSettings.tableRadius, -0.5, 0),
-        new Vector3(1, -0.5, 0),
-        new Vector3(1, -1 * GameSettings.tableHeight, 0),
-    ];
-
-    //Create table body
-    const table = MeshBuilder.CreateLathe("table", {
-        shape: tableOutline,
-        sideOrientation: Mesh.DOUBLESIDE,
+    const table = MeshBuilder.CreateCylinder("tableTop", {
+        height: GameSettings.tableHeight / 20,
+        diameter: 2 * GameSettings.tableRadius,
+        tessellation: 64
     });
+    const tableMat = new StandardMaterial("tableMat", scene);
+    tableMat.diffuseTexture = new Texture(tableTexture, scene);
+    table.material = tableMat;
+
+    const tableTrunk = MeshBuilder.CreateCylinder("tableTrunk", {
+        height: GameSettings.tableHeight * 19 / 20,
+        diameter: 1 / 4 * GameSettings.tableRadius
+    });
+    tableTrunk.material = tableMat;
+    tableTrunk.parent = table;
+    tableTrunk.position.y = -GameSettings.tableHeight * 19 / 20 / 2
+
     table.position.x = 0;
     table.position.z = 0;
-    table.position.y = GameSettings.tableHeight;
+    table.position.y = GameSettings.tableHeight - GameSettings.tableHeight / 20 / 2;
 
     // Flat part of table foot
     const legOutline = [new Vector3(-3, 0, -1), new Vector3(2, 0, -1)];
@@ -108,6 +175,7 @@ const buildTable = (scene: Scene) => {
     tableLeg1.position.x = 1.5;
     tableLeg1.position.z = -0.5;
     tableLeg1.scaling = new Vector3(1, 1, 0.5);
+    tableLeg1.material = tableMat;
 
     //Create other table feet
     const tableLeg2 = tableLeg1.clone("tableLeg2");
@@ -132,30 +200,51 @@ const buildTable = (scene: Scene) => {
 };
 
 //Create a card at the deck position
-const buildCard = (scene: Scene) => {
+const buildCard = (scene: Scene, manager: GUI3DManager, rank: number, suit: number) => {
+    var faceUV = new Array(6);
+
+    faceUV[5] = new Vector4(rank * 128 / 1024, suit * 128 / 1024, rank * 128 / 1024 + 77 / 1024, suit * 128 / 1024 + 115 / 1024);
+
     const card = MeshBuilder.CreateBox("card", {
-        width: (1 * 3) / 4,
+        width: (1.4 * 3) / 4,
         height: 0.007,
-        depth: (1.4 * 3) / 4,
+        depth: (1 * 3) / 4,
+        faceUV: faceUV
     });
     card.position = GameSettings.deckPosition.clone();
-
-    // const textureFile = new File()
-    // const textureURL = URL.createObjectURL(cardTextures);
+    card.rotation.y = -Math.PI / 2;
 
     const cardMat = new StandardMaterial("cardMat", scene);
     cardMat.diffuseTexture = new Texture(cardTextures, scene);
     card.material = cardMat;
-    
+
+    const cardButton = new MeshButton3D(card, "cardButton");
+    cardButton.onPointerDownObservable.add(() => {
+        if (card.position.z === GameSettings.deckPosition.z)
+            dealCard(scene, card, 3, GameSettings.playerDealPositions[3], 0);
+        else if (card.position.z > GameSettings.playerDealPositions[3].z - 0.3 && card.position.z < GameSettings.playerDealPositions[3].z + 0.3)
+            animateCardToHand(card, 3, 1, scene);
+        else if (card.position.z > GameSettings.handPositions[3].z - 0.3 && card.position.z < GameSettings.handPositions[3].z + 0.3
+            && card.position.y === GameSettings.handPositions[3].y)
+            animateAddCardToFan(card, 3, GameSettings.handCounter++, 1, scene);
+        else if (card.position.z > GameSettings.handPositions[3].z - 0.5 && card.position.z < GameSettings.handPositions[3].z + 0.5)
+           {
+                playCard(card, 3, scene);
+                GameSettings.handCounter--;
+            }
+    });
+
+    manager.addControl(cardButton);
+
     return card;
 };
 
 //Create a deck of cards at the deck position
-const buildDeck = (scene: Scene) => {
+const buildDeck = (scene: Scene, manager: GUI3DManager) => {
     var card;
 
     for (var i = 0; i < GameSettings.deckSize; i++) {
-        card = buildCard(scene);
+        card = buildCard(scene, manager, i % 6, i % 4);
         card.position.y += i * 0.0072;
         GameSettings.deck.push(card);
     }
@@ -198,7 +287,7 @@ const setPositions = () => {
                 GameSettings.tableRadius *
                 handRatio *
                 Math.sin((2 / GameSettings.players) * Math.PI * i),
-                GameSettings.tableHeight + 0.01,
+                GameSettings.tableHeight + 0.05,
                 GameSettings.tableRadius *
                 handRatio *
                 Math.cos((2 / GameSettings.players) * Math.PI * i)
@@ -211,11 +300,13 @@ const animateCardSlide = (
     card: Mesh,
     targetPlayer: number,
     targetPosition: Vector3,
+    targetRotation: Vector3,
     QueuePosition: number,
     cardsPerSecond: number,
     scene: Scene
 ) => {
-    var frameRate = 60;
+    const frameRate: number = 60;
+    const maxDriftDistance: number = 0.3;
 
     var xSlide = new Animation(
         "xSlide",
@@ -230,7 +321,7 @@ const animateCardSlide = (
 
     var keyFramesPX = [];
 
-    var xDrift = gaussianRandom() * 0.3;
+    var xDrift = (gaussianRandom() - 1/2) * maxDriftDistance;
 
     keyFramesPX.push({
         frame: 0,
@@ -300,7 +391,7 @@ const animateCardSlide = (
     var zSlideEase = new CircleEase();
     zSlideEase.setEasingMode(EasingFunction.EASINGMODE_EASEINOUT);
 
-    var zDrift = gaussianRandom() * 0.3;
+    var zDrift = (gaussianRandom() - 1/2) * maxDriftDistance;
 
     keyFramesPZ.push({
         frame: 0,
@@ -320,6 +411,45 @@ const animateCardSlide = (
     zSlide.setKeys(keyFramesPZ);
     zSlide.setEasingFunction(ySlideEase);
 
+    var xRotate = new Animation(
+        "xRotate",
+        "rotation.x",
+        frameRate,
+        Animation.ANIMATIONTYPE_FLOAT,
+        Animation.ANIMATIONLOOPMODE_CONSTANT
+    );
+
+    var keyFramesRX = [];
+
+    // limit to a quarter turn, and then add enough to compensate for seat number
+    // var rotations = baseRotation(targetPlayer).x;
+
+    // const axis = new Vector3(1, 1, 1);
+    // const angle = targetRotation.x;
+    // const quaternion = Quaternion.RotationAxis(axis, angle);
+    // card.rotationQuaternion = quaternion;
+
+    var xRotateEase = new CircleEase();
+    xRotateEase.setEasingMode(EasingFunction.EASINGMODE_EASEINOUT);
+
+    keyFramesRX.push({
+        frame: 0,
+        value: card.rotation.x,
+    });
+
+    keyFramesRX.push({
+        frame: 0 + (frameRate * QueuePosition) / cardsPerSecond,
+        value: card.rotation.x,
+    });
+
+    keyFramesRX.push({
+        frame: (frameRate + frameRate * QueuePosition) / cardsPerSecond,
+        value: targetRotation.x,
+    });
+
+    xRotate.setKeys(keyFramesRX);
+    xRotate.setEasingFunction(xSlideEase);
+
     var yRotate = new Animation(
         "yRotate",
         "rotation.y",
@@ -329,11 +459,6 @@ const animateCardSlide = (
     );
 
     var keyFramesRY = [];
-
-    // limit to a quarter turn, and then add enough to compensate for seat number
-    var rotations =
-        (1 / 4) * (gaussianRandom() - 1 / 4) * Math.PI +
-        (((2 * targetPlayer) % GameSettings.players) * Math.PI) / GameSettings.players;
 
     var yRotateEase = new CircleEase();
     yRotateEase.setEasingMode(EasingFunction.EASINGMODE_EASEINOUT);
@@ -350,7 +475,7 @@ const animateCardSlide = (
 
     keyFramesRY.push({
         frame: (frameRate + frameRate * QueuePosition) / cardsPerSecond,
-        value: rotations,
+        value: targetRotation.y,
     });
 
     yRotate.setKeys(keyFramesRY);
@@ -376,7 +501,7 @@ const animateCardSlide = (
 
     keyFramesRZ.push({
         frame: frameRate / cardsPerSecond,
-        value: 0,
+        value: targetRotation.z,
     });
 
     zRotate.setKeys(keyFramesRZ);
@@ -384,7 +509,165 @@ const animateCardSlide = (
 
     scene.beginDirectAnimation(
         card,
-        [xSlide, ySlide, zSlide, yRotate, zRotate],
+        [xSlide, ySlide, zSlide, xRotate, yRotate, zRotate],
+        0,
+        (frameRate + frameRate * QueuePosition) / cardsPerSecond,
+        true
+    );
+};
+
+const animateCardSlideQuaternion = (
+    card: Mesh,
+    targetPlayer: number,
+    targetPosition: Vector3,
+    targetRotation: Quaternion,
+    QueuePosition: number,
+    cardsPerSecond: number,
+    scene: Scene
+) => {
+    const frameRate: number = 60;
+    const maxDriftDistance: number = 0.3;
+
+    var xSlide = new Animation(
+        "xSlide",
+        "position.x",
+        frameRate,
+        Animation.ANIMATIONTYPE_FLOAT,
+        Animation.ANIMATIONLOOPMODE_CONSTANT
+    );
+
+    var xSlideEase = new CircleEase();
+    xSlideEase.setEasingMode(EasingFunction.EASINGMODE_EASEINOUT);
+
+    var keyFramesPX = [];
+
+    var xDrift = (gaussianRandom() - 1/2) * maxDriftDistance;
+
+    keyFramesPX.push({
+        frame: 0,
+        value: card.position.x,
+    });
+
+    keyFramesPX.push({
+        frame: 0 + (frameRate * QueuePosition) / cardsPerSecond,
+        value: card.position.x,
+    });
+
+    keyFramesPX.push({
+        frame: (frameRate + frameRate * QueuePosition) / cardsPerSecond,
+        value: targetPosition.x + xDrift,
+    });
+
+    xSlide.setKeys(keyFramesPX);
+    xSlide.setEasingFunction(xSlideEase);
+
+    var ySlide = new Animation(
+        "ySlide",
+        "position.y",
+        frameRate,
+        Animation.ANIMATIONTYPE_FLOAT,
+        Animation.ANIMATIONLOOPMODE_CONSTANT
+    );
+
+    var ySlideEase = new CircleEase();
+    ySlideEase.setEasingMode(EasingFunction.EASINGMODE_EASEINOUT);
+
+    var keyFramesPY = [];
+
+    keyFramesPY.push({
+        frame: 0,
+        value: card.position.y,
+    });
+
+    keyFramesPY.push({
+        frame: 0 + (frameRate * QueuePosition) / cardsPerSecond,
+        value: card.position.y,
+    });
+
+    keyFramesPY.push({
+        frame: (frameRate / 2 + frameRate * QueuePosition) / cardsPerSecond,
+        value: targetPosition.y + 0.25,
+    });
+
+    keyFramesPY.push({
+        frame: (frameRate + frameRate * QueuePosition) / cardsPerSecond,
+        value:
+            targetPosition.y + Math.floor(QueuePosition / GameSettings.players) * 0.0072,
+    });
+
+    ySlide.setKeys(keyFramesPY);
+    ySlide.setEasingFunction(ySlideEase);
+
+    var zSlide = new Animation(
+        "zSlide",
+        "position.z",
+        frameRate,
+        Animation.ANIMATIONTYPE_FLOAT,
+        Animation.ANIMATIONLOOPMODE_CONSTANT
+    );
+
+    var keyFramesPZ = [];
+
+    var zSlideEase = new CircleEase();
+    zSlideEase.setEasingMode(EasingFunction.EASINGMODE_EASEINOUT);
+
+    var zDrift = (gaussianRandom() - 1/2) * maxDriftDistance;
+
+    keyFramesPZ.push({
+        frame: 0,
+        value: card.position.z,
+    });
+
+    keyFramesPZ.push({
+        frame: 0 + (frameRate * QueuePosition) / cardsPerSecond,
+        value: card.position.z,
+    });
+
+    keyFramesPZ.push({
+        frame: (frameRate + frameRate * QueuePosition) / cardsPerSecond,
+        value: targetPosition.z + zDrift,
+    });
+
+    zSlide.setKeys(keyFramesPZ);
+    zSlide.setEasingFunction(ySlideEase);
+
+    var qRotate = new Animation(
+        "qRotate",
+        "rotationQuaternion",
+        frameRate,
+        Animation.ANIMATIONTYPE_QUATERNION,
+        Animation.ANIMATIONLOOPMODE_CONSTANT
+    );
+
+    var keyFramesRQ = [];
+
+    // limit to a quarter turn, and then add enough to compensate for seat number
+    // var rotations = baseRotation(targetPlayer).x;
+
+    var qRotateEase = new CircleEase();
+    qRotateEase.setEasingMode(EasingFunction.EASINGMODE_EASEINOUT);
+
+    keyFramesRQ.push({
+        frame: 0,
+        value: card.rotationQuaternion,
+    });
+
+    keyFramesRQ.push({
+        frame: 0 + (frameRate * QueuePosition) / cardsPerSecond,
+        value: card.rotationQuaternion,
+    });
+
+    keyFramesRQ.push({
+        frame: (frameRate + frameRate * QueuePosition) / cardsPerSecond,
+        value: targetRotation,
+    });
+
+    qRotate.setKeys(keyFramesRQ);
+    qRotate.setEasingFunction(qRotateEase);
+
+    scene.beginDirectAnimation(
+        card,
+        [xSlide, ySlide, zSlide, qRotate],
         0,
         (frameRate + frameRate * QueuePosition) / cardsPerSecond,
         true
@@ -394,20 +677,52 @@ const animateCardSlide = (
 //Deal all cards
 const dealCards = (scene: Scene) => {
     for (var i = 0; i < GameSettings.deckSize; i++) {
-        animateCardSlide(
+        dealCard(
+            scene,
             GameSettings.deck[GameSettings.deckSize - 1 - i],
-            i,
+            i % GameSettings.players,
             GameSettings.playerDealPositions[i % GameSettings.players],
-            i,
-            8,
-            scene
+            i
         );
     }
 };
 
+const dealCard = (scene: Scene, card: Mesh, playerNumber: number, position: Vector3, QueuePosition: number) => {
+    const rotations = new Vector3(
+        baseRotation(playerNumber).x,
+        baseRotation(playerNumber).y,
+        baseRotation(playerNumber).z
+    )
+
+    animateCardSlide(
+        card,
+        playerNumber,
+        position,
+        baseRotation(playerNumber),
+        QueuePosition,
+        8,
+        scene
+    );
+}
+
 //Play a card to a player's mat
 const playCard = (card: Mesh, player: number, scene: Scene) => {
-    animateCardSlide(card, player, GameSettings.playMatPositions[player], 0, 4, scene);
+    const rotationDriftFactor = new Vector3(0, 0.1, 0);
+    const randomDrift = new Vector3(gaussianRandom(), gaussianRandom(), gaussianRandom());
+
+    const rotations = new Vector3(
+        baseRotation(player).x - Math.PI + 2 * Math.PI * rotationDriftFactor.x * (randomDrift.x - 1/2),
+        baseRotation(player).y - Math.PI + 2 * Math.PI * rotationDriftFactor.y * (randomDrift.y - 1/2),
+        baseRotation(player).z + 2 * Math.PI * rotationDriftFactor.z * (randomDrift.z - 1/2)
+    )
+
+    const rotationQuaternion = Quaternion.RotationYawPitchRoll(rotations.y, rotations.x, rotations.z);
+
+    card.rotationQuaternion = card.rotation.toQuaternion();
+
+    animateCardSlideQuaternion(card, player, GameSettings.playMatPositions[player], rotationQuaternion, 0, 1, scene);
+
+    card.rotation = new Vector3(0, 0, 0);
 };
 
 //Bring a card from player's deal position to player's hand
@@ -417,7 +732,7 @@ const animateCardToHand = (
     cardsPerSecond: number,
     scene: Scene
 ) => {
-    var frameRate = 60;
+    const frameRate: number = 60;
 
     var xSlide = new Animation(
         "xSlide",
@@ -588,12 +903,12 @@ const animateCardToHand = (
 
     keyFramesRY.push({
         frame: ((1 / 2) * frameRate) / cardsPerSecond,
-        value: 0,
+        value: -Math.PI / 2,
     });
 
     keyFramesRY.push({
         frame: (1 * frameRate) / cardsPerSecond,
-        value: 0,
+        value: -Math.PI / 2,
     });
 
     yRotate.setKeys(keyFramesRY);
@@ -780,7 +1095,7 @@ const animateAddCardToFan = (
         frame: frameRate / cardsPerSecond,
         // to do: add seat rotation
         value:
-            ((fanPosition + 0.5 - GameSettings.deckSize / GameSettings.players / 2) * Math.PI) / 16,
+            -Math.PI / 2 + ((fanPosition + 0.5 - GameSettings.deckSize / GameSettings.players / 2) * Math.PI) / 16,
     });
 
     yRotate.setKeys(keyFramesRY);
@@ -822,11 +1137,13 @@ const animateAddCardToFan = (
     );
 };
 
-
 export const onSceneReady = (scene: Scene, settings: GameSettings) => {
     const engine = scene.getEngine();
     const canvas = engine.getRenderingCanvas();
     // if (canvas !== null) canvas.addEventListener("resize", function(){ engine.resize(); })
+
+    // Add interactive layer
+    const manager = new GUI3DManager(scene);
 
     const camera = new ArcRotateCamera(
         "camera",
@@ -852,33 +1169,36 @@ export const onSceneReady = (scene: Scene, settings: GameSettings) => {
     light3.intensity = 0.3;
     light4.intensity = 0.3;
 
-    buildSky(scene);
+    buildRoom(scene);
     buildTable(scene);
     setPositions();
-    buildDeck(scene);
+    buildDeck(scene, manager);
+    // dealCards(scene);
 
-    for (var i = 2; i < GameSettings.deckSize; i += GameSettings.players) {
-        animateCardToHand(GameSettings.deck[i], 3, 1, scene);
-    }
-    for (var i = 2; i < GameSettings.deckSize; i += GameSettings.players) {
-        animateAddCardToFan(GameSettings.deck[i], 3, (i - 2) / GameSettings.players, 1, scene);
-    }
+    // SSAO code from https://playground.babylonjs.com/#N96NXC
+    // Create SSAO and configure all properties (for the example)
+    var ssaoRatio = {
+        ssaoRatio: 0.5, // Ratio of the SSAO post-process, in a lower resolution
+        combineRatio: 1.0 // Ratio of the combine post-process (combines the SSAO and the scene)
+    };
 
-    scene.onPointerObservable.add((pointerInfo) => {
-        switch (pointerInfo.type) {
-            case PointerEventTypes.POINTERDOUBLETAP:
-                if (pointerInfo?.pickInfo?.hit) {
-                    playCard(GameSettings.deck[2], 3, scene);
-                }
-                break;
-        }
-    });
+    var ssao = new SSAORenderingPipeline("ssao", scene, ssaoRatio);
+    ssao.fallOff = 0.000001;
+    ssao.area = 1;
+    ssao.radius = 0.0001;
+    ssao.totalStrength = 1.0;
+    ssao.base = 0.5;
+
+    // Attach camera to the SSAO render pipeline
+    scene.postProcessRenderPipelineManager.attachCamerasToRenderPipeline("ssao", camera);
+    scene.postProcessRenderPipelineManager.enableEffectInPipeline("ssao", ssao.SSAOCombineRenderEffect, camera);
 };
 
 /**
  * Will run on every frame render.  We are spinning the box on y-axis.
  */
 export const onRender = (scene: Scene) => {
+    // Example code
     // if (box !== undefined) {
     //     var deltaTimeInMillis = scene.getEngine().getDeltaTime();
     //     const rpm = 10;
