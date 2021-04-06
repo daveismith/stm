@@ -4,6 +4,7 @@ import { onSceneReady, onRender } from "./SceneFunctions";
 import GameControls from "./GameControls/GameControls";
 import SceneComponent from "./SceneComponent";
 import GameBoard from "./GameBoard/GameBoard";
+
 import "./Game.css";
 
 const Game: React.FC = () => {

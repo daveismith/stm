@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 // [START csharp_declaration]
-// option csharp_namespace = "My.Sample.Namespace";
+option csharp_namespace = "My.Sample.Namespace";
 // [END csharp_declaration]
 
 // [START messages]
@@ -40,7 +40,7 @@ message Card {
 	Rank rank = 2;
 }
 
-message Status {
+message StatusResponse {
 	bool success = 1;
 	int32 error_num = 2;
 	string error_text = 3;
@@ -59,6 +59,11 @@ message SeatsList {
 }
 
 message JoinGameRequest {
+	string uuid = 1;
+}
+
+message JoinGameResponse {
+	string token = 1;
 }
 
 message SetReadyStatusRequest {
@@ -155,23 +160,24 @@ message LeaveGameRequest {
 
 message Notification {
 	oneof notification {
-		Status status = 1;
-		SeatsList seat_list = 2;
-		SeatDetails seat_update = 3;
-		StartGame start_game = 4;
-		Hand hand = 5;
-		BidRequest bid_request = 6;
-		Bid bid = 7;
-		BidList bid_list = 8;
-		TransferRequest transfer_request = 9;
-		Transfer transfer = 10;
-		ThrowawayRequest throwaway_request = 11;
-		PlayCardRequest play_card_request = 12;
-		UpdateTimeout update_timeout = 13;
-		PlayedCards played_cards = 14;
-		Tricks tricks = 15;
-		Scores scores = 16;
-		EndGame end_game = 17;
+		StatusResponse status = 1;
+		JoinGameResponse join_response = 2;
+		SeatsList seat_list = 3;
+		SeatDetails seat_update = 4;
+		StartGame start_game = 5;
+		Hand hand = 6;
+		BidRequest bid_request = 7;
+		Bid bid = 8;
+		BidList bid_list = 9;
+		TransferRequest transfer_request = 10;
+		Transfer transfer = 11;
+		ThrowawayRequest throwaway_request = 12;
+		PlayCardRequest play_card_request = 13;
+		UpdateTimeout update_timeout = 14;
+		PlayedCards played_cards = 15;
+		Tricks tricks = 16;
+		Scores scores = 17;
+		EndGame end_game = 18;
 	}
 }
 // [END messages]
@@ -180,14 +186,14 @@ message Notification {
 
 service ShootServer {
 	rpc JoinGame( JoinGameRequest ) returns ( stream Notification );
-	rpc TakeSeat( TakeSeatRequest ) returns ( Status );
-	rpc AssignBot( AssignBotRequest ) returns ( Status );
-	rpc SetReadyStatus( SetReadyStatusRequest ) returns ( Status );
-	rpc CreateBid( Bid ) returns ( Status );
-	rpc TransferCard( Transfer ) returns ( Status );
+	rpc TakeSeat( TakeSeatRequest ) returns ( StatusResponse );
+	rpc AssignBot( AssignBotRequest ) returns ( StatusResponse );
+	rpc SetReadyStatus( SetReadyStatusRequest ) returns ( StatusResponse );
+	rpc CreateBid( Bid ) returns ( StatusResponse );
+	rpc TransferCard( Transfer ) returns ( StatusResponse );
 	rpc ThrowawayCard( Card ) returns ( ThrowawayResponse );
-	rpc PlayCard( Card ) returns ( Status );
-	rpc LeaveGame( LeaveGameRequest ) returns ( Status );
+	rpc PlayCard( Card ) returns ( StatusResponse );
+	rpc LeaveGame( LeaveGameRequest ) returns ( StatusResponse );
 }
 
 // [END services]

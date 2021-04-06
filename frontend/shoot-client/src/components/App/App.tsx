@@ -7,7 +7,6 @@ import Game from "../Game/Game";
 import './App.css';
 import { GameProvider } from '../Game/Game.context';
 
-
 const App: React.FC = () => {
 
   const [ appState ] = useApp();
