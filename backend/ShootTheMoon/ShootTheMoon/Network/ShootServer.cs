@@ -27,6 +27,28 @@ namespace ShootTheMoon.Network
                 Game = game;
             }
 
+            public void SendCurrentState() {
+                Dictionary<string, RpcClient> clientList = new Dictionary<string, RpcClient>();
+                clientList.Add(this.Client.Token, this);
+
+                // Update The Seat List
+                SendSeatsList(Game, clientList);
+
+                // Update Scores
+
+                // Update Tricks
+
+                // Based On State, may need to send:
+                //   * Bid Request
+                //   * Bid List
+                //   * Transfer Request
+                //   * Transfer
+                //   * Throwaway Request
+                //   * Play Card Request
+                //   * Update Timeout
+                //   * Played Cards
+            }
+
         }
 
         Dictionary<string, Game.Game> games = new Dictionary<string, Game.Game>();
@@ -82,16 +104,21 @@ namespace ShootTheMoon.Network
             context.UserState.Add("gameId", request.Uuid);
 
             Client c = new Client();
+            c.Name = request.Name;
+
+            RpcClient client = new RpcClient(responseStream, c, game);
             game.Clients.Add(c);
-            clients.Add(c.Token, new RpcClient(responseStream, c, game));
+            clients.Add(c.Token, client);
 
             // Send A Join Game Response
             JoinGameResponse jgr = new JoinGameResponse();
             jgr.Token = c.Token;
-
             n.JoinResponse = jgr;
-
             await responseStream.WriteAsync(n);
+
+            // Call The Send Initial State Function To The Client
+            // This should either send basic stuff or 
+            client.SendCurrentState();
 
             try
             {
@@ -106,7 +133,7 @@ namespace ShootTheMoon.Network
 
         }
 
-        private async void SendSeatsList(Game.Game game)
+        private static async void SendSeatsList(Game.Game game, Dictionary<string, RpcClient> clients)
         {
             SeatsList sl = new SeatsList();
             for (int i = 0; i < game.NumPlayers; i++)
@@ -117,7 +144,7 @@ namespace ShootTheMoon.Network
                 details.Ready = false;
                 details.Empty = (c == null);
                 details.Human = (c == null) ? false : c.Human;
-                details.Name = "Player " + i.ToString();
+                details.Name = c.Name;
                 sl.Seats.Add(details);
             }
 
@@ -176,7 +203,7 @@ namespace ShootTheMoon.Network
             r.ErrorNum = 0;
             r.ErrorText = "";
 
-            SendSeatsList(game);
+            SendSeatsList(game, clients);
 
             return Task.FromResult(r);
         }

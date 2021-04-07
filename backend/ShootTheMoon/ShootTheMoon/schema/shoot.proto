@@ -68,6 +68,7 @@ message CreateGameResponse {
 
 message JoinGameRequest {
 	string uuid = 1;
+	string name = 2;
 }
 
 message JoinGameResponse {
