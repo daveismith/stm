@@ -1,41 +1,29 @@
 import React from 'react';
-import Game from '../Game/Game';
+import { useApp } from './App.context';
+import { Switch,  Route, Redirect } from "react-router";
+import { HashRouter } from "react-router-dom";
+import CreateGame from "../CreateGame/CreateGame";
+import Game from "../Game/Game";
 import './App.css';
-import * as grpcWeb from 'grpc-web';
-import {ShootServerClient} from './ShootServiceClientPb';
-import {JoinGameRequest, Notification, StatusResponse, TakeSeatRequest} from './shoot_pb';
+import { GameProvider } from '../Game/Game.context';
 
-const stmService = new ShootServerClient('http://localhost:8080', {"clientId": "my_client"}, null);
+const App: React.FC = () => {
 
-function App() {
-
-  let token: string;
-  const request = new JoinGameRequest();
-  request.setUuid('1234');
-
-  const stream = stmService.joinGame(request, {'x-game-id': '1234'} ) as grpcWeb.ClientReadableStream<Notification>;
-
-  stream.on('data', (response: Notification) => {
-    if (response.hasJoinResponse()) {
-      token = response.getJoinResponse()?.getToken() as string;
-      console.log('got token: ' + token);
-      const tsreq = new TakeSeatRequest();
-      tsreq.setSeat(1);
-      stmService.takeSeat(tsreq, {'x-game-id': '1234', 'x-game-token': token}, (err: grpcWeb.Error, resp: StatusResponse) => {
-        console.log('take seat response: ');
-        console.log(resp.toObject());
-      });
-    } else if (response.hasStatus()) {
-      console.log('status: ');
-      console.log(response.getStatus()?.toObject());
-    } else {
-      console.log('data');
-    }
-  });  
+  const [ appState ] = useApp();
 
   return (
     <div className="App">
-        <Game></Game>
+      <HashRouter>
+        <Switch>
+          <Route exact path={"/create"} component= { CreateGame } />
+          <Route exact path={"/game/:id"}>
+            <GameProvider>
+              <Game />
+            </GameProvider>
+          </Route>
+          <Redirect to={{pathname: "/create"}} />
+        </Switch>
+      </HashRouter>
     </div>
   );
 }

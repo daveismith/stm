@@ -1,19 +1,31 @@
 import React from "react";
-import GameControls from "./GameControls";
-import SceneComponent from "./SceneComponent";
+import { useGame } from "./Game.context";
 import { onSceneReady, onRender } from "./SceneFunctions";
+import GameControls from "./GameControls/GameControls";
+import SceneComponent from "./SceneComponent";
+import GameBoard from "./GameBoard/GameBoard";
+
 import "./Game.css";
 
 const Game: React.FC = () => {
       
+    const [ gameState ] = useGame();
+
+    const getView = () => {
+        if (gameState.sceneView) {
+            return <SceneComponent className="scene" antialias onSceneReady={onSceneReady} onRender={onRender} id="my-canvas" />;
+        }
+        return <GameBoard />;
+    }
+
     return (  
         <div className="game">
             <div className="row">
                 <div className="column-3">
-                    <SceneComponent className="scene" antialias onSceneReady={onSceneReady} onRender={onRender} id="my-canvas" />
+                    {getView()}
                 </div>
                 <div className="column-1">
-                    <GameControls></GameControls>
+                    <GameControls />
                 </div>
             </div>
         </div>
