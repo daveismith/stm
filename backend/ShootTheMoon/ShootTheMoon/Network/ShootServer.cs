@@ -2,9 +2,9 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 
 using Grpc.Core;
-using My.Sample.Namespace;
 using ShootTheMoon.Game;
 using ShootTheMoon.Utils;
+using ShootTheMoon.Network.Proto;
 
 namespace ShootTheMoon.Network
 {
