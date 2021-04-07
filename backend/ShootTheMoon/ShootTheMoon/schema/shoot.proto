@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 // [START csharp_declaration]
-option csharp_namespace = "My.Sample.Namespace";
+option csharp_namespace = "ShootTheMoon.Network.Proto";
 // [END csharp_declaration]
 
 // [START messages]

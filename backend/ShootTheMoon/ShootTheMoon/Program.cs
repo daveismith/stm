@@ -5,8 +5,8 @@ using Microsoft.Extensions.Logging;
 using System;
 
 using Grpc.Core;
-using My.Sample.Namespace;
 using ShootTheMoon.Network;
+using ShootTheMoon.Network.Proto;
 
 namespace ShootTheMoon
 {
