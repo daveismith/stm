@@ -21,4 +21,9 @@
     <Protobuf Include="schema/shoot.proto" Link="shoot.proto" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="english-adjectives.txt" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="english-nouns.txt" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>
