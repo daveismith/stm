@@ -50,5 +50,5 @@ This assumes that you've got protoc and the appropriate extension for generating
 
 ```sh
 cd frontend/shoot-client
-protoc -I ../../backend/ShootTheMoon/ShootTheMoon/schema shoot.proto --js_out=import_style=commonjs,binary:src/components/App --grpc-web_out=import_style=typescript,mode=grpcwebtext:src/components/App
+protoc -I ../../backend/ShootTheMoon/ShootTheMoon/schema shoot.proto --js_out=import_style=commonjs,binary:src/proto --grpc-web_out=import_style=typescript,mode=grpcwebtext:src/proto
 ```

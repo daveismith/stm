@@ -58,6 +58,14 @@ message SeatsList {
 	repeated SeatDetails seats = 1;
 }
 
+message CreateGameRequest {
+	uint32 seats = 1;
+}
+
+message CreateGameResponse {
+	string uuid = 1;
+}
+
 message JoinGameRequest {
 	string uuid = 1;
 }
@@ -185,6 +193,7 @@ message Notification {
 // [START services]
 
 service ShootServer {
+	rpc CreateGame( CreateGameRequest ) returns ( CreateGameResponse );
 	rpc JoinGame( JoinGameRequest ) returns ( stream Notification );
 	rpc TakeSeat( TakeSeatRequest ) returns ( StatusResponse );
 	rpc AssignBot( AssignBotRequest ) returns ( StatusResponse );
