@@ -35,6 +35,46 @@ export class ShootServerClient {
     this.options_ = options;
   }
 
+  methodInfoCreateGame = new grpcWeb.AbstractClientBase.MethodInfo(
+    shoot_pb.CreateGameResponse,
+    (request: shoot_pb.CreateGameRequest) => {
+      return request.serializeBinary();
+    },
+    shoot_pb.CreateGameResponse.deserializeBinary
+  );
+
+  createGame(
+    request: shoot_pb.CreateGameRequest,
+    metadata: grpcWeb.Metadata | null): Promise<shoot_pb.CreateGameResponse>;
+
+  createGame(
+    request: shoot_pb.CreateGameRequest,
+    metadata: grpcWeb.Metadata | null,
+    callback: (err: grpcWeb.Error,
+               response: shoot_pb.CreateGameResponse) => void): grpcWeb.ClientReadableStream<shoot_pb.CreateGameResponse>;
+
+  createGame(
+    request: shoot_pb.CreateGameRequest,
+    metadata: grpcWeb.Metadata | null,
+    callback?: (err: grpcWeb.Error,
+               response: shoot_pb.CreateGameResponse) => void) {
+    if (callback !== undefined) {
+      return this.client_.rpcCall(
+        this.hostname_ +
+          '/ShootServer/CreateGame',
+        request,
+        metadata || {},
+        this.methodInfoCreateGame,
+        callback);
+    }
+    return this.client_.unaryCall(
+    this.hostname_ +
+      '/ShootServer/CreateGame',
+    request,
+    metadata || {},
+    this.methodInfoCreateGame);
+  }
+
   methodInfoJoinGame = new grpcWeb.AbstractClientBase.MethodInfo(
     shoot_pb.Notification,
     (request: shoot_pb.JoinGameRequest) => {

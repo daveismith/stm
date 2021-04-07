@@ -122,6 +122,42 @@ export namespace SeatsList {
   }
 }
 
+export class CreateGameRequest extends jspb.Message {
+  getSeats(): number;
+  setSeats(value: number): CreateGameRequest;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): CreateGameRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: CreateGameRequest): CreateGameRequest.AsObject;
+  static serializeBinaryToWriter(message: CreateGameRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): CreateGameRequest;
+  static deserializeBinaryFromReader(message: CreateGameRequest, reader: jspb.BinaryReader): CreateGameRequest;
+}
+
+export namespace CreateGameRequest {
+  export type AsObject = {
+    seats: number,
+  }
+}
+
+export class CreateGameResponse extends jspb.Message {
+  getUuid(): string;
+  setUuid(value: string): CreateGameResponse;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): CreateGameResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: CreateGameResponse): CreateGameResponse.AsObject;
+  static serializeBinaryToWriter(message: CreateGameResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): CreateGameResponse;
+  static deserializeBinaryFromReader(message: CreateGameResponse, reader: jspb.BinaryReader): CreateGameResponse;
+}
+
+export namespace CreateGameResponse {
+  export type AsObject = {
+    uuid: string,
+  }
+}
+
 export class JoinGameRequest extends jspb.Message {
   getUuid(): string;
   setUuid(value: string): JoinGameRequest;
