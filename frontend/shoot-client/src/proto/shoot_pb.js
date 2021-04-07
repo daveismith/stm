@@ -1733,7 +1733,8 @@ proto.JoinGameRequest.prototype.toObject = function(opt_includeInstance) {
  */
 proto.JoinGameRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
-    uuid: jspb.Message.getFieldWithDefault(msg, 1, "")
+    uuid: jspb.Message.getFieldWithDefault(msg, 1, ""),
+    name: jspb.Message.getFieldWithDefault(msg, 2, "")
   };
 
   if (includeInstance) {
@@ -1774,6 +1775,10 @@ proto.JoinGameRequest.deserializeBinaryFromReader = function(msg, reader) {
       var value = /** @type {string} */ (reader.readString());
       msg.setUuid(value);
       break;
+    case 2:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setName(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -1810,6 +1815,13 @@ proto.JoinGameRequest.serializeBinaryToWriter = function(message, writer) {
       f
     );
   }
+  f = message.getName();
+  if (f.length > 0) {
+    writer.writeString(
+      2,
+      f
+    );
+  }
 };
 
 
@@ -1828,6 +1840,24 @@ proto.JoinGameRequest.prototype.getUuid = function() {
  */
 proto.JoinGameRequest.prototype.setUuid = function(value) {
   return jspb.Message.setProto3StringField(this, 1, value);
+};
+
+
+/**
+ * optional string name = 2;
+ * @return {string}
+ */
+proto.JoinGameRequest.prototype.getName = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.JoinGameRequest} returns this
+ */
+proto.JoinGameRequest.prototype.setName = function(value) {
+  return jspb.Message.setProto3StringField(this, 2, value);
 };
 
 

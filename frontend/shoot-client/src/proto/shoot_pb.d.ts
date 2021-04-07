@@ -162,6 +162,9 @@ export class JoinGameRequest extends jspb.Message {
   getUuid(): string;
   setUuid(value: string): JoinGameRequest;
 
+  getName(): string;
+  setName(value: string): JoinGameRequest;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): JoinGameRequest.AsObject;
   static toObject(includeInstance: boolean, msg: JoinGameRequest): JoinGameRequest.AsObject;
@@ -173,6 +176,7 @@ export class JoinGameRequest extends jspb.Message {
 export namespace JoinGameRequest {
   export type AsObject = {
     uuid: string,
+    name: string,
   }
 }
 
