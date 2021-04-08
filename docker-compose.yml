@@ -9,6 +9,15 @@ services:
       - "8000:80"
     environment:
       ENABLE_SWAGGER: "true"
+  shoot-proxy:
+    container_name: "shoot-proxy"
+    depends_on: 
+      - shoot-backend
+    build:
+      context: "./proxy"
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
   shoot-frontend:
     container_name: "shoot-frontend"
     build:
