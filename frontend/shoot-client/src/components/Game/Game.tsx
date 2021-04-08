@@ -25,7 +25,10 @@ const Game: React.FC = () => {
                     {getView()}
                 </div>
                 <div className="column-1">
-                    <GameControls />
+                    <GameControls
+                        score={gameState.score}
+                        tricks={gameState.tricks}
+					/>
                 </div>
             </div>
         </div>
