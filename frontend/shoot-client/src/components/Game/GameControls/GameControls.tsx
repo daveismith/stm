@@ -4,9 +4,15 @@ import TeamScore from "./TeamScore/TeamScore";
 import View from "./View/View";
 import "./GameControls.css";
 
-const GameControls: React.FC = () => {
-      
-    return (  
+interface IGameControlsProps {
+    score: number[],
+    tricks: number[]
+}
+
+const GameControls: React.FC<IGameControlsProps> = (props: IGameControlsProps) => {
+ 	const {score, tricks} = props;
+    
+    return (	
         <div className="game-controls">
             <div className="column">
                 <div className="row-1">
@@ -15,9 +21,9 @@ const GameControls: React.FC = () => {
                 <div className="row-1"> 
                     <TeamScore 
                         label={"SCORE"}
-                        t1Text={"43"}
+                        t1Text={score[0].toString()}
                         t1Color={"green"}
-                        t2Text={"37"}
+                        t2Text={score[1].toString()}
                         t2Color={"blue"}
                     >
                     </TeamScore>
@@ -25,9 +31,9 @@ const GameControls: React.FC = () => {
                 <div className="row-1"> 
                     <TeamScore 
                         label={"TRICKS"}
-                        t1Text={"3"}
+                        t1Text={tricks[0].toString()}
                         t1Color={"green"}
-                        t2Text={"1"}
+                        t2Text={tricks[1].toString()}
                         t2Color={"blue"}
                     >
                     </TeamScore>
