@@ -67,18 +67,20 @@ interface IPlayingCardProps {
 const PlayingCard: React.FC<IPlayingCardProps> = (props: IPlayingCardProps) => {
 
     const StyledDiv = styled.div`
-        font-size: 20px;
         border-radius: 12px;
         margin: 10px;
-        width: 80px;
+        width: 55px;
     `;
 
     const RankDiv = styled.div`
-        padding: 16px 0px;
+        font-size: 32px;
+        font-weight: bold;
+        padding: 6px 0px 4px 0px;
     `;
 
     const SuitDiv = styled.div`
-        padding: 0px 0px 32px 0px;
+        font-size: 26px;
+        padding: 0px 0px 6px 0px;
     `;
 
     return (  
