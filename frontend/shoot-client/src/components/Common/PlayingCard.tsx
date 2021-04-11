@@ -2,9 +2,66 @@ import React from "react";
 import { Card } from "@material-ui/core";
 import styled from 'styled-components';
 
+export enum Suit {
+    Spade,
+    Club,
+    Heart,
+    Diamond,
+}
+
+export namespace Suit {
+    export function symbol(suit: Suit): String {
+        switch (suit) {
+            case Suit.Spade:
+                return "♠️";
+            case Suit.Club:
+                return "♣️";
+            case Suit.Heart:
+                return "♥️";
+            case Suit.Diamond:
+                return "♦️";
+            default:
+                return "X"
+        }
+    }
+}
+
+export enum Rank {
+    Ace = 1,
+    Two,
+    Three,
+    Four,
+    Five,
+    Six,
+    Seven,
+    Eight,
+    Nine,
+    Ten,
+    Jack,
+    Queen,
+    King
+}
+
+export namespace Rank {
+    export function symbol(rank: Rank): String {
+        switch (rank) {
+            case Rank.Ace:
+                return "A";
+            case Rank.Jack:
+                return "J";
+            case Rank.Queen:
+                return "Q";
+            case Rank.King:
+                return "K";
+            default:
+                return rank.toString()
+        }
+    }
+}
+
 interface IPlayingCardProps {
-    suit: string,
-    rank: string
+    suit: Suit,
+    rank: Rank
 }
 
 const PlayingCard: React.FC<IPlayingCardProps> = (props: IPlayingCardProps) => {
@@ -28,10 +85,10 @@ const PlayingCard: React.FC<IPlayingCardProps> = (props: IPlayingCardProps) => {
         <StyledDiv>
             <Card>
                 <RankDiv>
-                    {props.rank}
+                    {Rank.symbol(props.rank)}
                 </RankDiv>
                 <SuitDiv>
-                    {props.suit}
+                    {Suit.symbol(props.suit)}
                 </SuitDiv>
             </Card>
         </StyledDiv>
