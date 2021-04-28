@@ -1,5 +1,4 @@
 import React from 'react';
-import { useApp } from './App.context';
 import { Switch,  Route, Redirect } from "react-router";
 import { HashRouter } from "react-router-dom";
 import CreateGame from "../CreateGame/CreateGame";
@@ -8,9 +7,6 @@ import './App.css';
 import { GameProvider } from '../Game/Game.context';
 
 const App: React.FC = () => {
-
-  const [ appState ] = useApp();
-
   return (
     <div className="App">
       <HashRouter>
