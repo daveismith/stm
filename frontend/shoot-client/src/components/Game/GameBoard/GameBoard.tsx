@@ -1,11 +1,10 @@
 import React from "react";
 import { Grid } from "@material-ui/core";
 import PlayingCard from "../../Common/PlayingCard";
-import {Suit, Rank} from "../../Common/PlayingCard";
+import { Card } from "../../../proto/shoot_pb";
 
 interface IGameBoardProps {
-    score: number[],
-    tricks: number[]
+    hand: Card[]
 }
 
 const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
@@ -19,9 +18,9 @@ const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
                 justify="center"
                 alignItems="center"
             >
-            <PlayingCard suit={Suit.Spade} rank={Rank.Ten}></PlayingCard>
-            <PlayingCard suit={Suit.Heart} rank={Rank.Ace}></PlayingCard>
-            <PlayingCard suit={Suit.Club} rank={Rank.Queen}></PlayingCard>
+                {hand.map(card => (
+                <PlayingCard card={card}></PlayingCard>
+                ))}
             </Grid>
         </div>
     );

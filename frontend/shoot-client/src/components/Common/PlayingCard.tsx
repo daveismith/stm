@@ -1,10 +1,48 @@
 import React from "react";
-import { Card } from "@material-ui/core";
+import { Card as CardView } from "@material-ui/core";
 import styled from 'styled-components';
-import {CardData, Suit, Rank} from "./GameData"
+import { Card } from "../../proto/shoot_pb";
 
 interface IPlayingCardProps {
-    card: CardData,
+    card: Card,
+}
+
+function suitString(suit: Card.Suit): String {
+    switch (suit) {
+        case Card.Suit.SPADES:
+            return "♠️";
+        case Card.Suit.CLUBS:
+            return "♣️";
+        case Card.Suit.HEARTS:
+            return "♥️";
+        case Card.Suit.DIAMONDS:
+            return "♦️";
+        default:
+            return "X"
+    }
+}
+
+function rankString(rank: Card.Rank): String {
+    switch (rank) {
+        case Card.Rank.ACE:
+            return "A";
+        case Card.Rank.JACK:
+            return "J";
+        case Card.Rank.QUEEN:
+            return "Q";
+        case Card.Rank.KING:
+            return "K";
+        case Card.Rank.TEN:
+            return "10";
+        case Card.Rank.NINE:
+            return "9";
+        case Card.Rank.EIGHT:
+            return "8";
+        case Card.Rank.SEVEN:
+            return "7";
+        default:
+            return "X"
+    }
 }
 
 const PlayingCard: React.FC<IPlayingCardProps> = (props: IPlayingCardProps) => {
@@ -28,14 +66,14 @@ const PlayingCard: React.FC<IPlayingCardProps> = (props: IPlayingCardProps) => {
 
     return (  
         <StyledDiv>
-            <Card>
+            <CardView>
                 <RankDiv>
-                    {Rank.symbol(props.card.rank)}
+                    {rankString(props.card.getRank())}
                 </RankDiv>
                 <SuitDiv>
-                    {Suit.symbol(props.card.suit)}
+                    {suitString(props.card.getSuit())}
                 </SuitDiv>
-            </Card>
+            </CardView>
         </StyledDiv>
     );
 };
