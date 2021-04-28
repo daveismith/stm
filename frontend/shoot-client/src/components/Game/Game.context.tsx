@@ -1,10 +1,12 @@
 import React, { createContext, useContext, useState } from "react";
+import { CardData } from "../Common/GameData";
 
 export interface IGame {
     numPlayers: number;
     sceneView: boolean;
     score: number[];
     tricks: number[];
+    hand: CardData[]
 }
 
 type GameContextType = (IGame | ((param: any) => void))[];

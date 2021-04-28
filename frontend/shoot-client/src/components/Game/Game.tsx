@@ -15,7 +15,9 @@ const Game: React.FC = () => {
         if (gameState.sceneView) {
             return <SceneComponent className="scene" antialias onSceneReady={onSceneReady} onRender={onRender} id="my-canvas" />;
         }
-        return <GameBoard />;
+        return <GameBoard
+            hand={gameState.hand}
+        />;
     }
 
     return (  
