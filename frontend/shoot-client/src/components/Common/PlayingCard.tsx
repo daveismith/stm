@@ -18,7 +18,7 @@ function suitString(suit: Card.Suit): String {
         case Card.Suit.DIAMONDS:
             return "♦️";
         default:
-            return "X"
+            return "X";
     }
 }
 
@@ -41,7 +41,7 @@ function rankString(rank: Card.Rank): String {
         case Card.Rank.SEVEN:
             return "7";
         default:
-            return "X"
+            return "X";
     }
 }
 

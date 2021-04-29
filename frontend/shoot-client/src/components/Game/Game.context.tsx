@@ -7,18 +7,18 @@ export interface IGame {
     sceneView: boolean;
     score: number[];
     tricks: number[];
-    hand: Card[]
+    hand: Card[];
 }
 
 type GameContextType = (IGame | ((param: any) => void))[];
 
-const card1 = new Card()
-card1.setRank(Card.Rank.ACE)
-card1.setSuit(Card.Suit.SPADES)
+const card1 = new Card();
+card1.setRank(Card.Rank.ACE);
+card1.setSuit(Card.Suit.SPADES);
 
-const card2 = new Card()
-card2.setRank(Card.Rank.JACK)
-card2.setSuit(Card.Suit.HEARTS)
+const card2 = new Card();
+card2.setRank(Card.Rank.JACK);
+card2.setSuit(Card.Suit.HEARTS);
 
 const initialState: IGame = {
     numPlayers: 6,
