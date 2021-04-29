@@ -1,13 +1,27 @@
 import React from "react";
+import { Grid } from "@material-ui/core";
 import PlayingCard from "../../Common/PlayingCard";
+import { Card } from "../../../proto/shoot_pb";
 
-const GameBoard: React.FC = () => {
-      
-    return (  
+interface IGameBoardProps {
+    hand: Card[]
+}
+
+const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
+    const {hand} = props;
+
+    return (
         <div style={{color: 'white', backgroundColor: '#404040', height: '100%'}}>
-            <PlayingCard suit="spades" rank="10"></PlayingCard>
-            <PlayingCard suit="hearts" rank="A"></PlayingCard>
-            <PlayingCard suit="clubs" rank="Q"></PlayingCard>
+            <Grid
+                container
+                direction="row"
+                justify="center"
+                alignItems="center"
+            >
+                {hand.map(card => (
+                <PlayingCard card={card}></PlayingCard>
+                ))}
+            </Grid>
         </div>
     );
 };
