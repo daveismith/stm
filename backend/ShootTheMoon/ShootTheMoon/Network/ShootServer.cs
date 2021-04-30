@@ -62,7 +62,19 @@ namespace ShootTheMoon.Network
 
             Game.Game game;
 
-            game = new Game.Game(GameSettings.GamePresets["SIXPLAYER"]);
+            GameSettings settings = GameSettings.GamePresets["SIXPLAYER"];
+            switch (request.Seats) {
+                case 4:
+                    settings = GameSettings.GamePresets["FOURPLAYER"];
+                    break;
+                case 6:
+                default:
+                    settings = GameSettings.GamePresets["SIXPLAYER"];
+                    break;
+
+            }
+
+            game = new Game.Game(settings);
 
             // We can generate the first id outside the locked loop because the check is
             // the part where we care about ensuring sequential access.
@@ -141,7 +153,7 @@ namespace ShootTheMoon.Network
                 try
                 {
                     RpcClient rpcClient = clients[c.Token];
-                    await rpcClient.Stream.WriteAsync(notification);
+                    rpcClient.Stream.WriteAsync(notification);
                 }
                 catch (KeyNotFoundException)
                 {
