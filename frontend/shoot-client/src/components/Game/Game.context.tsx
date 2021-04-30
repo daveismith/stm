@@ -1,4 +1,7 @@
+import { join } from "node:path";
 import React, { createContext, useContext, useState } from "react";
+import { useParams } from "react-router-dom";
+import { useApp } from "../App/App.context";
 
 import { Card } from "../../proto/shoot_pb";
 
@@ -9,6 +12,10 @@ export interface IGame {
     tricks: number[];
     hand: Card[];
 }
+
+interface ParamTypes{ 
+    id: string 
+};
 
 type GameContextType = (IGame | ((param: any) => void))[];
 
@@ -31,9 +38,26 @@ const initialState: IGame = {
 export const GameContext: React.Context<GameContextType> = createContext<GameContextType>([{ ...initialState }]);
 
 export const GameProvider: React.FC = ({ children }) => {
-    const contextValue = useState(initialState);
+    const [ appState, setAppState ] = useApp();
+    const [ state, setState ] = useState(initialState);
+    const { id } = useParams<ParamTypes>();
+
+    const { joinGame } = appState;
+
+    console.log(appState);
+
+    if (!appState.joined) {
+        console.log('joining game');
+
+        //joinGame(id, 'name')
+    } else {
+        appState.stream.on('data', (notification: Notification) => {
+            console.log(notification);
+        });
+    }
+
     return (
-        <GameContext.Provider value={ contextValue }>
+        <GameContext.Provider value={ [state, setState] }>
             { children }
         </GameContext.Provider>
     );
