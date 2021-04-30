@@ -6,10 +6,12 @@ import SceneComponent from "./SceneComponent";
 import GameBoard from "./GameBoard/GameBoard";
 
 import "./Game.css";
+import { useApp } from "../App/App.context";
 
 const Game: React.FC = () => {
       
     const [ gameState ] = useGame();
+    const [ appState ] = useApp();
 
     const getView = () => {
         if (gameState.sceneView) {
@@ -20,7 +22,7 @@ const Game: React.FC = () => {
         />;
     }
 
-    return (  
+    return (
         <div className="game">
             <div className="row">
                 <div className="column-3">
