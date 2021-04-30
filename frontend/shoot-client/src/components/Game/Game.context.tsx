@@ -1,7 +1,8 @@
 import { join } from "node:path";
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useApp } from "../App/App.context";
+import { Notification, Scores } from '../../proto/shoot_pb';
 
 import { Card } from "../../proto/shoot_pb";
 
@@ -35,6 +36,8 @@ const initialState: IGame = {
     hand: [card1, card2]
 }
 
+let registered: boolean = false;
+
 export const GameContext: React.Context<GameContextType> = createContext<GameContextType>([{ ...initialState }]);
 
 export const GameProvider: React.FC = ({ children }) => {
@@ -44,17 +47,37 @@ export const GameProvider: React.FC = ({ children }) => {
 
     const { joinGame } = appState;
 
-    console.log(appState);
+    useEffect(() => {
+        if (!appState.joined) {
+            joinGame(id, 'name')
+        } else if (!registered) {
+            appState.stream.on('data', (notification: Notification) => {
+                if (notification.hasScores()) {
+                    console.log('score update');
+                    // Handle A Score Update
+                    let updateState = {...state};
+                    updateState.score[0] = notification.getScores()?.getTeam1() as number;
+                    updateState.score[1] = notification.getScores()?.getTeam2() as number;
+                    setState(updateState);
+                } else if (notification.hasTricks()) {
+                    console.log('tricks update');
+                    // Handle A Tricks Update
+                    let updateState = {...state};
+                    updateState.tricks[0] = notification.getTricks()?.getTeam1() as number;
+                    updateState.tricks[1] = notification.getTricks()?.getTeam2() as number;
+                    setState(updateState);
+                } else {
+                    console.log('game data');
+                    const obj: object = notification.toObject();
+                    console.log(obj);
+                }
+            });
+    
+            registered = true;
+        }
+    });
 
-    if (!appState.joined) {
-        console.log('joining game');
-
-        //joinGame(id, 'name')
-    } else {
-        appState.stream.on('data', (notification: Notification) => {
-            console.log(notification);
-        });
-    }
+    
 
     return (
         <GameContext.Provider value={ [state, setState] }>

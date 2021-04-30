@@ -9,7 +9,7 @@ namespace ShootTheMoon.Game
     {
         public GameSettings GameSettings { get; set; }
         public string Uuid { get; set; }
-        public int NumPlayers { get; set; }
+        public int NumPlayers { get; }
         public int InProgress { get; set; }
         public List<Client> Clients { get; set; }
         public Client[] Players { get; set; }
@@ -30,8 +30,10 @@ namespace ShootTheMoon.Game
         {
             Uuid = Guid.NewGuid().ToString();
             Clients = new List<Client>();
-            Players = new Client[gameSettings.NumPlayersPerTeam * 2];
+            NumPlayers = gameSettings.NumPlayersPerTeam * 2;
+            Players = new Client[NumPlayers];
             Score = new List<int> { 0, 0 };
+            Tricks = new int[] { 0, 0 };
 
             Random r = new Random();
             Dealer = r.Next(Players.Length);
