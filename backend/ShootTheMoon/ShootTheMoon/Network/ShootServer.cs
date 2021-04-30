@@ -35,8 +35,10 @@ namespace ShootTheMoon.Network
                 SendSeatsList(Game, clientList);
 
                 // Update Scores
+                SendScore(Game, clientList);
 
                 // Update Tricks
+                SendTricks(Game, clientList);
 
                 // Based On State, may need to send:
                 //   * Bid Request
@@ -133,35 +135,61 @@ namespace ShootTheMoon.Network
 
         }
 
-        private static async void SendSeatsList(Game.Game game, Dictionary<string, RpcClient> clients)
+        private static async void BroadcastNotification(Notification notification, Game.Game game, Dictionary<string, RpcClient> clients) {
+            foreach (Client c in game.Clients)
+            {
+                try
+                {
+                    RpcClient rpcClient = clients[c.Token];
+                    await rpcClient.Stream.WriteAsync(notification);
+                }
+                catch (KeyNotFoundException)
+                {
+                }
+            }
+        }
+
+        private static void SendSeatsList(Game.Game game, Dictionary<string, RpcClient> clients)
         {
             SeatsList sl = new SeatsList();
             for (int i = 0; i < game.NumPlayers; i++)
             {
-                Client c = game.Clients[i];
+                Client c = game.Players[i];
                 SeatDetails details = new SeatDetails();
                 details.Seat = (uint)i;
                 details.Ready = false;
                 details.Empty = (c == null);
                 details.Human = (c == null) ? false : c.Human;
-                details.Name = c.Name;
+                details.Name = (c == null) ? "" : c.Name;
                 sl.Seats.Add(details);
             }
 
             Notification n = new Notification();
             n.SeatList = sl;
 
-            foreach (Client c in game.Clients)
-            {
-                try
-                {
-                    RpcClient rpcClient = clients[c.Token];
-                    await rpcClient.Stream.WriteAsync(n);
-                }
-                catch (KeyNotFoundException)
-                {
-                }
-            }
+            BroadcastNotification(n, game, clients);
+        }
+
+        private static void SendScore(Game.Game game, Dictionary<string, RpcClient> clients) {
+            Scores scores = new Scores();
+            scores.Team1 = (uint)game.Score[0];
+            scores.Team2 = (uint)game.Score[1];
+
+            Notification n = new Notification();
+            n.Scores = scores;
+
+            BroadcastNotification(n, game, clients);
+        }
+
+        private static void SendTricks(Game.Game game, Dictionary<string, RpcClient> clients) {
+            Tricks tricks = new Tricks();
+            tricks.Team1 = (uint)game.Tricks[0];
+            tricks.Team2 = (uint)game.Tricks[1];
+
+            Notification n = new Notification();
+            n.Tricks = tricks;
+
+            BroadcastNotification(n, game, clients);
         }
 
         public override Task<StatusResponse> TakeSeat(TakeSeatRequest request, ServerCallContext context)

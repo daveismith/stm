@@ -2,8 +2,8 @@ import React, { createContext, useContext, useState } from "react";
 
 import * as grpcWeb from 'grpc-web';
 import { ShootServerClient } from '../../proto/ShootServiceClientPb';
-import { CreateGameRequest, CreateGameResponse, JoinGameRequest, Notification } from '../../proto/shoot_pb';
-import { isNotEmittedStatement } from "typescript";
+import { CreateGameRequest, CreateGameResponse, JoinGameRequest, Notification, SeatDetails, StatusResponse, TakeSeatRequest } from '../../proto/shoot_pb';
+import { RestoreOutlined } from "@material-ui/icons";
 
 export interface IApp {
     connection?: ShootServerClient
@@ -12,8 +12,10 @@ export interface IApp {
     stream?: grpcWeb.ClientReadableStream<Notification>,
     createGame?(seats: number): void,
     joinGame?(gameId: string, name: string): boolean,
+    takeSeat?(seat: number): void,
     metadata: grpcWeb.Metadata,
-    joined: boolean
+    joined: boolean,
+    registered: boolean
 }
 
 function uuidv4() {
@@ -30,7 +32,8 @@ const connection: ShootServerClient = new ShootServerClient('http://localhost:80
 
 const initialState: IApp = {
     metadata: { }, 
-    joined: false
+    joined: false,
+    registered: false
 }
 
 const AppContext: React.Context<AppContextType> = createContext<AppContextType>([{ ...initialState }]);
@@ -59,6 +62,7 @@ export const AppProvider: React.FC = ({ children }) => {
             return false;
         }
 
+        console.log('join game');
 
         const request: JoinGameRequest = new JoinGameRequest();
         request.setName(name);
@@ -67,21 +71,42 @@ export const AppProvider: React.FC = ({ children }) => {
         let newState = {... appState};
         newState.stream = connection.joinGame(request, appState.metadata);
         newState.joined = (newState.stream !== undefined);
+        console.log('newState');
+        console.log(newState);
         setState(newState);
 
         newState.stream.on('data', (response: Notification) => {
+
             if (response.hasJoinResponse()) {
                 console.log('got join response');
-                let newState = {...appState};
-                newState.token = response.getJoinResponse()?.getToken() as string;
-                newState.metadata['x-game-token'] = newState.token;
-                setState(newState);        
+                let updateState = {...newState};
+                console.log(updateState);
+                updateState.token = response.getJoinResponse()?.getToken() as string;
+                updateState.metadata['x-game-token'] = updateState.token;
+                setState(updateState);        
             }
         });
 
         console.log('joinGame ' + gameId);
         return newState.stream !== undefined;
     };
+
+    appState.takeSeat = (seat: number) => {
+        if (!appState.joined) {
+            return false;
+        }
+
+        console.log('take seat');
+
+        const request: TakeSeatRequest = new TakeSeatRequest();
+        request.setSeat(seat);
+
+        let result: Promise<boolean> = connection.takeSeat(request, appState.metadata).then((value: StatusResponse) => {
+            return value.getSuccess();
+        }).catch((reason: any) => {
+            return false;
+        });
+    }
 
     return (
         <AppContext.Provider value={ contextValue }>
