@@ -24,7 +24,7 @@ const NameDialog: React.FC = () => {
 
     return (  
         <div>
-            <Dialog open={true} aria-labelledby="form-dialog-title">
+            <Dialog open aria-labelledby="form-dialog-title">
                 <DialogContent>
                     <TextField
                         id="name"
