@@ -40,7 +40,7 @@ const Game: React.FC = () => {
                 </div>
             </div>);
         }
-        return (<NameDialog isOpen={true}/>)
+        return (<NameDialog />)
     }
 
     return (
