@@ -8,7 +8,7 @@ import NameDialog from "../Common/NameDialog"
 import "./Game.css";
 
 const Game: React.FC = () => {
-      
+
     const [ gameState ] = useGame();
 
     const getView = () => {

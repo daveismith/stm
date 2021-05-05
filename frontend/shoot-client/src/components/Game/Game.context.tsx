@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useApp } from "../App/App.context";
-import { Notification, Scores } from '../../proto/shoot_pb';
+import { Notification } from '../../proto/shoot_pb';
 
 import { Card } from "../../proto/shoot_pb";
 

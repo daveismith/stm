@@ -2,8 +2,7 @@ import React, { createContext, useContext, useState } from "react";
 
 import * as grpcWeb from 'grpc-web';
 import { ShootServerClient } from '../../proto/ShootServiceClientPb';
-import { CreateGameRequest, CreateGameResponse, JoinGameRequest, Notification, SeatDetails, StatusResponse, TakeSeatRequest } from '../../proto/shoot_pb';
-import { RestoreOutlined } from "@material-ui/icons";
+import { CreateGameRequest, CreateGameResponse, JoinGameRequest, Notification, StatusResponse, TakeSeatRequest } from '../../proto/shoot_pb';
 
 export interface IApp {
     connection?: ShootServerClient
@@ -20,7 +19,7 @@ export interface IApp {
 
 function uuidv4() {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-      var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+      var r = Math.random() * 16 | 0, v = c === 'x' ? r : ((r & 0x3) | 0x8);
       return v.toString(16);
     });
   }
@@ -62,13 +61,13 @@ export const AppProvider: React.FC = ({ children }) => {
             return false;
         }
 
-        console.log('join game');
+        console.log('join game ' + name);
 
         const request: JoinGameRequest = new JoinGameRequest();
         request.setName(name);
         request.setUuid(gameId);
 
-        let newState = {... appState};
+        let newState = {...appState};
         newState.stream = connection.joinGame(request, appState.metadata);
         newState.joined = (newState.stream !== undefined);
         console.log('newState');
@@ -101,7 +100,7 @@ export const AppProvider: React.FC = ({ children }) => {
         const request: TakeSeatRequest = new TakeSeatRequest();
         request.setSeat(seat);
 
-        let result: Promise<boolean> = connection.takeSeat(request, appState.metadata).then((value: StatusResponse) => {
+        connection.takeSeat(request, appState.metadata).then((value: StatusResponse) => {
             return value.getSuccess();
         }).catch((reason: any) => {
             return false;
