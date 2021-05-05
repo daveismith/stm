@@ -153,7 +153,7 @@ namespace ShootTheMoon.Network
                 try
                 {
                     RpcClient rpcClient = clients[c.Token];
-                    rpcClient.Stream.WriteAsync(notification);
+                    await rpcClient.Stream.WriteAsync(notification);
                 }
                 catch (KeyNotFoundException)
                 {
