@@ -18,8 +18,11 @@ const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
                 justify="center"
                 alignItems="center"
             >
-                {hand.map(card => (
-                <PlayingCard card={card}></PlayingCard>
+                {hand.map((card, index) => (
+                    <PlayingCard
+                        key={"playing_card_" + index} 
+                        card={card} 
+                    />
                 ))}
             </Grid>
         </div>
