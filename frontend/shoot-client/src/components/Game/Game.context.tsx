@@ -1,4 +1,3 @@
-import { join } from "node:path";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useApp } from "../App/App.context";
@@ -7,6 +6,7 @@ import { Notification, Scores } from '../../proto/shoot_pb';
 import { Card } from "../../proto/shoot_pb";
 
 export interface IGame {
+    playerName?: string;
     numPlayers: number;
     sceneView: boolean;
     score: number[];
@@ -29,6 +29,7 @@ card2.setRank(Card.Rank.JACK);
 card2.setSuit(Card.Suit.HEARTS);
 
 const initialState: IGame = {
+    playerName: undefined,
     numPlayers: 6,
     sceneView: false,
     score: [27, 9],
@@ -41,15 +42,16 @@ let registered: boolean = false;
 export const GameContext: React.Context<GameContextType> = createContext<GameContextType>([{ ...initialState }]);
 
 export const GameProvider: React.FC = ({ children }) => {
-    const [ appState, setAppState ] = useApp();
+    const [ appState ] = useApp();
     const [ state, setState ] = useState(initialState);
     const { id } = useParams<ParamTypes>();
 
     const { joinGame } = appState;
 
     useEffect(() => {
+        if (!state.playerName) return;
         if (!appState.joined) {
-            joinGame(id, 'name')
+            joinGame(id, state.playerName);
         } else if (!registered) {
             appState.stream.on('data', (notification: Notification) => {
                 if (notification.hasScores()) {
