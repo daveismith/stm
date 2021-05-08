@@ -3,12 +3,11 @@ import { AppBar, IconButton, Toolbar, Typography } from "@material-ui/core";
 import MenuIcon from '@material-ui/icons/Menu';
 import styled from 'styled-components';
 
-const ControlsMenu: React.FC = () => {
-      
-    const StyledRoot = styled.div`
-        width: 100%;
-    `;
+const StyledRoot = styled.div`
+    width: 100%;
+`;
 
+const ControlsMenu: React.FC = () => {
     return (  
         <StyledRoot>
             <AppBar position="static" style={{ background: '#202020' }}>
