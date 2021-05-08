@@ -10,20 +10,19 @@ interface ITeamScoreProps {
     t2Color: string;
 }
 
+const StyledRoot = styled.div`
+    margin: 24px auto;
+`;
+
+const StyledLabel = styled.div`
+    color: #a9a9a9;
+`;
+
+const StyledTextBubble = styled.div`
+    margin: 10px;
+`;
+
 const TeamScore: React.FC<ITeamScoreProps> = (props: ITeamScoreProps) => {
-      
-    const StyledRoot = styled.div`
-        margin: 24px auto;
-    `;
-
-    const StyledLabel = styled.div`
-        color: #a9a9a9;
-    `;
-
-    const StyledTextBubble = styled.div`
-        margin: 10px;
-    `;
-
     return (  
         <StyledRoot>
             <StyledLabel>

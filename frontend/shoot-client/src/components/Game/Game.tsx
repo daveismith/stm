@@ -4,27 +4,31 @@ import { onSceneReady, onRender } from "./SceneFunctions";
 import GameControls from "./GameControls/GameControls";
 import SceneComponent from "./SceneComponent";
 import GameBoard from "./GameBoard/GameBoard";
-
+import NameDialog from "../Common/NameDialog"
 import "./Game.css";
-import { useApp } from "../App/App.context";
 
 const Game: React.FC = () => {
-      
+
     const [ gameState ] = useGame();
-    const [ appState ] = useApp();
 
     const getView = () => {
         if (gameState.sceneView) {
-            return <SceneComponent className="scene" antialias onSceneReady={onSceneReady} onRender={onRender} id="my-canvas" />;
+            return <SceneComponent 
+                        className="scene" 
+                        antialias 
+                        onSceneReady={onSceneReady} 
+                        onRender={onRender} 
+                        id="my-canvas" 
+                    />;
         }
         return <GameBoard
-            hand={gameState.hand}
-        />;
+                    hand={gameState.hand}
+                />;
     }
 
-    return (
-        <div className="game">
-            <div className="row">
+    const getContent = () => {
+        if(gameState.playerName) {
+            return (<div className="row">
                 <div className="column-3">
                     {getView()}
                 </div>
@@ -32,9 +36,16 @@ const Game: React.FC = () => {
                     <GameControls
                         score={gameState.score}
                         tricks={gameState.tricks}
-					/>
+                    />
                 </div>
-            </div>
+            </div>);
+        }
+        return (<NameDialog />)
+    }
+
+    return (
+        <div className="game">
+            { getContent() }
         </div>
     );
 };
