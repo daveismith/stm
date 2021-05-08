@@ -27,18 +27,19 @@ namespace ShootTheMoon.Network
                 Game = game;
             }
 
-            public void SendCurrentState() {
+            public async Task SendCurrentState() {
+                // TODO: Add other clients from this game.  -- Tim 2021-05-08
                 Dictionary<string, RpcClient> clientList = new Dictionary<string, RpcClient>();
                 clientList.Add(this.Client.Token, this);
 
                 // Update The Seat List
-                SendSeatsList(Game, clientList);
+                await SendSeatsList(Game, clientList);
 
                 // Update Scores
-                SendScore(Game, clientList);
+                await SendScore(Game, clientList);
 
                 // Update Tricks
-                SendTricks(Game, clientList);
+                await SendTricks(Game, clientList);
 
                 // Based On State, may need to send:
                 //   * Bid Request
@@ -84,8 +85,10 @@ namespace ShootTheMoon.Network
                     id = IdGenerator.NewId();
                 }
 
+                game.Name = id;
                 games.Add(id, game);
             }
+            if (Program.Verbose) System.Console.WriteLine("New game generated: " + id);
 
             CreateGameResponse response = new CreateGameResponse();
             response.Uuid = id;
@@ -103,6 +106,8 @@ namespace ShootTheMoon.Network
             }
             catch (KeyNotFoundException)
             {
+                if (Program.Verbose) System.Console.WriteLine("Join failed -- game " + request.Uuid + " not found");
+
                 // The game key doesn't exist, so try to add the game
                 //game = new Game.Game(GameSettings.GamePresets["SIXPLAYER"]);
                 //games.Add(request.Uuid, game);  //TODO: Change This To Handle The Generated UUIDS (this should be a failure case normally)
@@ -132,7 +137,7 @@ namespace ShootTheMoon.Network
 
             // Call The Send Initial State Function To The Client
             // This should either send basic stuff or 
-            client.SendCurrentState();
+            await client.SendCurrentState();
 
             try
             {
@@ -140,6 +145,7 @@ namespace ShootTheMoon.Network
             }
             catch (TaskCanceledException)
             {
+                if (Program.Verbose) System.Console.WriteLine("Task cancelled with client token " + c.Token);
                 // Task Cancelled, Do Any Disconnection Stuff
                 clients.Remove(c.Token);
                 game.Clients.Remove(c);
@@ -147,21 +153,28 @@ namespace ShootTheMoon.Network
 
         }
 
-        private static async void BroadcastNotification(Notification notification, Game.Game game, Dictionary<string, RpcClient> clients) {
+        private static async Task BroadcastNotification(Notification notification, Game.Game game, Dictionary<string, RpcClient> clients) {
+            List<Task> tasks = new List<Task>();
+            
             foreach (Client c in game.Clients)
             {
                 try
                 {
                     RpcClient rpcClient = clients[c.Token];
-                    await rpcClient.Stream.WriteAsync(notification);
+                    tasks.Add(rpcClient.Stream.WriteAsync(notification));
+                    if (Program.Verbose) System.Console.WriteLine("Broadcast complete to " + c.Token);
                 }
                 catch (KeyNotFoundException)
                 {
+                    if (Program.Verbose) System.Console.WriteLine("Couldn't broadcast: client key not found.");
                 }
             }
+
+            await Task.WhenAll(tasks);
+            if (Program.Verbose) System.Console.WriteLine("Broadcast complete for game " + game.Name);
         }
 
-        private static void SendSeatsList(Game.Game game, Dictionary<string, RpcClient> clients)
+        private static async Task SendSeatsList(Game.Game game, Dictionary<string, RpcClient> clients)
         {
             SeatsList sl = new SeatsList();
             for (int i = 0; i < game.NumPlayers; i++)
@@ -179,10 +192,10 @@ namespace ShootTheMoon.Network
             Notification n = new Notification();
             n.SeatList = sl;
 
-            BroadcastNotification(n, game, clients);
+            await BroadcastNotification(n, game, clients);
         }
 
-        private static void SendScore(Game.Game game, Dictionary<string, RpcClient> clients) {
+        private static async Task SendScore(Game.Game game, Dictionary<string, RpcClient> clients) {
             Scores scores = new Scores();
             scores.Team1 = (uint)game.Score[0];
             scores.Team2 = (uint)game.Score[1];
@@ -190,10 +203,10 @@ namespace ShootTheMoon.Network
             Notification n = new Notification();
             n.Scores = scores;
 
-            BroadcastNotification(n, game, clients);
+            await BroadcastNotification(n, game, clients);
         }
 
-        private static void SendTricks(Game.Game game, Dictionary<string, RpcClient> clients) {
+        private static async Task SendTricks(Game.Game game, Dictionary<string, RpcClient> clients) {
             Tricks tricks = new Tricks();
             tricks.Team1 = (uint)game.Tricks[0];
             tricks.Team2 = (uint)game.Tricks[1];
@@ -201,10 +214,10 @@ namespace ShootTheMoon.Network
             Notification n = new Notification();
             n.Tricks = tricks;
 
-            BroadcastNotification(n, game, clients);
+            await BroadcastNotification(n, game, clients);
         }
 
-        public override Task<StatusResponse> TakeSeat(TakeSeatRequest request, ServerCallContext context)
+        public override async Task<StatusResponse> TakeSeat(TakeSeatRequest request, ServerCallContext context)
         {
             string uuid = context.RequestHeaders.GetValue("x-game-id");
             string clientToken = context.RequestHeaders.GetValue("x-game-token");
@@ -221,7 +234,7 @@ namespace ShootTheMoon.Network
                 r.Success = false;
                 r.ErrorNum = 1; // TODO: Error Enum
                 r.ErrorText = "Game Not Found";
-                return Task.FromResult(r);
+                return r;
             }
 
             // Try To Take The Seat Request
@@ -231,7 +244,7 @@ namespace ShootTheMoon.Network
                 r.Success = false;
                 r.ErrorNum = 2; // TODO: Error Enum
                 r.ErrorText = "Seat In Use";
-                return Task.FromResult(r);
+                return r;
             }
             else
             {
@@ -243,9 +256,9 @@ namespace ShootTheMoon.Network
             r.ErrorNum = 0;
             r.ErrorText = "";
 
-            SendSeatsList(game, clients);
+            await SendSeatsList(game, clients);
 
-            return Task.FromResult(r);
+            return r;
         }
 
 

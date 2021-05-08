@@ -9,6 +9,7 @@ namespace ShootTheMoon.Game
     {
         public GameSettings GameSettings { get; set; }
         public string Uuid { get; set; }
+        public string Name { get; set; }
         public int NumPlayers { get; }
         public int InProgress { get; set; }
         public List<Client> Clients { get; set; }
