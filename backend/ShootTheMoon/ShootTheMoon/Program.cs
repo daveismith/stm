@@ -18,10 +18,10 @@ namespace ShootTheMoon
         public static void Main(string[] args)
         {
             var configuration = new ConfigurationBuilder()
+                .AddEnvironmentVariables()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json")
                 .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}.json", true)
-                .AddEnvironmentVariables()
                 .Build();
 
             Log.Logger = new LoggerConfiguration()
