@@ -5,6 +5,7 @@ using Grpc.Core;
 using ShootTheMoon.Game;
 using ShootTheMoon.Utils;
 using ShootTheMoon.Network.Proto;
+using Serilog;
 
 namespace ShootTheMoon.Network
 {
@@ -88,7 +89,7 @@ namespace ShootTheMoon.Network
                 game.Name = id;
                 games.Add(id, game);
             }
-            if (Program.Verbose) System.Console.WriteLine("New game generated: " + id);
+            Log.Debug("New game generated: " + id);
 
             CreateGameResponse response = new CreateGameResponse();
             response.Uuid = id;
@@ -106,7 +107,7 @@ namespace ShootTheMoon.Network
             }
             catch (KeyNotFoundException)
             {
-                if (Program.Verbose) System.Console.WriteLine("Join failed -- game " + request.Uuid + " not found");
+                Log.Debug("Join failed -- game " + request.Uuid + " not found");
 
                 // The game key doesn't exist, so try to add the game
                 //game = new Game.Game(GameSettings.GamePresets["SIXPLAYER"]);
@@ -145,7 +146,7 @@ namespace ShootTheMoon.Network
             }
             catch (TaskCanceledException)
             {
-                if (Program.Verbose) System.Console.WriteLine("Task cancelled with client token " + c.Token);
+                Log.Debug("Task cancelled with client token " + c.Token);
                 // Task Cancelled, Do Any Disconnection Stuff
                 clients.Remove(c.Token);
                 game.Clients.Remove(c);
@@ -162,16 +163,16 @@ namespace ShootTheMoon.Network
                 {
                     RpcClient rpcClient = clients[c.Token];
                     tasks.Add(rpcClient.Stream.WriteAsync(notification));
-                    if (Program.Verbose) System.Console.WriteLine("Broadcast complete to " + c.Token);
+                    Log.Debug("Broadcast complete to " + c.Token);
                 }
                 catch (KeyNotFoundException)
                 {
-                    if (Program.Verbose) System.Console.WriteLine("Couldn't broadcast: client key not found.");
+                    Log.Debug("Couldn't broadcast: client key not found.");
                 }
             }
 
             await Task.WhenAll(tasks);
-            if (Program.Verbose) System.Console.WriteLine("Broadcast complete for game " + game.Name);
+            Log.Debug("Broadcast complete for game " + game.Name);
         }
 
         private static async Task SendSeatsList(Game.Game game, Dictionary<string, RpcClient> clients)
