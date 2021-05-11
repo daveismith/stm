@@ -33,7 +33,7 @@ class CardStack {
         CardStack.deck.position = new Vector3(1.5, GameSettings.tableHeight + 0.01, 1.5);
 
         //Populate all card positions
-        for (var i = 0; i < GameSettings.players; i++) {
+        for (i = 0; i < GameSettings.players; i++) {
             CardStack.dealMatStacks[i].position = new Vector3(
                 GameSettings.tableRadius *
                 dealPositionRatio *

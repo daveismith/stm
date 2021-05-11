@@ -17,7 +17,6 @@ import {
 
 import { GameSettings } from "./GameSettings3D";
 import { baseRotation } from "./SceneFunctions";
-import { CardStack } from "./CardStack3D";
 
 import iconTextures from "./resources/images/icons.png";
 

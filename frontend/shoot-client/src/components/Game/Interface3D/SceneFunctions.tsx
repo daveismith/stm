@@ -1,7 +1,6 @@
 import {
     ArcRotateCamera,
     HemisphericLight,
-    Mesh,
     MeshBuilder,
     Scene,
     Vector3,
@@ -9,9 +8,6 @@ import {
     Texture,
     SSAORenderingPipeline,
     TransformNode,
-    PBRMaterial,
-    PBRMetallicRoughnessMaterial,
-    CubeTexture,
     SceneLoader
 } from "@babylonjs/core";
 
@@ -248,6 +244,7 @@ const buildSeatCubes = (scene: Scene, manager: GUI3DManager, camera: ArcRotateCa
     var seatCube: SeatCube;
 
     for (var i = 0; i < GameSettings.players; i++) {
+        // eslint-disable-next-line
         seatCube = new SeatCube(scene, manager, camera, i);
     }
 }
@@ -262,10 +259,12 @@ const buildBidCubes = (scene: Scene, manager: GUI3DManager) => {
         pivot.position = new Vector3(0, GameSettings.tableHeight, 0);
     
         for (var j = 0; j < 9; j++) {
+            // eslint-disable-next-line
             bidNumberCube = new BidNumberCube(scene, manager, pivot, i, j);
         }
 
-        for (var j = 0; j < 6; j++) {
+        for (j = 0; j < 6; j++) {
+            // eslint-disable-next-line
             bidSuitCube = new BidSuitCube(scene, manager, pivot, i, j);
         }
 
@@ -275,22 +274,22 @@ const buildBidCubes = (scene: Scene, manager: GUI3DManager) => {
     }
 }
 
-const dealCards = (scene: Scene) => {
-    var deck: CardStack = CardStack.deck;
-    var card: Card | null;
+// const dealCards = (scene: Scene) => {
+//     var deck: CardStack = CardStack.deck;
+//     var card: Card | null;
 
-    for (var i = 0; i < GameSettings.deckSize; i++) {
-        card = deck.index[deck.cardsInStack - 1];
-        debugger;
-        if (card !== null) {
-            card.dealCard(
-                scene,
-                i % GameSettings.players,
-                i
-            );
-        }
-    }
-};
+//     for (var i = 0; i < GameSettings.deckSize; i++) {
+//         card = deck.index[deck.cardsInStack - 1];
+//         debugger;
+//         if (card !== null) {
+//             card.dealCard(
+//                 scene,
+//                 i % GameSettings.players,
+//                 i
+//             );
+//         }
+//     }
+// };
 
 export const onSceneReady = (scene: Scene, settings: GameSettings) => {
     const engine = scene.getEngine();

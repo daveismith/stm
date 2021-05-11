@@ -22,7 +22,6 @@ import { CardStack } from "./CardStack3D";
 import { baseRotation, baseRotationQuaternion, gaussianRandom } from "./SceneFunctions";
 
 import cardTextures from "./resources/images/cards.png";
-import cardNormalTexture from "./resources/images/cards_normal.png";
 
 class Card {
     cardStack: CardStack | null = null;
