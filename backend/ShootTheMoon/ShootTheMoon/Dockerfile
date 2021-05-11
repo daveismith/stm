@@ -20,4 +20,4 @@ RUN dotnet publish "ShootTheMoon.csproj" -c Release -o /app/publish
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "ShootTheMoon.dll", "-v"]
+ENTRYPOINT ["dotnet", "ShootTheMoon.dll"]

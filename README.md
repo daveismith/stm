@@ -38,12 +38,6 @@ npm install
 npm start
 ```
 
-### Swagger Documentation
-
-```sh
-localhost:8000/swagger/index.html
-```
-
 ### Generating Typescript Files from schema
 
 This assumes that you've got protoc and the appropriate extension for generating the gRPC-web services installed and in your path. You can find more info at [grpc-web github](https://github.com/grpc/grpc-web) in the code generator plugin section.
