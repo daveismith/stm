@@ -12,51 +12,20 @@ namespace ShootTheMoon.Network
     class ShootServerImpl : ShootServer.ShootServerBase
     {
 
-        class RpcClient
+        class RpcClient : Game.Client
         {
 
             public IServerStreamWriter<Notification> Stream { get; }
 
-            public Client Client { get; }
-
-            public Game.Game Game { get; }
-
-            public RpcClient(IServerStreamWriter<Notification> stream, Client client, Game.Game game)
+            public RpcClient(IServerStreamWriter<Notification> stream, string name)
             {
                 Stream = stream;
-                Client = client;
-                Game = game;
-            }
-
-            public async Task SendCurrentState() {
-                // TODO: Add other clients from this game.  -- Tim 2021-05-08
-                Dictionary<string, RpcClient> clientList = new Dictionary<string, RpcClient>();
-                clientList.Add(this.Client.Token, this);
-
-                // Update The Seat List
-                await SendSeatsList(Game, clientList);
-
-                // Update Scores
-                await SendScore(Game, clientList);
-
-                // Update Tricks
-                await SendTricks(Game, clientList);
-
-                // Based On State, may need to send:
-                //   * Bid Request
-                //   * Bid List
-                //   * Transfer Request
-                //   * Transfer
-                //   * Throwaway Request
-                //   * Play Card Request
-                //   * Update Timeout
-                //   * Played Cards
+                Name = name;                
             }
 
         }
 
         Dictionary<string, Game.Game> games = new Dictionary<string, Game.Game>();
-        Dictionary<string, RpcClient> clients = new Dictionary<string, RpcClient>();
 
         private readonly object idLock = new object();
 
@@ -109,10 +78,7 @@ namespace ShootTheMoon.Network
             {
                 Log.Debug("Join failed -- game " + request.Uuid + " not found");
 
-                // The game key doesn't exist, so try to add the game
-                //game = new Game.Game(GameSettings.GamePresets["SIXPLAYER"]);
-                //games.Add(request.Uuid, game);  //TODO: Change This To Handle The Generated UUIDS (this should be a failure case normally)
-                
+                // The game key doesn't exist, so send an error
                 n.Status = new StatusResponse();
                 n.Status.Success = false;
                 n.Status.ErrorNum = 3;  //TODO: Error Enum
@@ -123,22 +89,17 @@ namespace ShootTheMoon.Network
 
             context.UserState.Add("gameId", request.Uuid);
 
-            Client c = new Client();
-            c.Name = request.Name;
-
-            RpcClient client = new RpcClient(responseStream, c, game);
-            game.Clients.Add(c);
-            clients.Add(c.Token, client);
+            RpcClient client = new RpcClient(responseStream, request.Name);
+            game.Clients.Add(client);
 
             // Send A Join Game Response
             JoinGameResponse jgr = new JoinGameResponse();
-            jgr.Token = c.Token;
+            jgr.Token = client.Token;
             n.JoinResponse = jgr;
             await responseStream.WriteAsync(n);
 
-            // Call The Send Initial State Function To The Client
-            // This should either send basic stuff or 
-            await client.SendCurrentState();
+            // Call The Send Initial State Function To The Client 
+            await SendCurrentState(game);
 
             try
             {
@@ -146,28 +107,36 @@ namespace ShootTheMoon.Network
             }
             catch (TaskCanceledException)
             {
-                Log.Debug("Task cancelled with client token " + c.Token);
                 // Task Cancelled, Do Any Disconnection Stuff
-                clients.Remove(c.Token);
-                game.Clients.Remove(c);
+                Log.Debug("Client Disconnected, Task Cancelled " + client.Token);
+                
+                // Handle Removing The Client From The Seat, and if needed replacing them with a bot
+                for(int i = 0; i < game.Players.Length; i++) {
+                    if (client.Equals(game.Players[i])) {
+                        game.Players[i] = null;
+                    }
+                }
+                game.Clients.Remove(client);
+
+                // TODO: Replace The Player With A Bot If The Game Is In Progress
+
+                // Update All The Clients
+                if (game.Clients.Count > 0) {
+                    await SendCurrentState(game);
+                }
             }
 
         }
 
-        private static async Task BroadcastNotification(Notification notification, Game.Game game, Dictionary<string, RpcClient> clients) {
+        private static async Task BroadcastNotification(Notification notification, Game.Game game) {
             List<Task> tasks = new List<Task>();
-            
+
             foreach (Client c in game.Clients)
             {
-                try
+                if (c is RpcClient)
                 {
-                    RpcClient rpcClient = clients[c.Token];
+                    RpcClient rpcClient = (RpcClient)c;
                     tasks.Add(rpcClient.Stream.WriteAsync(notification));
-                    Log.Debug("Broadcast complete to " + c.Token);
-                }
-                catch (KeyNotFoundException)
-                {
-                    Log.Debug("Couldn't broadcast: client key not found.");
                 }
             }
 
@@ -175,7 +144,7 @@ namespace ShootTheMoon.Network
             Log.Debug("Broadcast complete for game " + game.Name);
         }
 
-        private static async Task SendSeatsList(Game.Game game, Dictionary<string, RpcClient> clients)
+        private static async Task SendSeatsList(Game.Game game)
         {
             SeatsList sl = new SeatsList();
             for (int i = 0; i < game.NumPlayers; i++)
@@ -193,10 +162,9 @@ namespace ShootTheMoon.Network
             Notification n = new Notification();
             n.SeatList = sl;
 
-            await BroadcastNotification(n, game, clients);
+            await BroadcastNotification(n, game);
         }
-
-        private static async Task SendScore(Game.Game game, Dictionary<string, RpcClient> clients) {
+        private static async Task SendScore(Game.Game game) {
             Scores scores = new Scores();
             scores.Team1 = (uint)game.Score[0];
             scores.Team2 = (uint)game.Score[1];
@@ -204,10 +172,10 @@ namespace ShootTheMoon.Network
             Notification n = new Notification();
             n.Scores = scores;
 
-            await BroadcastNotification(n, game, clients);
+            await BroadcastNotification(n, game);
         }
 
-        private static async Task SendTricks(Game.Game game, Dictionary<string, RpcClient> clients) {
+        private static async Task SendTricks(Game.Game game) {
             Tricks tricks = new Tricks();
             tricks.Team1 = (uint)game.Tricks[0];
             tricks.Team2 = (uint)game.Tricks[1];
@@ -215,7 +183,42 @@ namespace ShootTheMoon.Network
             Notification n = new Notification();
             n.Tricks = tricks;
 
-            await BroadcastNotification(n, game, clients);
+            await BroadcastNotification(n, game);
+        }
+
+
+        public async Task SendCurrentState(Game.Game game) {
+            // Update The Seat List
+            await SendSeatsList(game);
+
+            // Update Scores
+            await SendScore(game);
+
+            // Update Tricks
+            await SendTricks(game);
+
+            // Based On State, may need to send:
+            //   * Bid Request
+            //   * Bid List
+            //   * Transfer Request
+            //   * Transfer
+            //   * Throwaway Request
+            //   * Play Card Request
+            //   * Update Timeout
+            //   * Played Cards
+        } 
+
+        private RpcClient FindClient(Game.Game game, string token) {
+            foreach (Client c in game.Clients) {
+                if (c is not RpcClient)
+                    continue;
+
+                RpcClient client = (RpcClient)c;
+                if (c.Token.Equals(token)) {
+                    return client;
+                }
+            }
+            throw new KeyNotFoundException();
         }
 
         public override async Task<StatusResponse> TakeSeat(TakeSeatRequest request, ServerCallContext context)
@@ -249,16 +252,25 @@ namespace ShootTheMoon.Network
             }
             else
             {
-                RpcClient client = clients[clientToken];
-                game.Players[request.Seat] = client.Client;
+                try {
+                    RpcClient client = FindClient(game, clientToken);
+                    game.Players[request.Seat] = client;
+                }
+                catch (KeyNotFoundException) {
+                    r.Success = false;
+                    r.ErrorNum = 3; // TODO: Error Enum
+                    r.ErrorText = "Client Not Found";
+                    return r;
+                }
+
+                
             }
 
             r.Success = true;
             r.ErrorNum = 0;
             r.ErrorText = "";
 
-            await SendSeatsList(game, clients);
-
+            await SendSeatsList(game);
             return r;
         }
 
