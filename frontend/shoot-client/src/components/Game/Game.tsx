@@ -1,8 +1,8 @@
 import React from "react";
 import { useGame } from "./Game.context";
-import { onSceneReady, onRender } from "./SceneFunctions";
+import { onSceneReady, onRender } from "./Interface3D/SceneFunctions";
 import GameControls from "./GameControls/GameControls";
-import SceneComponent from "./SceneComponent";
+import SceneComponent from "./Interface3D/SceneComponent";
 import GameBoard from "./GameBoard/GameBoard";
 import NameDialog from "../Common/NameDialog"
 import "./Game.css";
