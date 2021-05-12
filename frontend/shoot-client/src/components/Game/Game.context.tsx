@@ -1,9 +1,17 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useApp } from "../App/App.context";
-import { Notification } from '../../proto/shoot_pb';
+import { Notification, SeatDetails, SeatsList } from '../../proto/shoot_pb';
 
 import { Card } from "../../proto/shoot_pb";
+
+export interface ISeat {
+    seat: number;
+    ready: boolean;
+    empty: boolean;
+    human: boolean;
+    name: string;
+}
 
 export interface IGame {
     playerName?: string;
@@ -12,6 +20,7 @@ export interface IGame {
     score: number[];
     tricks: number[];
     hand: Card[];
+    seats: ISeat[];
 }
 
 interface ParamTypes{ 
@@ -34,7 +43,8 @@ const initialState: IGame = {
     sceneView: false,
     score: [27, 9],
     tricks: [3, 2],
-    hand: [card1, card2]
+    hand: [card1, card2],
+    seats: []
 }
 
 let registered: boolean = false;
@@ -57,17 +67,27 @@ export const GameProvider: React.FC = ({ children }) => {
                 if (notification.hasScores()) {
                     console.log('score update');
                     // Handle A Score Update
-                    let updateState = {...state};
-                    updateState.score[0] = notification.getScores()?.getTeam1() as number;
-                    updateState.score[1] = notification.getScores()?.getTeam2() as number;
-                    setState(updateState);
+                    let { score }  = { ...state };
+                    score[0] = notification.getScores()?.getTeam1() as number;
+                    score[1] = notification.getScores()?.getTeam2() as number;
+                    setState({...state, score: score});
                 } else if (notification.hasTricks()) {
                     console.log('tricks update');
                     // Handle A Tricks Update
-                    let updateState = {...state};
-                    updateState.tricks[0] = notification.getTricks()?.getTeam1() as number;
-                    updateState.tricks[1] = notification.getTricks()?.getTeam2() as number;
-                    setState(updateState);
+                    let { tricks } = { ...state };
+                    tricks[0] = notification.getTricks()?.getTeam1() as number;
+                    tricks[1] = notification.getTricks()?.getTeam2() as number;
+                    setState({...state, tricks: tricks});
+                } else if (notification.hasSeatList()) {
+                    console.log('seats list');
+                    // Handle Seat List Update
+                    const seatList: SeatDetails[] = notification.getSeatList()?.getSeatsList() as SeatDetails[];
+                    let { seats } = { ...state };
+                    seats.length = 0;   // Clear This Out
+                    for (let value of seatList) {
+                        seats.push(value.toObject());
+                    };
+                    setState({...state, seats: seats});
                 } else {
                     console.log('game data');
                     const obj: object = notification.toObject();
