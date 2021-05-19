@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { produce } from "immer";
 import { useParams } from "react-router-dom";
 import { useApp } from "../App/App.context";
 import { Notification, SeatDetails, SeatsList } from '../../proto/shoot_pb';
@@ -67,17 +68,17 @@ export const GameProvider: React.FC = ({ children }) => {
                 if (notification.hasScores()) {
                     console.log('score update');
                     // Handle A Score Update
-                    let { score }  = { ...state };
-                    score[0] = notification.getScores()?.getTeam1() as number;
-                    score[1] = notification.getScores()?.getTeam2() as number;
-                    setState({...state, score: score});
+                    setState(produce(draft => {
+                        draft.score[0] = notification.getScores()?.getTeam1() as number;
+                        draft.score[1] = notification.getScores()?.getTeam2() as number;
+                    }))
                 } else if (notification.hasTricks()) {
                     console.log('tricks update');
                     // Handle A Tricks Update
-                    let { tricks } = { ...state };
-                    tricks[0] = notification.getTricks()?.getTeam1() as number;
-                    tricks[1] = notification.getTricks()?.getTeam2() as number;
-                    setState({...state, tricks: tricks});
+                    setState(produce(draft => {
+                        draft.tricks[0] = notification.getTricks()?.getTeam1() as number;
+                        draft.tricks[1] = notification.getTricks()?.getTeam2() as number;
+                    }));
                 } else if (notification.hasSeatList()) {
                     console.log('seats list');
                     // Handle Seat List Update
