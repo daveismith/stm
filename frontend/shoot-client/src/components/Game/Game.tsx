@@ -23,6 +23,7 @@ const Game: React.FC = () => {
         }
         return <GameBoard
                     hand={gameState.hand}
+            seats={gameState.seats}
                 />;
     }
 
