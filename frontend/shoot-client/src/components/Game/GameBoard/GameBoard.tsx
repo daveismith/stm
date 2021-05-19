@@ -2,11 +2,13 @@ import React from "react";
 import { Grid } from "@material-ui/core";
 import PlayingCard from "../../Common/PlayingCard";
 import TextBubble from "../../Common/TextBubble"
-import { Card, SeatDetails } from "../../../proto/shoot_pb";
+import { Card } from "../Models/Card";
+import { Seat } from "../Models/Seat";
+import { Bid } from "../Models/Bid";
 
 interface IGameBoardProps {
     hand: Card[],
-    seats: SeatDetails[]
+    seats: Seat[]
 }
 
 const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
@@ -27,9 +29,9 @@ const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
                     justify="center"
                     alignItems="center"
                 >
-                    <PlayingCard card={hand[0]}></PlayingCard>
-                    <TextBubble size="small" text={seat.getName()} color="green"></TextBubble>
-                    <div>3 ♠︎</div>
+                    {seat.playedCard && <PlayingCard card={seat.playedCard!}></PlayingCard> }
+                    <TextBubble size="small" text={seat.name} color="green"></TextBubble>
+                    {seat.bid && <div>{seat.bid!.number} {Bid.trumpString(seat.bid!.trump)}</div> }
                 </Grid>
                 ))}
             </Grid>
