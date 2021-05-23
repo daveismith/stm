@@ -22,9 +22,11 @@ const Game: React.FC = () => {
                     />;
         }
         return <GameBoard
-                    hand={gameState.hand}
+            hand={gameState.hand}
             seats={gameState.seats}
-                />;
+            playedCards={gameState.playedCards}
+            bids={gameState.bids}
+        />;
     }
 
     const getContent = () => {

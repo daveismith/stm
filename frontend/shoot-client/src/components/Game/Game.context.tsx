@@ -15,7 +15,9 @@ export interface IGame {
     score: number[];
     tricks: number[];
     hand: Card[];
-    seats: Seat[];
+    seats: Map<number, Seat>;
+    playedCards: Map<number, Card>;
+    bids: Map<number, Bid>;
 }
 
 interface ParamTypes{ 
@@ -34,27 +36,9 @@ const card2: Card = {
     suit: Card.Suit.HEARTS
 }
 
-const seat1: Seat = {
-    index: 0,
-    name: "Fraser",
-    playedCard : card2
-}
-
 const bid2: Bid = {
     number: 6,
     trump: Bid.Trump.SPADES
-}
-
-const seat2: Seat = {
-    index: 1,
-    name: "David",
-    playedCard : card1,
-    bid: bid2
-}
-
-const seat3: Seat = {
-    index: 2,
-    name: "Tim",
 }
 
 const initialState: IGame = {
@@ -64,7 +48,9 @@ const initialState: IGame = {
     score: [27, 9],
     tricks: [3, 2],
     hand: [card1, card2],
-    seats: [seat1, seat2, seat3]
+    seats: new Map(),
+    playedCards: new Map([[1, card1]]),
+    bids: new Map([[2, bid2]])
 }
 
 let registered: boolean = false;
@@ -101,21 +87,21 @@ export const GameProvider: React.FC = ({ children }) => {
                 } else if (notification.hasSeatList()) {
                     console.log('seats list');
                     // Handle Seat List Update
-                    const seatList: SeatDetails[] = notification.getSeatList()?.getSeatsList() as SeatDetails[];
-                    let { seats } = { ...state };
-                    if (seats.length == 0) {
-                        // make new seats
-                        seats = seatList.map(value => (
-                            {
-                                index: value.getSeat(),
-                                name: value.getName(),
+                    setState(produce(draft => {
+                        const seatDetailsList: SeatDetails[] = notification.getSeatList()?.getSeatsList() as SeatDetails[];
+                        
+                        draft.seats = new Map();
+                        for (let seatDetails of seatDetailsList) {
+                            const seat: Seat = {
+                                index: seatDetails.getSeat(),
+                                name: seatDetails.getName(),
+                                empty: seatDetails.getEmpty(),
+                                human: seatDetails.getHuman(),
+                                ready: seatDetails.getReady(),
                             }
-                        ))
-                    } else {
-                        // update existing seats
-                        // TODO: update seats
-                    }
-                    setState({...state, seats: seats});
+                            draft.seats.set(seat.index, seat)
+                        }
+                    }));
                 } else {
                     console.log('game data');
                     const obj: object = notification.toObject();

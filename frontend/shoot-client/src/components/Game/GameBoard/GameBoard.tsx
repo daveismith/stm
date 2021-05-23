@@ -8,11 +8,29 @@ import { Bid } from "../Models/Bid";
 
 interface IGameBoardProps {
     hand: Card[],
-    seats: Seat[]
+    seats: Map<number, Seat>;
+    playedCards: Map<number, Card>;
+    bids: Map<number, Bid>;
 }
 
 const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
-    const {hand, seats} = props;
+    const {hand, seats, playedCards, bids} = props;
+
+    const orderedSeats = Array.from(seats.values()).sort((s1,s2) => s1.index - s2.index);
+
+    const playedCard = (index: number) => {
+        const playedCard = playedCards.get(index);
+        if (playedCard) {
+            return <PlayingCard card={playedCard!}></PlayingCard>;
+        }
+    }
+
+    const bid = (index: number) => {
+        const bid = bids.get(index);
+        if (bid) {
+            return <div>{bid!.number} {Bid.trumpString(bid!.trump)}</div>;
+        }
+    }
 
     return (
         <div style={{color: 'white', backgroundColor: '#404040', height: '100%'}}>
@@ -22,16 +40,16 @@ const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
                 justify="center"
                 alignItems="center"
             >
-                {seats.map(seat => (
+                {orderedSeats.map(seat => (
                 <Grid
                     item
                     direction="column"
                     justify="center"
                     alignItems="center"
                 >
-                    {seat.playedCard && <PlayingCard card={seat.playedCard!}></PlayingCard> }
-                    <TextBubble size="small" text={seat.name} color="green"></TextBubble>
-                    {seat.bid && <div>{seat.bid!.number} {Bid.trumpString(seat.bid!.trump)}</div> }
+                    {playedCard(seat.index)}
+                    <TextBubble size="small" text={seat.name.length == 0 ? "Empty" : seat.name} color="green" disabled={seat.empty}></TextBubble>
+                    {bid(seat.index)}
                 </Grid>
                 ))}
             </Grid>

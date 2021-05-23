@@ -3,6 +3,10 @@ import React, { createContext, useContext, useState } from "react";
 import * as grpcWeb from 'grpc-web';
 import { ShootServerClient } from '../../proto/ShootServiceClientPb';
 import { CreateGameRequest, CreateGameResponse, JoinGameRequest, Notification, StatusResponse, TakeSeatRequest } from '../../proto/shoot_pb';
+import { enableMapSet } from "immer"
+
+// Immer - enable support for Map and Set
+enableMapSet()
 
 export interface IApp {
     connection?: ShootServerClient

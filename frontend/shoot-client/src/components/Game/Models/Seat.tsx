@@ -5,6 +5,7 @@ import { Bid } from "./Bid"
 export interface Seat {
     index: number;
     name: string;
-    playedCard? : Card;
-    bid?: Bid;
+    empty: boolean;
+    human: boolean;
+    ready: boolean;
 }
