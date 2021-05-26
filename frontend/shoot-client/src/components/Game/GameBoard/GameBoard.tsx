@@ -20,16 +20,12 @@ const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
 
     const playedCard = (index: number) => {
         const playedCard = playedCards.get(index);
-        if (playedCard) {
-            return <PlayingCard card={playedCard!}></PlayingCard>;
-        }
+        return playedCard && <PlayingCard card={playedCard}></PlayingCard>;
     }
 
     const bid = (index: number) => {
         const bid = bids.get(index);
-        if (bid) {
-            return <div>{bid!.number} {Bid.trumpString(bid!.trump)}</div>;
-        }
+        return bid && <div>{bid.number} {Bid.trumpString(bid.trump)}</div>;
     }
 
     return (
