@@ -3,16 +3,9 @@ import { produce } from "immer";
 import { useParams } from "react-router-dom";
 import { useApp } from "../App/App.context";
 import { Notification, SeatDetails, SeatsList } from '../../proto/shoot_pb';
-
-import { Card } from "../../proto/shoot_pb";
-
-export interface ISeat {
-    seat: number;
-    ready: boolean;
-    empty: boolean;
-    human: boolean;
-    name: string;
-}
+import { Card } from "./Models/Card";
+import { Seat } from "./Models/Seat";
+import { Bid } from "./Models/Bid";
 
 export interface IGame {
     playerName?: string;
@@ -21,7 +14,9 @@ export interface IGame {
     score: number[];
     tricks: number[];
     hand: Card[];
-    seats: ISeat[];
+    seats: Map<number, Seat>;
+    playedCards: Map<number, Card>;
+    bids: Map<number, Bid>;
 }
 
 interface ParamTypes{ 
@@ -30,13 +25,20 @@ interface ParamTypes{
 
 type GameContextType = (IGame | ((param: any) => void))[];
 
-const card1 = new Card();
-card1.setRank(Card.Rank.ACE);
-card1.setSuit(Card.Suit.SPADES);
+const card1: Card = {
+    rank: Card.Rank.ACE,
+    suit: Card.Suit.SPADES
+};
 
-const card2 = new Card();
-card2.setRank(Card.Rank.JACK);
-card2.setSuit(Card.Suit.HEARTS);
+const card2: Card = {
+    rank: Card.Rank.JACK,
+    suit: Card.Suit.HEARTS
+};
+
+const bid2: Bid = {
+    number: 6,
+    trump: Bid.Trump.SPADES
+};
 
 const initialState: IGame = {
     playerName: undefined,
@@ -45,8 +47,10 @@ const initialState: IGame = {
     score: [27, 9],
     tricks: [3, 2],
     hand: [card1, card2],
-    seats: []
-}
+    seats: new Map(),
+    playedCards: new Map([[1, card1]]),
+    bids: new Map([[2, bid2]])
+};
 
 let registered: boolean = false;
 
@@ -71,7 +75,7 @@ export const GameProvider: React.FC = ({ children }) => {
                     setState(produce(draft => {
                         draft.score[0] = notification.getScores()?.getTeam1() as number;
                         draft.score[1] = notification.getScores()?.getTeam2() as number;
-                    }))
+                    }));
                 } else if (notification.hasTricks()) {
                     console.log('tricks update');
                     // Handle A Tricks Update
@@ -82,13 +86,21 @@ export const GameProvider: React.FC = ({ children }) => {
                 } else if (notification.hasSeatList()) {
                     console.log('seats list');
                     // Handle Seat List Update
-                    const seatList: SeatDetails[] = notification.getSeatList()?.getSeatsList() as SeatDetails[];
-                    let { seats } = { ...state };
-                    seats.length = 0;   // Clear This Out
-                    for (let value of seatList) {
-                        seats.push(value.toObject());
-                    };
-                    setState({...state, seats: seats});
+                    setState(produce(draft => {
+                        const seatDetailsList: SeatDetails[] = notification.getSeatList()?.getSeatsList() as SeatDetails[];
+                        
+                        draft.seats = new Map();
+                        for (let seatDetails of seatDetailsList) {
+                            const seat: Seat = {
+                                index: seatDetails.getSeat(),
+                                name: seatDetails.getName(),
+                                empty: seatDetails.getEmpty(),
+                                human: seatDetails.getHuman(),
+                                ready: seatDetails.getReady(),
+                            };
+                            draft.seats.set(seat.index, seat);
+                        }
+                    }));
                 } else {
                     console.log('game data');
                     const obj: object = notification.toObject();

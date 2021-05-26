@@ -2,9 +2,13 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import App from './components/App/App';
 import reportWebVitals from './reportWebVitals';
-import { AppProvider } from "./components/App/App.context"
+import { AppProvider } from "./components/App/App.context";
 import { HashRouter } from "react-router-dom";
+import { enableMapSet } from "immer";
 import './index.css';
+
+// Immer - enable support for Map and Set
+enableMapSet();
 
 ReactDOM.render(
     <AppProvider>
