@@ -7,7 +7,7 @@ import { Seat } from "../Models/Seat";
 import { Bid } from "../Models/Bid";
 
 interface IGameBoardProps {
-    hand: Card[],
+    hand: Card[];
     seats: Map<number, Seat>;
     playedCards: Map<number, Card>;
     bids: Map<number, Bid>;

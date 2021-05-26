@@ -5,6 +5,10 @@ import reportWebVitals from './reportWebVitals';
 import { AppProvider } from "./components/App/App.context"
 import { HashRouter } from "react-router-dom";
 import './index.css';
+import { enableMapSet } from "immer"
+
+// Immer - enable support for Map and Set
+enableMapSet()
 
 ReactDOM.render(
     <AppProvider>

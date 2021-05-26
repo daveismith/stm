@@ -1,4 +1,3 @@
-import { join } from "node:path";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { produce } from "immer";
 import { useParams } from "react-router-dom";
@@ -29,17 +28,17 @@ type GameContextType = (IGame | ((param: any) => void))[];
 const card1: Card = {
     rank: Card.Rank.ACE,
     suit: Card.Suit.SPADES
-}
+};
 
 const card2: Card = {
     rank: Card.Rank.JACK,
     suit: Card.Suit.HEARTS
-}
+};
 
 const bid2: Bid = {
     number: 6,
     trump: Bid.Trump.SPADES
-}
+};
 
 const initialState: IGame = {
     playerName: undefined,
@@ -51,7 +50,7 @@ const initialState: IGame = {
     seats: new Map(),
     playedCards: new Map([[1, card1]]),
     bids: new Map([[2, bid2]])
-}
+};
 
 let registered: boolean = false;
 
@@ -76,7 +75,7 @@ export const GameProvider: React.FC = ({ children }) => {
                     setState(produce(draft => {
                         draft.score[0] = notification.getScores()?.getTeam1() as number;
                         draft.score[1] = notification.getScores()?.getTeam2() as number;
-                    }))
+                    }));
                 } else if (notification.hasTricks()) {
                     console.log('tricks update');
                     // Handle A Tricks Update
@@ -98,8 +97,8 @@ export const GameProvider: React.FC = ({ children }) => {
                                 empty: seatDetails.getEmpty(),
                                 human: seatDetails.getHuman(),
                                 ready: seatDetails.getReady(),
-                            }
-                            draft.seats.set(seat.index, seat)
+                            };
+                            draft.seats.set(seat.index, seat);
                         }
                     }));
                 } else {
