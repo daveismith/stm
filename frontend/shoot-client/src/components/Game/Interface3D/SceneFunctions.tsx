@@ -1,11 +1,8 @@
 import {
     ArcRotateCamera,
     HemisphericLight,
-    MeshBuilder,
     Scene,
     Vector3,
-    StandardMaterial,
-    Texture,
     SSAORenderingPipeline,
     TransformNode,
     SceneLoader
@@ -27,26 +24,9 @@ import { BidNumberCube } from "./BidNumberCube";
 import { BidSuitCube } from "./BidSuitCube";
 import { SeatCube } from "./SeatCube";
 
-// import wallTexture from "./resources/images/wall.png";
-// import groundTexture from "./resources/images/ground.png";
-// import wallNormalTexture from "./resources/images/wall_normal.png";
-// import groundNormalTexture from "./resources/images/ground_normal.png";
-// import ceilingTexture from "./resources/images/ceiling.jpg";
-// import ceilingNormalTexture from "./resources/images/ceiling_normal.jpg";
-import tableTexture from "./resources/images/table.png";
-import tableNormalTexture from "./resources/images/table_normal.png";
-
-// import plankTexture from "./resources/images/irregular+wood+planks-1024x1024.png";
-// import plankHeightTexture from "./resources/images/irregular+wood+planks-1024x1024_height.png";
-// import plankNormalTexture from "./resources/images/irregular+wood+planks-1024x1024_normal.png";
-// import plankMetallicTexture from "./resources/images/irregular+wood+planks-1024x1024_metallic.png";
-// import plankSmoothnessTexture from "./resources/images/irregular+wood+planks-1024x1024_smoothness.png";
-// import plankAOTexture from "./resources/images/irregular+wood+planks-1024x1024_ao.png";
-// import plankEdgeTexture from "./resources/images/irregular+wood+planks-1024x1024_edge.png";
-// import plankMetallicRoughnessTexture from "./resources/images/irregular+wood+planks-1024x1024_MR.png";
-
 // @ts-ignore TS6133
 import sceneAssets from "./resources/stm.glb";
+// import { Console } from "node:console";
 
 // Get a random number between -1 and 1.
 const gaussianRandom = () => {
@@ -148,87 +128,87 @@ const baseRotationQuaternion = (seat: number) => {
 
 // }
 
-const buildTable = (scene: Scene) => {
-    const table = MeshBuilder.CreateCylinder("tableTop", {
-        height: GameSettings.tableHeight / 20,
-        diameter: 2 * GameSettings.tableRadius,
-        tessellation: 64
-    });
-    const tableMaterial = new StandardMaterial("tableMaterial", scene);
-    tableMaterial.diffuseTexture = new Texture(tableTexture, scene);
-    tableMaterial.bumpTexture = new Texture(tableNormalTexture, scene);
-    tableMaterial.useParallax = true;
-    tableMaterial.useParallaxOcclusion = true;
-    tableMaterial.parallaxScaleBias = 0.2;
-    table.material = tableMaterial;
+// const buildTable = (scene: Scene) => {
+//     const table = MeshBuilder.CreateCylinder("tableTop", {
+//         height: GameSettings.tableHeight / 20,
+//         diameter: 2 * GameSettings.tableRadius,
+//         tessellation: 64
+//     });
+//     const tableMaterial = new StandardMaterial("tableMaterial", scene);
+//     tableMaterial.diffuseTexture = new Texture(tableTexture, scene);
+//     tableMaterial.bumpTexture = new Texture(tableNormalTexture, scene);
+//     tableMaterial.useParallax = true;
+//     tableMaterial.useParallaxOcclusion = true;
+//     tableMaterial.parallaxScaleBias = 0.2;
+//     table.material = tableMaterial;
 
-    // const tableTrunk = MeshBuilder.CreateCylinder("tableTrunk", {
-    //     height: GameSettings.tableHeight * 19 / 20,
-    //     diameter: 1 / 4 * GameSettings.tableRadius
-    // });
-    // tableTrunk.material = tableMaterial;
-    // tableTrunk.parent = table;
-    // tableTrunk.position.y = -GameSettings.tableHeight * 19 / 20 / 2
+//     // const tableTrunk = MeshBuilder.CreateCylinder("tableTrunk", {
+//     //     height: GameSettings.tableHeight * 19 / 20,
+//     //     diameter: 1 / 4 * GameSettings.tableRadius
+//     // });
+//     // tableTrunk.material = tableMaterial;
+//     // tableTrunk.parent = table;
+//     // tableTrunk.position.y = -GameSettings.tableHeight * 19 / 20 / 2
 
-    table.position.x = 0;
-    table.position.z = 0;
-    table.position.y = GameSettings.tableHeight - GameSettings.tableHeight / 20 / 2;
+//     table.position.x = 0;
+//     table.position.z = 0;
+//     table.position.y = GameSettings.tableHeight - GameSettings.tableHeight / 20 / 2;
 
-    // // Flat part of table foot
-    // const legOutline = [new Vector3(-3, 0, -1), new Vector3(2, 0, -1)];
+//     // // Flat part of table foot
+//     // const legOutline = [new Vector3(-3, 0, -1), new Vector3(2, 0, -1)];
 
-    // //Curved part of table foot
-    // for (var i = 0; i < 20; i++) {
-    //     legOutline.push(
-    //         new Vector3(
-    //             2 * Math.cos((i * Math.PI) / 40),
-    //             0,
-    //             2 * Math.sin((i * Math.PI) / 40) - 1
-    //         )
-    //     );
-    // }
+//     // //Curved part of table foot
+//     // for (var i = 0; i < 20; i++) {
+//     //     legOutline.push(
+//     //         new Vector3(
+//     //             2 * Math.cos((i * Math.PI) / 40),
+//     //             0,
+//     //             2 * Math.sin((i * Math.PI) / 40) - 1
+//     //         )
+//     //     );
+//     // }
 
-    // //Top of table foot
-    // legOutline.push(new Vector3(0, 0, 1));
-    // legOutline.push(new Vector3(-3, 0, 1));
+//     // //Top of table foot
+//     // legOutline.push(new Vector3(0, 0, 1));
+//     // legOutline.push(new Vector3(-3, 0, 1));
 
-    // //Extrude table foot
-    // const tableLeg1 = MeshBuilder.ExtrudePolygon(
-    //     "tableLeg1",
-    //     { shape: legOutline, depth: 1 },
-    //     scene
-    // );
+//     // //Extrude table foot
+//     // const tableLeg1 = MeshBuilder.ExtrudePolygon(
+//     //     "tableLeg1",
+//     //     { shape: legOutline, depth: 1 },
+//     //     scene
+//     // );
 
-    // //Position first table foot
-    // tableLeg1.rotation.x = -Math.PI / 2;
-    // tableLeg1.parent = table;
-    // tableLeg1.position.y = -8.5;
-    // tableLeg1.position.x = 1.5;
-    // tableLeg1.position.z = -0.5;
-    // tableLeg1.scaling = new Vector3(1, 1, 0.5);
-    // tableLeg1.material = tableMaterial;
+//     // //Position first table foot
+//     // tableLeg1.rotation.x = -Math.PI / 2;
+//     // tableLeg1.parent = table;
+//     // tableLeg1.position.y = -8.5;
+//     // tableLeg1.position.x = 1.5;
+//     // tableLeg1.position.z = -0.5;
+//     // tableLeg1.scaling = new Vector3(1, 1, 0.5);
+//     // tableLeg1.material = tableMaterial;
 
-    // //Create other table feet
-    // const tableLeg2 = tableLeg1.clone("tableLeg2");
-    // tableLeg2.position.x = -0.5;
-    // tableLeg2.position.z = -1.5;
-    // tableLeg2.rotation.y = Math.PI / 2;
+//     // //Create other table feet
+//     // const tableLeg2 = tableLeg1.clone("tableLeg2");
+//     // tableLeg2.position.x = -0.5;
+//     // tableLeg2.position.z = -1.5;
+//     // tableLeg2.rotation.y = Math.PI / 2;
 
-    // const tableLeg3 = tableLeg1.clone("tableLeg3");
-    // tableLeg3.position.x = -1.5;
-    // tableLeg3.position.z = 0.5;
-    // tableLeg3.rotation.y = Math.PI;
+//     // const tableLeg3 = tableLeg1.clone("tableLeg3");
+//     // tableLeg3.position.x = -1.5;
+//     // tableLeg3.position.z = 0.5;
+//     // tableLeg3.rotation.y = Math.PI;
 
-    // const tableLeg4 = tableLeg1.clone("tableLeg4");
-    // tableLeg4.position.x = 0.5;
-    // tableLeg4.position.z = 1.5;
-    // tableLeg4.rotation.y = -Math.PI / 2;
+//     // const tableLeg4 = tableLeg1.clone("tableLeg4");
+//     // tableLeg4.position.x = 0.5;
+//     // tableLeg4.position.z = 1.5;
+//     // tableLeg4.rotation.y = -Math.PI / 2;
 
-    // //Spin table so feet are offset
-    // table.rotation.y = Math.PI / 4;
+//     // //Spin table so feet are offset
+//     // table.rotation.y = Math.PI / 4;
 
-    return table;
-};
+//     return table;
+// };
 
 //Create a deck of cards at the deck position
 const buildDeck = (scene: Scene, manager: GUI3DManager) => {
@@ -310,23 +290,23 @@ export const onSceneReady = (scene: Scene, settings: GameSettings) => {
     camera.upperBetaLimit = Math.PI / 2.2;
     camera.attachControl(canvas, true);
     camera.inputs.clear();
-    const light = new HemisphericLight("light", new Vector3(2, 1, 2), scene);
-    const light2 = new HemisphericLight("light2", new Vector3(-2, 1, 2), scene);
-    const light3 = new HemisphericLight("light3", new Vector3(-2, 1, -2), scene);
-    const light4 = new HemisphericLight("light4", new Vector3(2, 1, -2), scene);
+    const lightVector1 = new Vector3(3 * Math.cos(-1*Math.PI/3), GameSettings.tableHeight+2, 3 * Math.sin(-1*Math.PI/3));
+    const lightVector2 = new Vector3(3 * Math.cos(1*Math.PI/3), GameSettings.tableHeight+1, 3 * Math.sin(1*Math.PI/3));
+    const lightVector3 = new Vector3(3 * Math.cos(3*Math.PI/3), GameSettings.tableHeight, 3 * Math.sin(3*Math.PI/3));
+    const light1 = new HemisphericLight("light1", lightVector1, scene);
+    const light2 = new HemisphericLight("light2", lightVector2, scene);
+    const light3 = new HemisphericLight("light3", lightVector3, scene);
 
     // This attaches the camera to the canvas
     camera.attachControl(canvas, true);
 
     // Default intensity is 1
-    light.intensity = 0.3;
-    light2.intensity = 0.3;
-    light3.intensity = 0.3;
-    light4.intensity = 0.3;
+    light1.intensity = 0.4;
+    light2.intensity = 0.4;
+    light3.intensity = 0.4;
 
-    // buildRoom(scene);
-    SceneLoader.Append(sceneAssets, "", scene, function (scene) {});
-    buildTable(scene);
+    SceneLoader.Append(sceneAssets, "", scene, function (scene) { });
+
     buildSeatCubes(scene, manager, camera);
     buildBidCubes(scene, manager);
     buildDeck(scene, manager);
