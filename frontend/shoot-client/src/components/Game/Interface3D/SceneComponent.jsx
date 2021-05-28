@@ -1,8 +1,11 @@
 import { Engine, Scene } from "@babylonjs/core";
 import React, { useEffect, useRef } from "react";
+import { useGame } from "../Game.context";
 
 const SceneComponent = (props) => {
   const reactCanvas = useRef(null);
+
+  const [ gameState, setGameState ] = useGame();
 
   const {
     antialias,
@@ -24,10 +27,10 @@ const SceneComponent = (props) => {
       );
       const scene = new Scene(engine, sceneOptions);
       if (scene.isReady()) {
-        props.onSceneReady(scene);
+        props.onSceneReady(scene, gameState);
       } else {
         scene.onReadyObservable.addOnce((scene) =>
-          props.onSceneReady(scene)
+          props.onSceneReady(scene, gameState)
         );
       }
       engine.runRenderLoop(() => {

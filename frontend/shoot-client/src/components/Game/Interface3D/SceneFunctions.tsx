@@ -26,7 +26,8 @@ import { SeatCube } from "./SeatCube";
 
 // @ts-ignore TS6133
 import sceneAssets from "./resources/stm.glb";
-// import { Console } from "node:console";
+
+import { IGame } from "../Game.context";
 
 // Get a random number between -1 and 1.
 const gaussianRandom = () => {
@@ -271,7 +272,7 @@ const buildBidCubes = (scene: Scene, manager: GUI3DManager) => {
 //     }
 // };
 
-export const onSceneReady = (scene: Scene, settings: GameSettings) => {
+export const onSceneReady = (scene: Scene, state: IGame) => {
     const engine = scene.getEngine();
     const canvas = engine.getRenderingCanvas();
     // if (canvas !== null) canvas.addEventListener("resize", function(){ engine.resize(); })
