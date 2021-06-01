@@ -6,6 +6,7 @@ import { Notification, SeatDetails, SeatsList } from '../../proto/shoot_pb';
 import { Card } from "./Models/Card";
 import { Seat } from "./Models/Seat";
 import { Bid } from "./Models/Bid";
+import { EventEmitter3D } from "./Interface3D/EventEmitter3D";
 
 export interface IGame {
     playerName?: string;
@@ -17,6 +18,7 @@ export interface IGame {
     seats: Map<number, Seat>;
     playedCards: Map<number, Card>;
     bids: Map<number, Bid>;
+    eventEmitter: EventEmitter3D;
 }
 
 interface ParamTypes{ 
@@ -49,7 +51,8 @@ const initialState: IGame = {
     hand: [card1, card2],
     seats: new Map(),
     playedCards: new Map([[1, card1]]),
-    bids: new Map([[2, bid2]])
+    bids: new Map([[2, bid2]]),
+    eventEmitter: new EventEmitter3D()
 };
 
 let registered: boolean = false;
@@ -83,6 +86,7 @@ export const GameProvider: React.FC = ({ children }) => {
                         draft.tricks[0] = notification.getTricks()?.getTeam1() as number;
                         draft.tricks[1] = notification.getTricks()?.getTeam2() as number;
                     }));
+                    state.eventEmitter.emit("tricks");
                 } else if (notification.hasSeatList()) {
                     console.log('seats list');
                     // Handle Seat List Update
@@ -101,6 +105,7 @@ export const GameProvider: React.FC = ({ children }) => {
                             draft.seats.set(seat.index, seat);
                         }
                     }));
+                    state.eventEmitter.emit("seats");
                 } else {
                     console.log('game data');
                     const obj: object = notification.toObject();
