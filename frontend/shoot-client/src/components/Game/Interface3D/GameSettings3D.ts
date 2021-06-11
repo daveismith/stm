@@ -1,7 +1,9 @@
 import {
     Mesh,
-    Vector3
+    Vector3,
+    ArcRotateCamera
 } from "@babylonjs/core";
+import { SeatCube } from "./SeatCube";
 
 class GameSettings {
     static roomSize = 48;
@@ -12,11 +14,14 @@ class GameSettings {
     static deckSize = 48;
     static handRadius = new Vector3(2, 0, 1);
     static currentPlayer: number = 3;
+    static camera: ArcRotateCamera;
     static cameraAlpha: number = 3 * Math.PI / 2;
     static cameraBeta: number = Math.PI / 3;
     static cameraRadius: number = 8;
     static cameraTargets: Vector3[] = [];
     // static cameraDefaultTarget: Vector3 = new Vector3(0, GameSettings.tableHeight, -1/2 * GameSettings.tableRadius);
+
+    static seatCubes: SeatCube[] = [];
 
     private static _initialize = (() => {
         //Radius ratio of camera target to table radius (from centre of table)

@@ -28,6 +28,7 @@ import { SeatCube } from "./SeatCube";
 import sceneAssets from "./resources/stm.glb";
 
 import { IGame } from "../Game.context";
+import { IApp } from "../../App/App.context";
 
 // Get a random number between -1 and 1.
 const gaussianRandom = () => {
@@ -221,13 +222,16 @@ const buildDeck = (scene: Scene, manager: GUI3DManager) => {
     }
 };
 
-const buildSeatCubes = (scene: Scene, manager: GUI3DManager, camera: ArcRotateCamera) => {
-    var seatCube: SeatCube;
+const buildSeatCubes = (scene: Scene, manager: GUI3DManager, appState: IApp) => {
+    let seatCube: SeatCube;
+    let seatCubes: SeatCube[] = [];
 
     for (var i = 0; i < GameSettings.players; i++) {
         // eslint-disable-next-line
-        seatCube = new SeatCube(scene, manager, camera, i);
+        seatCubes[i] = seatCube = new SeatCube(scene, manager, i, appState);
     }
+
+    GameSettings.seatCubes = seatCubes;
 }
 
 const buildBidCubes = (scene: Scene, manager: GUI3DManager) => {
@@ -272,7 +276,7 @@ const buildBidCubes = (scene: Scene, manager: GUI3DManager) => {
 //     }
 // };
 
-export const onSceneReady = (scene: Scene, state: IGame) => {
+  export const onSceneReady = (scene: Scene, gameState: IGame, appState: IApp) => {
     const engine = scene.getEngine();
     const canvas = engine.getRenderingCanvas();
     // if (canvas !== null) canvas.addEventListener("resize", function(){ engine.resize(); })
@@ -291,6 +295,7 @@ export const onSceneReady = (scene: Scene, state: IGame) => {
     camera.upperBetaLimit = Math.PI / 2.2;
     camera.attachControl(canvas, true);
     camera.inputs.clear();
+    GameSettings.camera = camera;
     const lightVector1 = new Vector3(3 * Math.cos(-1*Math.PI/3), GameSettings.tableHeight+2, 3 * Math.sin(-1*Math.PI/3));
     const lightVector2 = new Vector3(3 * Math.cos(1*Math.PI/3), GameSettings.tableHeight+1, 3 * Math.sin(1*Math.PI/3));
     const lightVector3 = new Vector3(3 * Math.cos(3*Math.PI/3), GameSettings.tableHeight, 3 * Math.sin(3*Math.PI/3));
@@ -308,7 +313,7 @@ export const onSceneReady = (scene: Scene, state: IGame) => {
 
     SceneLoader.Append(sceneAssets, "", scene, function (scene) { });
 
-    buildSeatCubes(scene, manager, camera);
+    buildSeatCubes(scene, manager, appState);
     buildBidCubes(scene, manager);
     buildDeck(scene, manager);
     // dealCards(scene);

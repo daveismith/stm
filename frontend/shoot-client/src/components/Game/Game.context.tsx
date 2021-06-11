@@ -85,8 +85,8 @@ export const GameProvider: React.FC = ({ children }) => {
                     setState(produce(draft => {
                         draft.tricks[0] = notification.getTricks()?.getTeam1() as number;
                         draft.tricks[1] = notification.getTricks()?.getTeam2() as number;
+                        state.eventEmitter.emit("tricks");
                     }));
-                    state.eventEmitter.emit("tricks");
                 } else if (notification.hasSeatList()) {
                     console.log('seats list');
                     // Handle Seat List Update
@@ -104,8 +104,8 @@ export const GameProvider: React.FC = ({ children }) => {
                             };
                             draft.seats.set(seat.index, seat);
                         }
+                        state.eventEmitter.emit("seats", seatDetailsList);
                     }));
-                    state.eventEmitter.emit("seats");
                 } else {
                     console.log('game data');
                     const obj: object = notification.toObject();
@@ -117,7 +117,7 @@ export const GameProvider: React.FC = ({ children }) => {
         }
     });
 
-    
+
 
     return (
         <GameContext.Provider value={ [state, setState] }>
