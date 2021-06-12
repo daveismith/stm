@@ -28,6 +28,7 @@ const ButtonGroupSelector: React.FC<IButtonGroupSelectorProps> = (props: IButton
                 {
                     items.map((item, index) => (
                         <Button 
+                            key={index}
                             disabled={item.disabled}
                             color={item.value ===  selected ? "primary" : "secondary"}
                             onClick={() => onClick(item.value)}
