@@ -2,8 +2,13 @@ import { SeatDetails } from '../../../proto/shoot_pb';
 import { Seat } from "../Models/Seat";
 import { GameSettings } from "./GameSettings3D";
 import { baseRotation } from "./SceneFunctions";
+import { SeatCube } from "./SeatCube";
+import { Nameplate } from "./Nameplate";
 
 class SceneController {
+    static seatCubes: SeatCube[] = [];
+    static nameplates: Nameplate[] = [];
+
     static tricksListener () {
         console.log('tricks event');
     }
@@ -20,18 +25,28 @@ class SceneController {
                 ready: seatDetails.getReady(),
             };
 
-            if (seat.name === "tim") {
-                GameSettings.currentPlayer = seat.index;
-                GameSettings.camera.target = GameSettings.cameraTargets[seat.index];
-                GameSettings.camera.alpha = -1 * baseRotation(seat.index).y + Math.PI;
-                GameSettings.camera.beta = GameSettings.cameraBeta;
-                GameSettings.camera.radius = GameSettings.cameraRadius;
+            if (!seat.empty) {
+                this.seatCubes[seat.index].disable();
+                this.nameplates[seat.index].updateName(seat.name);
+            }
 
-                for (let seatCube of GameSettings.seatCubes) {
+            if (seat.name === "tim") {
+                this.moveCameraToSeat(seat.index);
+                this.nameplates[seat.index].disable();
+
+                for (let seatCube of this.seatCubes) {
                     seatCube.disable();
                 }
             }
         }
+    }
+
+    static moveCameraToSeat(seatNumber: number) {
+        GameSettings.currentPlayer = seatNumber;
+        GameSettings.camera.target = GameSettings.cameraTargets[seatNumber];
+        GameSettings.camera.alpha = -1 * baseRotation(seatNumber).y + Math.PI;
+        GameSettings.camera.beta = GameSettings.cameraBeta;
+        GameSettings.camera.radius = GameSettings.cameraRadius;
     }
 }
 

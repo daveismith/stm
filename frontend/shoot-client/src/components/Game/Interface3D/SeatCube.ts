@@ -80,6 +80,7 @@ class SeatCube {
 
     disable () {
         this.button.onPointerDownObservable.clear();
+        this.mesh.visibility = 0;
     }
 }
 

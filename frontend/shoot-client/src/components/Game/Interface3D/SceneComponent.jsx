@@ -6,7 +6,7 @@ import { useApp } from "../../App/App.context";
 const SceneComponent = (props) => {
   const reactCanvas = useRef(null);
 
-  const [ gameState, setGameState ] = useGame();
+  const [ gameState ] = useGame();
 
   const [ appState ] = useApp();
 

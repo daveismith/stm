@@ -9,6 +9,7 @@ import {
 } from "@babylonjs/core";
 
 import {
+    AdvancedDynamicTexture,
     GUI3DManager
 } from "@babylonjs/gui";
 
@@ -29,6 +30,8 @@ import sceneAssets from "./resources/stm.glb";
 
 import { IGame } from "../Game.context";
 import { IApp } from "../../App/App.context";
+import { SceneController } from "./SceneController";
+import { Nameplate } from "./Nameplate";
 
 // Get a random number between -1 and 1.
 const gaussianRandom = () => {
@@ -223,15 +226,14 @@ const buildDeck = (scene: Scene, manager: GUI3DManager) => {
 };
 
 const buildSeatCubes = (scene: Scene, manager: GUI3DManager, appState: IApp) => {
-    let seatCube: SeatCube;
     let seatCubes: SeatCube[] = [];
 
     for (var i = 0; i < GameSettings.players; i++) {
         // eslint-disable-next-line
-        seatCubes[i] = seatCube = new SeatCube(scene, manager, i, appState);
+        seatCubes[i] = new SeatCube(scene, manager, i, appState);
     }
 
-    GameSettings.seatCubes = seatCubes;
+    SceneController.seatCubes = seatCubes;
 }
 
 const buildBidCubes = (scene: Scene, manager: GUI3DManager) => {
@@ -259,6 +261,16 @@ const buildBidCubes = (scene: Scene, manager: GUI3DManager) => {
     }
 }
 
+const buildNameplates = (scene: Scene, manager2D: AdvancedDynamicTexture, appState: IApp) => {
+    let nameplates: Nameplate[] = [];
+
+    for (let i = 0; i < GameSettings.players; i++) {
+        nameplates[i] = new Nameplate(manager2D, i, appState);
+    }
+
+    SceneController.nameplates = nameplates;
+}
+
 // const dealCards = (scene: Scene) => {
 //     var deck: CardStack = CardStack.deck;
 //     var card: Card | null;
@@ -281,21 +293,29 @@ const buildBidCubes = (scene: Scene, manager: GUI3DManager) => {
     const canvas = engine.getRenderingCanvas();
     // if (canvas !== null) canvas.addEventListener("resize", function(){ engine.resize(); })
 
+    // if (gameState) GameSettings.players = gameState.numPlayers; // This is how it should work
+    if (gameState) GameSettings.players = gameState.seats.size; // For now, just count number of seats
+    GameSettings.initializeGame();
+    console.log(GameSettings.players);
+
     // Add interactive layer
-    const manager = new GUI3DManager(scene);
+    const manager3D = new GUI3DManager(scene);
+    const manager2D = AdvancedDynamicTexture.CreateFullscreenUI("UI");
 
     const camera = new ArcRotateCamera(
         "camera",
         GameSettings.cameraAlpha,
         GameSettings.cameraBeta,
         GameSettings.cameraRadius,
-        GameSettings.cameraTargets[3],
+        GameSettings.cameraTargets[0],
         scene
     );
     camera.upperBetaLimit = Math.PI / 2.2;
     camera.attachControl(canvas, true);
     camera.inputs.clear();
     GameSettings.camera = camera;
+    SceneController.moveCameraToSeat(0);
+
     const lightVector1 = new Vector3(3 * Math.cos(-1*Math.PI/3), GameSettings.tableHeight+2, 3 * Math.sin(-1*Math.PI/3));
     const lightVector2 = new Vector3(3 * Math.cos(1*Math.PI/3), GameSettings.tableHeight+1, 3 * Math.sin(1*Math.PI/3));
     const lightVector3 = new Vector3(3 * Math.cos(3*Math.PI/3), GameSettings.tableHeight, 3 * Math.sin(3*Math.PI/3));
@@ -313,9 +333,10 @@ const buildBidCubes = (scene: Scene, manager: GUI3DManager) => {
 
     SceneLoader.Append(sceneAssets, "", scene, function (scene) { });
 
-    buildSeatCubes(scene, manager, appState);
-    buildBidCubes(scene, manager);
-    buildDeck(scene, manager);
+    buildSeatCubes(scene, manager3D, appState);
+    buildBidCubes(scene, manager3D);
+    buildDeck(scene, manager3D);
+    buildNameplates(scene, manager2D, appState);
     // dealCards(scene);
 
     // SSAO code from https://playground.babylonjs.com/#N96NXC
