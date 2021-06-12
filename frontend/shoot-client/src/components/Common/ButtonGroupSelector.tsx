@@ -8,6 +8,7 @@ export interface IButtonGroupItem {
 }
 
 interface IButtonGroupSelectorProps {
+    name: string;
     items: IButtonGroupItem[];
     selected: string | null;
     onClick(selectedValue: string) : void;
@@ -20,7 +21,7 @@ const StyledSpan = styled.span`
 
 const ButtonGroupSelector: React.FC<IButtonGroupSelectorProps> = (props: IButtonGroupSelectorProps) => {
 
-    const { items, selected, onClick } = props;
+    const { name, items, selected, onClick } = props;
 
     return (  
         <StyledSpan>
@@ -28,7 +29,7 @@ const ButtonGroupSelector: React.FC<IButtonGroupSelectorProps> = (props: IButton
                 {
                     items.map((item, index) => (
                         <Button 
-                            key={index}
+                            key={name + "_" + index}
                             disabled={item.disabled}
                             color={item.value ===  selected ? "primary" : "secondary"}
                             onClick={() => onClick(item.value)}

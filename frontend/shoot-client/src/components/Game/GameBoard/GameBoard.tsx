@@ -68,10 +68,20 @@ const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
                     )
                 }
             </Grid>
-            <Grid>
+            <Grid
+                container
+                direction="row"
+                justify="center"
+                alignItems="center"
+            >
                 <BidTricksSelector bidTricksSelected = {bidTricksSelected}/>
-                <br />
-                <br />
+            </Grid>
+            <Grid
+                container
+                direction="row"
+                justify="center"
+                alignItems="center"
+            >
                 <BidTrumpSelector bidTrumpSelected = {bidTrumpSelected}/>
             </Grid>
         </div>

@@ -29,6 +29,7 @@ const BidTrumpSelector: React.FC<IBidTrumpsSelector> = (props: IBidTrumpsSelecto
 
     return (  
         <ButtonGroupSelector 
+            name = { "trump_selector" }
             items = { getItems() } 
             selected = { bidTrumpSelected } 
             onClick={ onClick }

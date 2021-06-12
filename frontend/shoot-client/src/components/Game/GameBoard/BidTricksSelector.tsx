@@ -32,6 +32,7 @@ const BidTricksSelector: React.FC<IBidTricksSelector> = (props: IBidTricksSelect
 
     return (  
         <ButtonGroupSelector 
+            name = { "tricks_selector" }
             items = { getItems() } 
             selected = { bidTricksSelected } 
             onClick={ onClick }
