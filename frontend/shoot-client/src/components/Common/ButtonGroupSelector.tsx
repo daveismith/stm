@@ -2,6 +2,7 @@ import React from "react";
 import { Button, ButtonGroup } from "@material-ui/core";
 import styled from 'styled-components';
 import { makeStyles } from '@material-ui/core/styles';
+import { shadows } from '@material-ui/system';
 
 export interface IButtonGroupItem {
     value: string;
@@ -29,9 +30,15 @@ const useStyles = makeStyles({
       '&$disabled': {
         color: '#606060',
       },
+      '&$outlined': {
+        background: "#a9a9a9",
+        border: 0,
+        margin: 0,
+        padding: 0,
+      },
     },
     disabled: {},
-    selected: {},
+    outlined: {},
     label: {
         height: 10,
     }
@@ -51,10 +58,11 @@ const ButtonGroupSelector: React.FC<IButtonGroupSelectorProps> = (props: IButton
                             classes={{
                                 root: classes.root,
                                 disabled: classes.disabled,
+                                outlined: classes.outlined,
                             }}
                             key={name + "_" + index}
                             disabled={item.disabled}
-                            //color={item.value ===  selected ? "primary" : "secondary"}
+                            variant={item.value === selected ? "outlined" : "text"}
                             onClick={() => onClick(item.value)}
                         >
                             {item.value}
