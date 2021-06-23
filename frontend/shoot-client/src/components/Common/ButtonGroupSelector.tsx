@@ -26,6 +26,7 @@ const useStyles = makeStyles({
       borderRadius: 30,
       color: '#FFFFFF',
       height: 48,
+      padding: 10,
       fontSize: '1.5rem',
       '&$disabled': {
         color: '#606060',
@@ -34,8 +35,13 @@ const useStyles = makeStyles({
         background: "#a9a9a9",
         border: 0,
         margin: 0,
-        padding: 0,
+        padding: 10,
       },
+    },
+    groupedOutlined: {
+        "&:first-child": {
+          marginLeft: 0,
+        },
     },
     disabled: {},
     outlined: {},
