@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -9,7 +10,7 @@ using Serilog;
 
 namespace ShootTheMoon.Network
 {
-    class ShootServerImpl : ShootServer.ShootServerBase
+    class ShootServerImpl : ShootServer.ShootServerBase, IObserver<GameEvent>
     {
 
         class RpcClient : Game.Client
@@ -25,9 +26,67 @@ namespace ShootTheMoon.Network
 
         }
 
+        enum ErrorCode : int {
+            SUCCESS = 0,
+            GAME_NOT_FOUND = 1,
+            SEAT_IN_USE = 2,
+            CLIENT_NOT_FOUND = 3
+        }
+
         Dictionary<string, Game.Game> games = new Dictionary<string, Game.Game>();
 
         private readonly object idLock = new object();
+        private const string GAME_ID = "x-game-id";
+        private const string CLIENT_TOKEN = "x-game-token";
+
+        public virtual void OnCompleted() {
+            // Nothing To Do Here
+        }
+
+        public virtual void OnError(Exception e)
+        {
+            // No implementation.
+        }
+
+        public virtual async void OnNext(GameEvent info)
+        {
+
+            Console.Out.Write("Game Event: {}", info);
+
+            Game.Game game = info.Game;
+
+            // Process Client Update
+            if ((info.Type & GameEventType.ClientUpdate) == GameEventType.ClientUpdate) {
+                // Update List Of Clients
+            }
+
+            // Progress Score Update
+            if ((info.Type & GameEventType.ScoreUpdate) == GameEventType.ScoreUpdate) {
+                await ScoreUpdate(game);
+            }
+
+            // Progress Tricks Update
+            if ((info.Type & GameEventType.TricksUpdate) == GameEventType.TricksUpdate) {
+                await TricksUpdate(game);
+            }
+
+            // Process A Seat List Update
+            if ((info.Type & GameEventType.SeatListUpdate) == GameEventType.SeatListUpdate) {
+
+                await SeatListUpdate(game);
+            }
+
+            // Process Start Game
+            if ((info.Type & GameEventType.StartGame) == GameEventType.StartGame) {
+                // Handle Start Game
+            }
+
+            if ((info.Type & GameEventType.DealCards) == GameEventType.DealCards) {
+                // Handle Card Dealing
+            }
+
+        }
+
 
         public override Task<CreateGameResponse> CreateGame(CreateGameRequest request, ServerCallContext context) {
 
@@ -56,6 +115,7 @@ namespace ShootTheMoon.Network
                 }
 
                 game.Name = id;
+                game.Subscribe(this);
                 games.Add(id, game);
             }
             Log.Debug("New game generated: " + id);
@@ -81,7 +141,7 @@ namespace ShootTheMoon.Network
                 // The game key doesn't exist, so send an error
                 n.Status = new StatusResponse();
                 n.Status.Success = false;
-                n.Status.ErrorNum = 3;  //TODO: Error Enum
+                n.Status.ErrorNum = (int)ErrorCode.GAME_NOT_FOUND;
                 n.Status.ErrorText = "No Game Exists";
                 await responseStream.WriteAsync(n);
                 return;
@@ -90,7 +150,8 @@ namespace ShootTheMoon.Network
             context.UserState.Add("gameId", request.Uuid);
 
             RpcClient client = new RpcClient(responseStream, request.Name);
-            game.Clients.Add(client);
+            game.AddClient(client);
+            //game.Clients.Add(client);
 
             // Send A Join Game Response
             JoinGameResponse jgr = new JoinGameResponse();
@@ -144,7 +205,7 @@ namespace ShootTheMoon.Network
             Log.Debug("Broadcast complete for game " + game.Name);
         }
 
-        private static async Task SendSeatsList(Game.Game game)
+        /*private static async Task SendSeatsList(Game.Game game)
         {
             SeatsList sl = new SeatsList();
             for (int i = 0; i < game.NumPlayers; i++)
@@ -152,7 +213,27 @@ namespace ShootTheMoon.Network
                 Client c = game.Players[i];
                 SeatDetails details = new SeatDetails();
                 details.Seat = (uint)i;
-                details.Ready = false;
+                details.Ready = c.Ready;
+                details.Empty = (c == null);
+                details.Human = (c == null) ? false : c.Human;
+                details.Name = (c == null) ? "" : c.Name;
+                sl.Seats.Add(details);
+            }
+
+            Notification n = new Notification();
+            n.SeatList = sl;
+
+            await BroadcastNotification(n, game);
+        }*/
+
+        public async Task SeatListUpdate(Game.Game game) {
+            SeatsList sl = new SeatsList();
+            for (int i = 0; i < game.NumPlayers; i++)
+            {
+                Client c = game.Players[i];
+                SeatDetails details = new SeatDetails();
+                details.Seat = (uint)i;
+                details.Ready = c.Ready;
                 details.Empty = (c == null);
                 details.Human = (c == null) ? false : c.Human;
                 details.Name = (c == null) ? "" : c.Name;
@@ -164,7 +245,20 @@ namespace ShootTheMoon.Network
 
             await BroadcastNotification(n, game);
         }
-        private static async Task SendScore(Game.Game game) {
+
+
+        /*private static async Task SendScore(Game.Game game) {
+            Scores scores = new Scores();
+            scores.Team1 = (uint)game.Score[0];
+            scores.Team2 = (uint)game.Score[1];
+
+            Notification n = new Notification();
+            n.Scores = scores;
+
+            await BroadcastNotification(n, game);
+        }*/
+
+        public async Task ScoreUpdate(Game.Game game) {
             Scores scores = new Scores();
             scores.Team1 = (uint)game.Score[0];
             scores.Team2 = (uint)game.Score[1];
@@ -175,7 +269,18 @@ namespace ShootTheMoon.Network
             await BroadcastNotification(n, game);
         }
 
-        private static async Task SendTricks(Game.Game game) {
+        /*private static async Task SendTricks(Game.Game game) {
+            Tricks tricks = new Tricks();
+            tricks.Team1 = (uint)game.Tricks[0];
+            tricks.Team2 = (uint)game.Tricks[1];
+
+            Notification n = new Notification();
+            n.Tricks = tricks;
+
+            await BroadcastNotification(n, game);
+        }*/
+
+        public async Task TricksUpdate(Game.Game game) {
             Tricks tricks = new Tricks();
             tricks.Team1 = (uint)game.Tricks[0];
             tricks.Team2 = (uint)game.Tricks[1];
@@ -189,13 +294,16 @@ namespace ShootTheMoon.Network
 
         public async Task SendCurrentState(Game.Game game) {
             // Update The Seat List
-            await SendSeatsList(game);
+            //await SendSeatsList(game);
+            await SeatListUpdate(game);
 
             // Update Scores
-            await SendScore(game);
+            //await SendScore(game);
+            await ScoreUpdate(game);
 
             // Update Tricks
-            await SendTricks(game);
+            //await SendTricks(game);
+            await TricksUpdate(game);
 
             // Based On State, may need to send:
             //   * Bid Request
@@ -223,8 +331,8 @@ namespace ShootTheMoon.Network
 
         public override async Task<StatusResponse> TakeSeat(TakeSeatRequest request, ServerCallContext context)
         {
-            string uuid = context.RequestHeaders.GetValue("x-game-id");
-            string clientToken = context.RequestHeaders.GetValue("x-game-token");
+            string uuid = context.RequestHeaders.GetValue(GAME_ID);
+            string clientToken = context.RequestHeaders.GetValue(CLIENT_TOKEN);
 
             StatusResponse r = new StatusResponse();
             Game.Game game;
@@ -236,17 +344,17 @@ namespace ShootTheMoon.Network
             catch (KeyNotFoundException)
             {
                 r.Success = false;
-                r.ErrorNum = 1; // TODO: Error Enum
+                r.ErrorNum = (int)ErrorCode.GAME_NOT_FOUND; 
                 r.ErrorText = "Game Not Found";
                 return r;
             }
 
             // Try To Take The Seat Request
             Client seatClient = game.Players[request.Seat];
-            if (seatClient != null)
+            if (seatClient != null && !seatClient.Token.Equals(clientToken))
             {
                 r.Success = false;
-                r.ErrorNum = 2; // TODO: Error Enum
+                r.ErrorNum = (int)ErrorCode.SEAT_IN_USE;
                 r.ErrorText = "Seat In Use";
                 return r;
             }
@@ -254,26 +362,63 @@ namespace ShootTheMoon.Network
             {
                 try {
                     RpcClient client = FindClient(game, clientToken);
-                    game.Players[request.Seat] = client;
+                    game.TakeSeat(request.Seat, client);
                 }
                 catch (KeyNotFoundException) {
                     r.Success = false;
-                    r.ErrorNum = 3; // TODO: Error Enum
+                    r.ErrorNum = (int)ErrorCode.CLIENT_NOT_FOUND;
                     r.ErrorText = "Client Not Found";
                     return r;
                 }
-
-                
             }
 
             r.Success = true;
-            r.ErrorNum = 0;
+            r.ErrorNum = (int)ErrorCode.SUCCESS;
             r.ErrorText = "";
 
-            await SendSeatsList(game);
             return r;
         }
 
+        public override async Task<StatusResponse> SetReadyStatus(SetReadyStatusRequest request, ServerCallContext context) {
+            string uuid = context.RequestHeaders.GetValue(GAME_ID);
+            string clientToken = context.RequestHeaders.GetValue(CLIENT_TOKEN);
 
+            StatusResponse r = new StatusResponse();
+            Game.Game game;
+
+            try {
+                game = games[uuid];
+            }
+            catch (KeyNotFoundException) {
+                r.Success = false;
+                r.ErrorNum = (int)ErrorCode.GAME_NOT_FOUND;
+                r.ErrorText = "Game Not Found";
+                return r;
+            }
+
+            try {
+                RpcClient client = FindClient(game, clientToken);
+                client.Ready = request.Ready;
+            }
+            catch (KeyNotFoundException) {
+                r.Success = false;
+                r.ErrorNum = (int)ErrorCode.CLIENT_NOT_FOUND;
+                r.ErrorText = "Client Not Found";
+                return r;
+            }
+
+            r.Success = true;
+            r.ErrorNum = (int)ErrorCode.SUCCESS;
+            r.ErrorText = "";
+
+            //await SendSeatsList(game);
+
+            //if (game.StartGame()) {
+                // Game Can Only Start If All Players Ready
+
+            //}
+
+            return r;
+        }
     }
 }
