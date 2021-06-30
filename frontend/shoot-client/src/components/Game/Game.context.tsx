@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { produce } from "immer";
 import { useParams } from "react-router-dom";
 import { useApp } from "../App/App.context";
-import { Notification, SeatDetails, SeatsList } from '../../proto/shoot_pb';
+import { Notification, SeatDetails } from '../../proto/shoot_pb';
 import { Card } from "./Models/Card";
 import { Seat } from "./Models/Seat";
 import { Bid } from "./Models/Bid";
@@ -18,6 +18,8 @@ export interface IGame {
     seats: Map<number, Seat>;
     playedCards: Map<number, Card>;
     bids: Map<number, Bid>;
+    bidTricksSelected: string | null;
+    bidTrumpSelected: string | null;
     eventEmitter: EventEmitter3D;
 }
 
@@ -52,6 +54,8 @@ const initialState: IGame = {
     seats: new Map(),
     playedCards: new Map([[1, card1]]),
     bids: new Map([[2, bid2]]),
+    bidTricksSelected: null,
+    bidTrumpSelected: null,
     eventEmitter: new EventEmitter3D()
 };
 

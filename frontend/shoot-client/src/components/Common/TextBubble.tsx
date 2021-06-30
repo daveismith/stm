@@ -17,7 +17,11 @@ const StyledSpan = styled.span`
 const TextBubble: React.FC<ITextBubbleProps> = (props: ITextBubbleProps) => {
     return (  
         <StyledSpan>
-            <Chip size={props.size} label={props.text} style={{ color: props.disabled ? 'rgba(255, 255, 255, 0.5)' : 'rgba(255, 255, 255, 1)', backgroundColor: props.color }}/>
+            <Chip 
+                size={props.size} 
+                label={props.text} 
+                style={{ color: props.disabled ? 'rgba(255, 255, 255, 0.5)' : 'rgba(255, 255, 255, 1)', backgroundColor: props.color }}
+            />
         </StyledSpan>
     );
 };
