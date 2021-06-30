@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useGame } from "../Game/Game.context";
+import { useGame } from "../Game.context";
 import { Dialog, DialogContent, DialogActions, TextField, Button } from "@material-ui/core";
 
 const NameDialog: React.FC = () => {

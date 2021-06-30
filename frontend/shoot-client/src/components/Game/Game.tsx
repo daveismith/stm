@@ -4,7 +4,7 @@ import { onSceneReady, onRender } from "./Interface3D/SceneFunctions";
 import GameControls from "./GameControls/GameControls";
 import SceneComponent from "./Interface3D/SceneComponent";
 import GameBoard from "./GameBoard/GameBoard";
-import NameDialog from "../Common/NameDialog"
+import NameDialog from "./GameBoard/NameDialog"
 import "./Game.css";
 
 const Game: React.FC = () => {
@@ -26,6 +26,8 @@ const Game: React.FC = () => {
             seats={gameState.seats}
             playedCards={gameState.playedCards}
             bids={gameState.bids}
+            bidTricksSelected={gameState.bidTricksSelected}
+            bidTrumpSelected={gameState.bidTrumpSelected}
         />;
     }
 
