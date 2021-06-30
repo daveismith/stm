@@ -51,7 +51,7 @@ namespace ShootTheMoon.Network
         public virtual async void OnNext(GameEvent info)
         {
 
-            Console.Out.Write("Game Event: {}", info);
+            Console.Out.Write("Game Event: {0}", info);
 
             Game.Game game = info.Game;
 
@@ -212,7 +212,7 @@ namespace ShootTheMoon.Network
                 Client c = game.Players[i];
                 SeatDetails details = new SeatDetails();
                 details.Seat = (uint)i;
-                details.Ready = c.Ready;
+                details.Ready = (c == null) ? false : c.Ready;
                 details.Empty = (c == null);
                 details.Human = (c == null) ? false : c.Human;
                 details.Name = (c == null) ? "" : c.Name;
