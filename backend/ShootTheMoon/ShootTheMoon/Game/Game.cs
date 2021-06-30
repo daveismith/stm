@@ -38,7 +38,7 @@ namespace ShootTheMoon.Game
         public string Uuid { get; set; }
         public string Name { get; set; }
         public int NumPlayers { get { return Players.Length; } }
-        public int InProgress { get; set; }
+        //public int InProgress { get; set; }
         public ImmutableList<Client> Clients { get; private set; }
         public Client[] Players { get; private set; }
 
@@ -68,6 +68,7 @@ namespace ShootTheMoon.Game
             Score = new List<int> { 0, 0 };
             Tricks = new int[] { 0, 0 };
             State = GameState.AWAITING_PLAYERS;
+            GameSettings = gameSettings;
 
             Random r = new Random();
             Dealer = r.Next(Players.Length);
@@ -135,12 +136,32 @@ namespace ShootTheMoon.Game
                     eventType |= (GameEventType.StartGame | GameEventType.ClientUpdate | GameEventType.SeatListUpdate);
                 }
 
-                //TODO: Deal Players To all The Cards
+                Deal();
+                eventType |= GameEventType.DealCards;
 
                 PublishEvent(new GameEvent(eventType, this));
                 EnterState(GameState.AWAITING_BIDS);
             }
 
+        }
+
+        private void Deal() {
+            // TODO: Get The Deck Somehow So It Can Be Injected
+            var deck = new Deck(GameSettings.NumDuplicateCards);
+            deck.Shuffle();
+
+            int dealTo = (Dealer + 1) % NumPlayers;
+
+            foreach(var player in Players)
+                player.Hand.Clear();
+
+            // Deal Until There Are No More Cards
+            while (deck.Cards.Count > 0) {
+                Client player = Players[dealTo];
+                Card dealtCard = deck.Draw();
+                player.Hand.Add(dealtCard);
+                dealTo = (dealTo + 1) % NumPlayers;
+            }
         }
 
         public void AddClient(Client client) {

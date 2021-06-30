@@ -20,12 +20,15 @@ namespace ShootTheMoon.Game
         private bool _human;
         public bool Human { get { return _human; } set { _human = value; PublishChange(); } }
 
+        public List<Card> Hand { get; set; }
+
         public Client() {
             Token = Guid.NewGuid().ToString();
             Name = Token;
             Human = false;
             Ready = false;
             observers = new List<IObserver<Client>>();
+            Hand = new List<Card>();
         }
 
         public IDisposable Subscribe(IObserver<Client> observer) 

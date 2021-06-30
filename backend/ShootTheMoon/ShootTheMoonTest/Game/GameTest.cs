@@ -40,6 +40,22 @@ namespace ShootTheMoonTest.Game
             Assert.AreEqual(GameState.AWAITING_PLAYERS, game.State);
         }        
 
+
+        [TestMethod]
+        public void TestEightPlayerGame()
+        {
+            ShootTheMoon.Game.Game game = new ShootTheMoon.Game.Game(ShootTheMoon.Game.GameSettings.GamePresets["EIGHTPLAYER"]);
+
+            Assert.AreEqual(8, game.NumPlayers);
+            Assert.AreEqual(8, game.Players.Length);
+            Assert.AreEqual(0, game.Clients.Count);
+            Assert.AreEqual(0, game.Score[0]);
+            Assert.AreEqual(0, game.Score[1]);
+            Assert.AreEqual(0, game.Tricks[0]);
+            Assert.AreEqual(0, game.Tricks[1]);            
+            Assert.AreEqual(GameState.AWAITING_PLAYERS, game.State);
+        }               
+
         [TestMethod]
         public void TestTakeSeat()
         {
@@ -74,7 +90,11 @@ namespace ShootTheMoonTest.Game
 
             c.Ready = true;
 
-            observer.Verify(x => x.OnNext(It.Is<GameEvent>(p => p.Type == (GameEventType.ClientUpdate | GameEventType.SeatListUpdate |  GameEventType.StartGame) && p.Game == game)), Times.Once);
+            observer.Verify(x => x.OnNext(It.Is<GameEvent>(p => p.Type == (GameEventType.ClientUpdate | GameEventType.SeatListUpdate |  GameEventType.StartGame | GameEventType.DealCards) && p.Game == game)), Times.Once);
+
+            foreach (var player in game.Players) {
+                Assert.AreEqual(8, player.Hand.Count);
+            }
         }
     }
 }

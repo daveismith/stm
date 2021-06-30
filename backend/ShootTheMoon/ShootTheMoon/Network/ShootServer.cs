@@ -205,27 +205,6 @@ namespace ShootTheMoon.Network
             Log.Debug("Broadcast complete for game " + game.Name);
         }
 
-        /*private static async Task SendSeatsList(Game.Game game)
-        {
-            SeatsList sl = new SeatsList();
-            for (int i = 0; i < game.NumPlayers; i++)
-            {
-                Client c = game.Players[i];
-                SeatDetails details = new SeatDetails();
-                details.Seat = (uint)i;
-                details.Ready = c.Ready;
-                details.Empty = (c == null);
-                details.Human = (c == null) ? false : c.Human;
-                details.Name = (c == null) ? "" : c.Name;
-                sl.Seats.Add(details);
-            }
-
-            Notification n = new Notification();
-            n.SeatList = sl;
-
-            await BroadcastNotification(n, game);
-        }*/
-
         public async Task SeatListUpdate(Game.Game game) {
             SeatsList sl = new SeatsList();
             for (int i = 0; i < game.NumPlayers; i++)
@@ -246,18 +225,6 @@ namespace ShootTheMoon.Network
             await BroadcastNotification(n, game);
         }
 
-
-        /*private static async Task SendScore(Game.Game game) {
-            Scores scores = new Scores();
-            scores.Team1 = (uint)game.Score[0];
-            scores.Team2 = (uint)game.Score[1];
-
-            Notification n = new Notification();
-            n.Scores = scores;
-
-            await BroadcastNotification(n, game);
-        }*/
-
         public async Task ScoreUpdate(Game.Game game) {
             Scores scores = new Scores();
             scores.Team1 = (uint)game.Score[0];
@@ -268,17 +235,6 @@ namespace ShootTheMoon.Network
 
             await BroadcastNotification(n, game);
         }
-
-        /*private static async Task SendTricks(Game.Game game) {
-            Tricks tricks = new Tricks();
-            tricks.Team1 = (uint)game.Tricks[0];
-            tricks.Team2 = (uint)game.Tricks[1];
-
-            Notification n = new Notification();
-            n.Tricks = tricks;
-
-            await BroadcastNotification(n, game);
-        }*/
 
         public async Task TricksUpdate(Game.Game game) {
             Tricks tricks = new Tricks();
@@ -291,6 +247,64 @@ namespace ShootTheMoon.Network
             await BroadcastNotification(n, game);
         }
 
+        private static Dictionary<Game.Suit, Proto.Card.Types.Suit> GameSuitToProtoSuite = new Dictionary<Suit, Proto.Card.Types.Suit>() 
+        {
+            {Game.Suit.Clubs, Proto.Card.Types.Suit.Clubs},
+            {Game.Suit.Diamonds, Proto.Card.Types.Suit.Diamonds},
+            {Game.Suit.Hearts, Proto.Card.Types.Suit.Hearts},
+            {Game.Suit.Spades, Proto.Card.Types.Suit.Spades}
+        };
+
+        private static Dictionary<Game.Rank, Proto.Card.Types.Rank> GameRankToProtoRank = new Dictionary<Rank, Proto.Card.Types.Rank>()
+        {
+            {Game.Rank.Nine, Proto.Card.Types.Rank.Nine},
+            {Game.Rank.Ten, Proto.Card.Types.Rank.Ten},
+            {Game.Rank.Jack, Proto.Card.Types.Rank.Jack},
+            {Game.Rank.Queen, Proto.Card.Types.Rank.Queen},
+            {Game.Rank.King, Proto.Card.Types.Rank.King},
+            {Game.Rank.Ace, Proto.Card.Types.Rank.Ace}
+        };
+
+        // Converts a Game.Card to a Proto.Card
+        /// <summary>
+        /// Converts a Game.Card to a Proto.Card
+        /// </summary>
+        /// <param name="card">the card to convert</param>
+        /// <returns>
+        /// The equvalent Proto.Card representation of the passed Game.Card
+        /// </returns>
+        private static Proto.Card GameCardToProtoCard(Game.Card card) {
+            Proto.Card returnCard = new Proto.Card();
+            returnCard.Suit = GameSuitToProtoSuite[card.Suit];
+            returnCard.Rank = GameRankToProtoRank[card.Rank];
+            return returnCard;
+        }
+
+        public async Task DealUpdate(Game.Game game) {
+            List<Task> tasks = new List<Task>();
+
+            foreach (Client client in game.Players) {
+                if (client is RpcClient)
+                {
+                    RpcClient rpcClient = (RpcClient)client;
+
+                    Hand hand = new Hand();
+                    hand.Dealer = (uint)game.Dealer;
+                    hand.Hand_.Clear();
+
+                    foreach (Game.Card card in client.Hand) {
+                        hand.Hand_.Add(GameCardToProtoCard(card));
+                    }
+
+                    Notification n = new Notification();
+                    n.Hand = hand;
+                    tasks.Add(rpcClient.Stream.WriteAsync(n));
+                }
+            }
+
+            await Task.WhenAll(tasks);
+            Log.Debug("Deal Notification complete for game " + game.Name);
+        }
 
         public async Task SendCurrentState(Game.Game game) {
             // Update The Seat List
