@@ -237,28 +237,37 @@ const buildSeatCubes = (scene: Scene, manager: GUI3DManager, appState: IApp) => 
 }
 
 const buildBidCubes = (scene: Scene, manager: GUI3DManager) => {
+    const allBidNumberCubes: BidNumberCube[][] = [];
+    const allBidSuitCubes: BidSuitCube[][] = [];
+    const playerBidNumberCubes: BidNumberCube[] = [];
+    const playerBidSuitCubes: BidSuitCube[] = [];
+
     var pivot: TransformNode;
-    var bidNumberCube: BidNumberCube;
-    var bidSuitCube: BidSuitCube;
 
     for (var i = 0; i < GameSettings.players; i++) {
         pivot = new TransformNode("tableCentre");
         pivot.position = new Vector3(0, GameSettings.tableHeight, 0);
     
         for (var j = 0; j < 9; j++) {
-            // eslint-disable-next-line
-            bidNumberCube = new BidNumberCube(scene, manager, pivot, i, j);
+            playerBidNumberCubes[j] = new BidNumberCube(scene, manager, pivot, i, j);
+            playerBidNumberCubes[j].disable();
         }
 
         for (j = 0; j < 6; j++) {
-            // eslint-disable-next-line
-            bidSuitCube = new BidSuitCube(scene, manager, pivot, i, j);
+            playerBidSuitCubes[j] = new BidSuitCube(scene, manager, pivot, i, j);
+            playerBidSuitCubes[j].disable();
         }
+
+        allBidNumberCubes[i] = playerBidNumberCubes;
+        allBidSuitCubes[i] = playerBidSuitCubes;
 
         const axis = new Vector3(0, 1, 0);
         const angle = i * 2 * Math.PI / GameSettings.players;
         pivot.rotate(axis, angle);
     }
+        
+    SceneController.bidNumberCubes = allBidNumberCubes;
+    SceneController.bidSuitCubes = allBidSuitCubes;
 }
 
 const buildNameplates = (scene: Scene, manager2D: AdvancedDynamicTexture, appState: IApp) => {
