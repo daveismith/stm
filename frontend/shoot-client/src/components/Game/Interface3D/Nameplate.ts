@@ -13,6 +13,7 @@ class Nameplate {
     textBlock: TextBlock = new TextBlock();
     player: number;
     name: string;
+    static emptySeatLabel: string = "Waiting for Player";
 
     // constructor (scene: Scene, manager2D: AdvancedDynamicTexture, player: number, appState: IApp) {
     constructor (manager2D: AdvancedDynamicTexture, player: number, appState: IApp) {
@@ -26,8 +27,7 @@ class Nameplate {
         this.plate.verticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
         manager2D.addControl(this.plate);
 
-        // this.name = "Player " + player;
-        this.name = "";
+        this.name = Nameplate.emptySeatLabel;
         this.textBlock.text = this.name;
         this.plate.addControl(this.textBlock);
 
@@ -40,7 +40,7 @@ class Nameplate {
         this.textBlock.text = name;
     }
 
-    disable() {
+    disable () {
         this.plate.isVisible = false;
     }
 }

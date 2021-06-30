@@ -1,6 +1,5 @@
 import { EventEmitter } from 'events';
 import { SeatDetails } from '../../../proto/shoot_pb';
-// import EventEmitter from "node:events";
 import { SceneController } from "./SceneController";
 
 // const events = require('events');
@@ -15,6 +14,10 @@ class EventEmitter3D extends EventEmitter {
 
         this.on('seats', function(seatDetailsList: SeatDetails[]) {
             SceneController.seatsListener(seatDetailsList);
+        });
+
+        this.on('takeSeatRequestResponse', function(seatNumber: number, success: boolean) {
+            SceneController.seatRequestResponseListener(seatNumber, success);
         });
     }
 }

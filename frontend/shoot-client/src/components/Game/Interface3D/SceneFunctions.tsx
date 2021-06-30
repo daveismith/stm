@@ -262,12 +262,12 @@ const buildBidCubes = (scene: Scene, manager: GUI3DManager) => {
 }
 
 const buildNameplates = (scene: Scene, manager2D: AdvancedDynamicTexture, appState: IApp) => {
-    let nameplates: Nameplate[] = [];
+    const nameplates: Nameplate[] = [];
 
     for (let i = 0; i < GameSettings.players; i++) {
         nameplates[i] = new Nameplate(manager2D, i, appState);
     }
-
+    
     SceneController.nameplates = nameplates;
 }
 
@@ -296,6 +296,7 @@ const buildNameplates = (scene: Scene, manager2D: AdvancedDynamicTexture, appSta
     // if (gameState) GameSettings.players = gameState.numPlayers; // This is how it should work
     if (gameState) GameSettings.players = gameState.seats.size; // For now, just count number of seats
     GameSettings.initializeGame();
+    CardStack.initializeCardStacks();
     console.log(GameSettings.players);
 
     // Add interactive layer

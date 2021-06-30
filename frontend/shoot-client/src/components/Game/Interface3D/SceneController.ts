@@ -29,14 +29,20 @@ class SceneController {
                 this.seatCubes[seat.index].disable();
                 this.nameplates[seat.index].updateName(seat.name);
             }
+            else
+            {
+                if (this.nameplates[seat.index]) this.nameplates[seat.index].updateName(Nameplate.emptySeatLabel);
+            }
+        }
+    }
 
-            if (seat.name === "tim") {
-                this.moveCameraToSeat(seat.index);
-                this.nameplates[seat.index].disable();
+    static seatRequestResponseListener (seatNumber: number, success: boolean) {
+        if (success) {
+            this.moveCameraToSeat(seatNumber);
+            this.nameplates[seatNumber].disable();
 
-                for (let seatCube of this.seatCubes) {
-                    seatCube.disable();
-                }
+            for (let seatCube of this.seatCubes) {
+                seatCube.disable();
             }
         }
     }
