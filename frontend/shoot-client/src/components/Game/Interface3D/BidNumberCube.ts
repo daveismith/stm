@@ -26,6 +26,7 @@ class BidNumberCube {
     bidCubeHeight = 1/4;
     mesh: Mesh;
     pivot: TransformNode;
+    button: MeshButton3D;
 
     constructor(scene: Scene, manager: GUI3DManager, pivot: TransformNode, i: number, j: number) {
         var faceUV = new Array(6);
@@ -60,12 +61,12 @@ class BidNumberCube {
         bidNumberCubeMaterial.diffuseTexture = new Texture(iconTextures, scene);
         this.mesh.material = bidNumberCubeMaterial;
 
-        const bidNumberCubeButton = new MeshButton3D(this.mesh, "bidNumberCubeButton");
-        bidNumberCubeButton.onPointerDownObservable.add(() => {
+        this.button = new MeshButton3D(this.mesh, "bidNumberCubeButton");
+        this.button.onPointerDownObservable.add(() => {
             this.animateBidCube(scene, 1);
         });
 
-        manager.addControl(bidNumberCubeButton);
+        manager.addControl(this.button);
 
         this.mesh.parent = this.pivot;
         this.mesh.position = new Vector3(
@@ -120,6 +121,11 @@ class BidNumberCube {
             frameRate * duration,
             true
         );    
+    }
+
+    disable () {
+        this.button.onPointerDownObservable.clear();
+        this.mesh.visibility = 0;
     }
 }
 

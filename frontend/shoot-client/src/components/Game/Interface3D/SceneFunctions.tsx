@@ -9,6 +9,7 @@ import {
 } from "@babylonjs/core";
 
 import {
+    AdvancedDynamicTexture,
     GUI3DManager
 } from "@babylonjs/gui";
 
@@ -26,7 +27,11 @@ import { SeatCube } from "./SeatCube";
 
 // @ts-ignore TS6133
 import sceneAssets from "./resources/stm.glb";
-// import { Console } from "node:console";
+
+import { IGame } from "../Game.context";
+import { IApp } from "../../App/App.context";
+import { SceneController } from "./SceneController";
+import { Nameplate } from "./Nameplate";
 
 // Get a random number between -1 and 1.
 const gaussianRandom = () => {
@@ -220,38 +225,59 @@ const buildDeck = (scene: Scene, manager: GUI3DManager) => {
     }
 };
 
-const buildSeatCubes = (scene: Scene, manager: GUI3DManager, camera: ArcRotateCamera) => {
-    var seatCube: SeatCube;
+const buildSeatCubes = (scene: Scene, manager: GUI3DManager, appState: IApp) => {
+    let seatCubes: SeatCube[] = [];
 
     for (var i = 0; i < GameSettings.players; i++) {
         // eslint-disable-next-line
-        seatCube = new SeatCube(scene, manager, camera, i);
+        seatCubes[i] = new SeatCube(scene, manager, i, appState);
     }
+
+    SceneController.seatCubes = seatCubes;
 }
 
 const buildBidCubes = (scene: Scene, manager: GUI3DManager) => {
+    const allBidNumberCubes: BidNumberCube[][] = [];
+    const allBidSuitCubes: BidSuitCube[][] = [];
+    const playerBidNumberCubes: BidNumberCube[] = [];
+    const playerBidSuitCubes: BidSuitCube[] = [];
+
     var pivot: TransformNode;
-    var bidNumberCube: BidNumberCube;
-    var bidSuitCube: BidSuitCube;
 
     for (var i = 0; i < GameSettings.players; i++) {
         pivot = new TransformNode("tableCentre");
         pivot.position = new Vector3(0, GameSettings.tableHeight, 0);
     
         for (var j = 0; j < 9; j++) {
-            // eslint-disable-next-line
-            bidNumberCube = new BidNumberCube(scene, manager, pivot, i, j);
+            playerBidNumberCubes[j] = new BidNumberCube(scene, manager, pivot, i, j);
+            playerBidNumberCubes[j].disable();
         }
 
         for (j = 0; j < 6; j++) {
-            // eslint-disable-next-line
-            bidSuitCube = new BidSuitCube(scene, manager, pivot, i, j);
+            playerBidSuitCubes[j] = new BidSuitCube(scene, manager, pivot, i, j);
+            playerBidSuitCubes[j].disable();
         }
+
+        allBidNumberCubes[i] = playerBidNumberCubes;
+        allBidSuitCubes[i] = playerBidSuitCubes;
 
         const axis = new Vector3(0, 1, 0);
         const angle = i * 2 * Math.PI / GameSettings.players;
         pivot.rotate(axis, angle);
     }
+        
+    SceneController.bidNumberCubes = allBidNumberCubes;
+    SceneController.bidSuitCubes = allBidSuitCubes;
+}
+
+const buildNameplates = (scene: Scene, manager2D: AdvancedDynamicTexture, appState: IApp) => {
+    const nameplates: Nameplate[] = [];
+
+    for (let i = 0; i < GameSettings.players; i++) {
+        nameplates[i] = new Nameplate(manager2D, i, appState);
+    }
+    
+    SceneController.nameplates = nameplates;
 }
 
 // const dealCards = (scene: Scene) => {
@@ -271,25 +297,35 @@ const buildBidCubes = (scene: Scene, manager: GUI3DManager) => {
 //     }
 // };
 
-export const onSceneReady = (scene: Scene, settings: GameSettings) => {
+  export const onSceneReady = (scene: Scene, gameState: IGame, appState: IApp) => {
     const engine = scene.getEngine();
     const canvas = engine.getRenderingCanvas();
     // if (canvas !== null) canvas.addEventListener("resize", function(){ engine.resize(); })
 
+    // if (gameState) GameSettings.players = gameState.numPlayers; // This is how it should work
+    if (gameState) GameSettings.players = gameState.seats.size; // For now, just count number of seats
+    GameSettings.initializeGame();
+    CardStack.initializeCardStacks();
+    console.log(GameSettings.players);
+
     // Add interactive layer
-    const manager = new GUI3DManager(scene);
+    const manager3D = new GUI3DManager(scene);
+    const manager2D = AdvancedDynamicTexture.CreateFullscreenUI("UI");
 
     const camera = new ArcRotateCamera(
         "camera",
         GameSettings.cameraAlpha,
         GameSettings.cameraBeta,
         GameSettings.cameraRadius,
-        GameSettings.cameraTargets[3],
+        GameSettings.cameraTargets[0],
         scene
     );
     camera.upperBetaLimit = Math.PI / 2.2;
     camera.attachControl(canvas, true);
     camera.inputs.clear();
+    GameSettings.camera = camera;
+    SceneController.moveCameraToSeat(0);
+
     const lightVector1 = new Vector3(3 * Math.cos(-1*Math.PI/3), GameSettings.tableHeight+2, 3 * Math.sin(-1*Math.PI/3));
     const lightVector2 = new Vector3(3 * Math.cos(1*Math.PI/3), GameSettings.tableHeight+1, 3 * Math.sin(1*Math.PI/3));
     const lightVector3 = new Vector3(3 * Math.cos(3*Math.PI/3), GameSettings.tableHeight, 3 * Math.sin(3*Math.PI/3));
@@ -307,9 +343,10 @@ export const onSceneReady = (scene: Scene, settings: GameSettings) => {
 
     SceneLoader.Append(sceneAssets, "", scene, function (scene) { });
 
-    buildSeatCubes(scene, manager, camera);
-    buildBidCubes(scene, manager);
-    buildDeck(scene, manager);
+    buildSeatCubes(scene, manager3D, appState);
+    buildBidCubes(scene, manager3D);
+    buildDeck(scene, manager3D);
+    buildNameplates(scene, manager2D, appState);
     // dealCards(scene);
 
     // SSAO code from https://playground.babylonjs.com/#N96NXC

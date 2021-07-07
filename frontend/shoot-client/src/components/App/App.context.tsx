@@ -4,6 +4,8 @@ import * as grpcWeb from 'grpc-web';
 import { ShootServerClient } from '../../proto/ShootServiceClientPb';
 import { CreateGameRequest, CreateGameResponse, JoinGameRequest, Notification, StatusResponse, TakeSeatRequest } from '../../proto/shoot_pb';
 
+import { EventEmitter3D } from "../Game/Interface3D/EventEmitter3D";
+
 export interface IApp {
     connection?: ShootServerClient
     token?: string,
@@ -14,7 +16,8 @@ export interface IApp {
     takeSeat?(seat: number): void,
     metadata: grpcWeb.Metadata,
     joined: boolean,
-    registered: boolean
+    registered: boolean,
+    eventEmitter: EventEmitter3D
 }
 
 function uuidv4() {
@@ -32,7 +35,8 @@ const connection: ShootServerClient = new ShootServerClient('http://localhost:80
 const initialState: IApp = {
     metadata: { }, 
     joined: false,
-    registered: false
+    registered: false,
+    eventEmitter: new EventEmitter3D()
 }
 
 const AppContext: React.Context<AppContextType> = createContext<AppContextType>([{ ...initialState }]);
@@ -101,8 +105,10 @@ export const AppProvider: React.FC = ({ children }) => {
         request.setSeat(seat);
 
         connection.takeSeat(request, appState.metadata).then((value: StatusResponse) => {
+            appState.eventEmitter.emit('takeSeatRequestResponse', seat, true);
             return value.getSuccess();
         }).catch((reason: any) => {
+            appState.eventEmitter.emit('takeSeatRequestResponse', seat, false);
             return false;
         });
     }
