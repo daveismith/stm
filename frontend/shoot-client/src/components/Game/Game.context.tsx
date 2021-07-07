@@ -6,6 +6,7 @@ import { Notification, SeatDetails } from '../../proto/shoot_pb';
 import { Card } from "./Models/Card";
 import { Seat } from "./Models/Seat";
 import { Bid } from "./Models/Bid";
+import { EventEmitter3D } from "./Interface3D/EventEmitter3D";
 
 export interface IGame {
     playerName?: string;
@@ -19,6 +20,7 @@ export interface IGame {
     bids: Map<number, Bid>;
     bidTricksSelected: string | null;
     bidTrumpSelected: string | null;
+    eventEmitter: EventEmitter3D;
 }
 
 interface ParamTypes{ 
@@ -53,7 +55,8 @@ const initialState: IGame = {
     playedCards: new Map([[1, card1]]),
     bids: new Map([[2, bid2]]),
     bidTricksSelected: null,
-    bidTrumpSelected: null
+    bidTrumpSelected: null,
+    eventEmitter: new EventEmitter3D()
 };
 
 let registered: boolean = false;
@@ -86,6 +89,7 @@ export const GameProvider: React.FC = ({ children }) => {
                     setState(produce(draft => {
                         draft.tricks[0] = notification.getTricks()?.getTeam1() as number;
                         draft.tricks[1] = notification.getTricks()?.getTeam2() as number;
+                        state.eventEmitter.emit("tricks");
                     }));
                 } else if (notification.hasSeatList()) {
                     console.log('seats list');
@@ -104,6 +108,7 @@ export const GameProvider: React.FC = ({ children }) => {
                             };
                             draft.seats.set(seat.index, seat);
                         }
+                        state.eventEmitter.emit("seats", seatDetailsList);
                     }));
                 } else {
                     console.log('game data');
@@ -116,7 +121,7 @@ export const GameProvider: React.FC = ({ children }) => {
         }
     });
 
-    
+
 
     return (
         <GameContext.Provider value={ [state, setState] }>

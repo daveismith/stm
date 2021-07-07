@@ -1,5 +1,4 @@
 import {
-    ArcRotateCamera,
     Mesh,
     MeshBuilder,
     Scene,
@@ -16,9 +15,9 @@ import {
 } from "@babylonjs/gui";
 
 import { GameSettings } from "./GameSettings3D";
-import { baseRotation } from "./SceneFunctions";
 
 import iconTextures from "./resources/images/icons.png";
+import { IApp } from "../../App/App.context";
 
 class SeatCube {
     seatCubeRatio = 7/8;
@@ -26,8 +25,9 @@ class SeatCube {
     mesh: Mesh;
     player: number;
     pivot: TransformNode;
+    button: MeshButton3D;
 
-    constructor (scene: Scene, manager: GUI3DManager, camera: ArcRotateCamera, player: number) {
+    constructor (scene: Scene, manager: GUI3DManager, player: number, appState: IApp) {
         var faceUV = new Array(6);
         this.player = player;
         this.pivot = new TransformNode("seatCubePivot", scene);
@@ -52,16 +52,19 @@ class SeatCube {
         seatCubeMaterial.diffuseTexture = new Texture(iconTextures, scene);
         this.mesh.material = seatCubeMaterial;
 
-        const seatCubeButton = new MeshButton3D(this.mesh, "seatCubeButton");
-        seatCubeButton.onPointerDownObservable.add(() => {
-            GameSettings.currentPlayer = player;
-            camera.target = GameSettings.cameraTargets[player];
-            camera.alpha = -1 * baseRotation(player).y + Math.PI;
-            camera.beta = GameSettings.cameraBeta;
-            camera.radius = GameSettings.cameraRadius;
+        this.button = new MeshButton3D(this.mesh, "seatCubeButton");
+        this.button.onPointerDownObservable.add(() => {
+            if (appState.takeSeat) appState.takeSeat(player);
+
+            // GameSettings.currentPlayer = player;
+            // camera.target = GameSettings.cameraTargets[player];
+            // camera.alpha = -1 * baseRotation(player).y + Math.PI;
+            // camera.beta = GameSettings.cameraBeta;
+            // camera.radius = GameSettings.cameraRadius;
+            // SceneController.takeSeat(player);
         });
 
-        manager.addControl(seatCubeButton);
+        manager.addControl(this.button);
 
         this.mesh.parent = this.pivot;
         this.mesh.position = new Vector3(
@@ -73,6 +76,11 @@ class SeatCube {
         const axis = new Vector3(0, 1, 0);
         const angle = player * 2 * Math.PI / GameSettings.players;
         this.pivot.rotate(axis, angle);
+    }
+
+    disable () {
+        this.button.onPointerDownObservable.clear();
+        this.mesh.visibility = 0;
     }
 }
 

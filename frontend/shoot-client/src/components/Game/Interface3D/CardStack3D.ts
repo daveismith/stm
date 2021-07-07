@@ -14,7 +14,7 @@ class CardStack {
     static handStacks: CardStack[] = [];
     static fanStacks: CardStack[] = [];
 
-    private static _initialize = (() => {
+    static initializeCardStacks () {
         //Radius ratio of position to deal cards to
         const dealPositionRatio = 3 / 5;
         //Radius ratio of position to play cards to
@@ -71,7 +71,7 @@ class CardStack {
                 Math.cos((2 / GameSettings.players) * Math.PI * i)
             );
         }
-    })();
+    };
 
     removeFromStack (card: Card) {
         if (card.positionInDeck >= 0) this.index[card.positionInDeck] = null;
