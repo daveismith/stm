@@ -425,13 +425,6 @@ namespace ShootTheMoon.Network
             r.ErrorNum = (int)ErrorCode.SUCCESS;
             r.ErrorText = "";
 
-            //await SendSeatsList(game);
-
-            //if (game.StartGame()) {
-                // Game Can Only Start If All Players Ready
-
-            //}
-
             return r;
         }
     }

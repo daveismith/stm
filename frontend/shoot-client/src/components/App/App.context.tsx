@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState } from "react";
 
 import * as grpcWeb from 'grpc-web';
 import { ShootServerClient } from '../../proto/ShootServiceClientPb';
-import { CreateGameRequest, CreateGameResponse, JoinGameRequest, Notification, StatusResponse, TakeSeatRequest } from '../../proto/shoot_pb';
+import { CreateGameRequest, CreateGameResponse, JoinGameRequest, Notification, SetReadyStatusRequest, StatusResponse, TakeSeatRequest } from '../../proto/shoot_pb';
 
 import { EventEmitter3D } from "../Game/Interface3D/EventEmitter3D";
 
@@ -14,6 +14,7 @@ export interface IApp {
     createGame?(seats: number): void,
     joinGame?(gameId: string, name: string): boolean,
     takeSeat?(seat: number): void,
+    setSeatReadyStatus?(ready: boolean): void,
     metadata: grpcWeb.Metadata,
     joined: boolean,
     registered: boolean,
@@ -86,6 +87,8 @@ export const AppProvider: React.FC = ({ children }) => {
                 console.log(updateState);
                 updateState.token = response.getJoinResponse()?.getToken() as string;
                 updateState.metadata['x-game-token'] = updateState.token;
+                updateState.gameId = gameId;
+                updateState.metadata['x-game-id'] = gameId;
                 setState(updateState);        
             }
         });
@@ -109,6 +112,25 @@ export const AppProvider: React.FC = ({ children }) => {
             return value.getSuccess();
         }).catch((reason: any) => {
             appState.eventEmitter.emit('takeSeatRequestResponse', seat, false);
+            return false;
+        });
+    };
+
+    appState.setSeatReadyStatus = (ready: boolean) {
+        if (!appState.joined) {
+            return false;
+        }
+
+        console.log('set ready status');
+
+        const request: SetReadyStatusRequest = new SetReadyStatusRequest();
+        request.setReady(ready);
+
+        connection.setReadyStatus(request, appState.metadata).then((value: StatusResponse) => {
+            appState.eventEmitter.emit('setReadyStatusResponse', ready, value.getSuccess());
+            return value.getSuccess();
+        }).catch((reason: any) => { 
+            appState.eventEmitter.emit('setReadyStatusResponse', ready, false);
             return false;
         });
     }
