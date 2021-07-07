@@ -116,7 +116,7 @@ export const AppProvider: React.FC = ({ children }) => {
         });
     };
 
-    appState.setSeatReadyStatus = (ready: boolean) {
+    appState.setSeatReadyStatus = (ready: boolean) => {
         if (!appState.joined) {
             return false;
         }
@@ -133,7 +133,7 @@ export const AppProvider: React.FC = ({ children }) => {
             appState.eventEmitter.emit('setReadyStatusResponse', ready, false);
             return false;
         });
-    }
+    };
 
     return (
         <AppContext.Provider value={ contextValue }>
