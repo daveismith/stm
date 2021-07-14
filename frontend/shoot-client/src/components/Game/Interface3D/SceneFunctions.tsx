@@ -24,6 +24,7 @@ import { CardStack } from "./CardStack3D";
 import { BidNumberCube } from "./BidNumberCube";
 import { BidSuitCube } from "./BidSuitCube";
 import { SeatCube } from "./SeatCube";
+import { ReadyCube } from "./ReadyCube";
 
 // @ts-ignore TS6133
 import sceneAssets from "./resources/stm.glb";
@@ -280,6 +281,16 @@ const buildNameplates = (scene: Scene, manager2D: AdvancedDynamicTexture, appSta
     SceneController.nameplates = nameplates;
 }
 
+const buildReadyCubes = (scene: Scene, manager: GUI3DManager, appState: IApp) => {
+    let readyCubes: ReadyCube[] = [];
+
+    for (var i = 0; i < GameSettings.players; i++) {
+        readyCubes[i] = new ReadyCube(scene, manager, i, appState);
+    }
+
+    SceneController.readyCubes = readyCubes;
+}
+
 // const dealCards = (scene: Scene) => {
 //     var deck: CardStack = CardStack.deck;
 //     var card: Card | null;
@@ -347,6 +358,7 @@ const buildNameplates = (scene: Scene, manager2D: AdvancedDynamicTexture, appSta
     buildBidCubes(scene, manager3D);
     buildDeck(scene, manager3D);
     buildNameplates(scene, manager2D, appState);
+    buildReadyCubes(scene, manager3D, appState);
     // dealCards(scene);
 
     // SSAO code from https://playground.babylonjs.com/#N96NXC
