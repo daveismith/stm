@@ -7,7 +7,7 @@ import { Nameplate } from "./Nameplate";
 import { BidNumberCube } from './BidNumberCube';
 import { BidSuitCube } from './BidSuitCube';
 import { ReadyCube } from './ReadyCube';
-import { Color3 } from '@babylonjs/core';
+import { Color3, StandardMaterial } from '@babylonjs/core';
 
 class SceneController {
     static seatCubes: SeatCube[] = [];
@@ -57,12 +57,18 @@ class SceneController {
 
     // Server response to our ready-status request.
     static readyStatusRequestResponseListener (readyStatus: boolean, success: boolean) {
-        if (success) {
-            if (this.readyCubes[GameSettings.currentPlayer])
-                if (readyStatus)
-                    this.readyCubes[GameSettings.currentPlayer].mesh.outlineColor = Color3.Green();
-                else
-                    this.readyCubes[GameSettings.currentPlayer].mesh.outlineColor = Color3.Red();
+        console.log("ready status request response listener. success = " + success);
+
+        if (this.readyCubes[GameSettings.currentPlayer]) {
+            let readyCubeMaterial: StandardMaterial = this.readyCubes[GameSettings.currentPlayer].mesh.material as StandardMaterial;
+
+            if (success) {
+                    this.readyCubes[GameSettings.currentPlayer].status = readyStatus;
+                    if (readyStatus)
+                        readyCubeMaterial.diffuseColor = Color3.Green();
+                    else
+                        readyCubeMaterial.diffuseColor = Color3.Yellow();
+            }
         }
     }
 

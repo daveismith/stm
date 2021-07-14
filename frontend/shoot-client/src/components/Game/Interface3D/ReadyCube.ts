@@ -1,4 +1,5 @@
 import {
+    Color3,
     Mesh,
     MeshBuilder,
     Scene,
@@ -49,9 +50,10 @@ class ReadyCube {
             wrap: true
         });
 
-        // const readyCubeMaterial = new StandardMaterial("readyCubeMaterial", scene);
+        const readyCubeMaterial = new StandardMaterial("readyCubeMaterial", scene);
         // readyCubeMaterial.diffuseTexture = new Texture(iconTextures, scene);
-        // this.mesh.material = readyCubeMaterial;
+        readyCubeMaterial.diffuseColor = Color3.Yellow();
+        this.mesh.material = readyCubeMaterial;
 
         this.button = new MeshButton3D(this.mesh, "readyCubeButton");
         this.button.onPointerDownObservable.add(() => {

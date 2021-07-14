@@ -230,7 +230,6 @@ const buildSeatCubes = (scene: Scene, manager: GUI3DManager, appState: IApp) => 
     let seatCubes: SeatCube[] = [];
 
     for (var i = 0; i < GameSettings.players; i++) {
-        // eslint-disable-next-line
         seatCubes[i] = new SeatCube(scene, manager, i, appState);
     }
 
