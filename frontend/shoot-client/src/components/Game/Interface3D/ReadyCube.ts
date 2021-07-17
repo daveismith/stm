@@ -1,5 +1,4 @@
 import {
-    Color3,
     Mesh,
     MeshBuilder,
     Scene,
@@ -16,58 +15,86 @@ import {
 } from "@babylonjs/gui";
 
 import { GameSettings } from "./GameSettings3D";
+import { SceneController } from "./SceneController";
 
-import iconTextures from "./resources/images/icons.png";
+import readyTextures from "./resources/images/ready.png";
 import { IApp } from "../../App/App.context";
 
 class ReadyCube {
-    readyCubeRatio = 5/8;
-    readyCubeHeight = 1/3;
+    readyCubeRatio = 7/8;
+    readyCubeHeight = 1/4;
     mesh: Mesh;
     player: number;
     pivot: TransformNode;
     button: MeshButton3D;
-    status: boolean = false;
+    readyValue: boolean;
+    faceUV = new Array(6);
+    appState: IApp;
+    cubeStartingPosition: Vector3;
+    pivotStartingPosition: Vector3;
 
-    constructor (scene: Scene, manager: GUI3DManager, player: number, appState: IApp) {
-        // var faceUV = new Array(6);
+    constructor (scene: Scene, manager: GUI3DManager, player: number, readyStatus: boolean, appState: IApp) {
+        this.appState = appState;
         this.player = player;
         this.pivot = new TransformNode("readyCubePivot", scene);
-        this.pivot.position = new Vector3(0, GameSettings.tableHeight, 0);
+        this.pivotStartingPosition = new Vector3(0, GameSettings.tableHeight, 0);
+        this.pivot.position = this.pivotStartingPosition.clone();
+        this.cubeStartingPosition = new Vector3(
+            0,
+            0.01 + this.readyCubeHeight/2,
+            GameSettings.tableRadius * this.readyCubeRatio
+        );
 
-        // faceUV[0] = new Vector4((player % 4) / 4, Math.floor(player / 4 + 2) / 4, (player % 4 + 1) / 4, Math.floor(player / 4 + 3) / 4);
-        // faceUV[1] = faceUV[0];
-        // faceUV[2] = faceUV[0];
-        // faceUV[3] = faceUV[0];
-        // faceUV[4] = new Vector4(faceUV[0].z, faceUV[0].w, faceUV[0].x, faceUV[0].y);
-        // faceUV[5] = new Vector4(3/4, 1/4, 1, 1/2);
+        if (readyStatus) {
+            this.faceUV[0] = new Vector4(0, 0, 1/2, 1/2);
+            this.faceUV[1] = this.faceUV[0];
+            this.faceUV[2] = this.faceUV[0];
+            this.faceUV[3] = this.faceUV[0];
+            this.faceUV[4] = new Vector4(0, 1/2, 1/2, 1);
+            this.faceUV[5] = this.faceUV[4];
+
+            this.readyValue = true;
+        }
+        else {
+            this.faceUV[0] = new Vector4(1/2, 0, 1, 1/2);
+            this.faceUV[1] = this.faceUV[0];
+            this.faceUV[2] = this.faceUV[0];
+            this.faceUV[3] = this.faceUV[0];
+            this.faceUV[4] = new Vector4(1/2, 1/2, 1, 1);
+            this.faceUV[5] = this.faceUV[4];
+
+            this.readyValue = false;
+        }
 
         this.mesh = MeshBuilder.CreateBox("readyCube", {
             width: this.readyCubeHeight,
             height: this.readyCubeHeight,
             depth: this.readyCubeHeight,
-            // faceUV: faceUV,
+            faceUV: this.faceUV,
             wrap: true
         });
 
         const readyCubeMaterial = new StandardMaterial("readyCubeMaterial", scene);
-        // readyCubeMaterial.diffuseTexture = new Texture(iconTextures, scene);
-        readyCubeMaterial.diffuseColor = Color3.Yellow();
+        readyCubeMaterial.diffuseTexture = new Texture(readyTextures, scene);
         this.mesh.material = readyCubeMaterial;
 
         this.button = new MeshButton3D(this.mesh, "readyCubeButton");
+
         this.button.onPointerDownObservable.add(() => {
-            if (appState.setSeatReadyStatus) appState.setSeatReadyStatus(!this.status);
+            if (this.appState.setSeatReadyStatus) this.appState.setSeatReadyStatus(!this.readyValue);
         });
 
         manager.addControl(this.button);
 
         this.mesh.parent = this.pivot;
-        this.mesh.position = new Vector3(
-            0,
-            0.01 + this.readyCubeHeight/2,
-            GameSettings.tableRadius * this.readyCubeRatio
-        );
+        this.mesh.position = this.cubeStartingPosition.clone();
+
+        if (SceneController.seats[player] && !SceneController.seats[player].empty)
+            this.show();
+        else
+            this.hide();
+
+        this.disable();
 
         const axis = new Vector3(0, 1, 0);
         const angle = player * 2 * Math.PI / GameSettings.players;
@@ -75,8 +102,19 @@ class ReadyCube {
     }
 
     disable () {
-        this.button.onPointerDownObservable.clear();
+        this.mesh.isPickable = false;
+    }
+
+    enable () {
+        this.mesh.isPickable = true;
+    }
+
+    hide () {
         this.mesh.visibility = 0;
+    }
+
+    show () {
+        this.mesh.visibility = 1;
     }
 }
 

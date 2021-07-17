@@ -270,23 +270,27 @@ const buildBidCubes = (scene: Scene, manager: GUI3DManager) => {
     SceneController.bidSuitCubes = allBidSuitCubes;
 }
 
-const buildNameplates = (scene: Scene, manager2D: AdvancedDynamicTexture, appState: IApp) => {
+const buildNameplates = (manager2D: AdvancedDynamicTexture) => {
     const nameplates: Nameplate[] = [];
 
     for (let i = 0; i < GameSettings.players; i++) {
-        nameplates[i] = new Nameplate(manager2D, i, appState);
+        nameplates[i] = new Nameplate(manager2D, i);
     }
     
     SceneController.nameplates = nameplates;
 }
 
 const buildReadyCubes = (scene: Scene, manager: GUI3DManager, appState: IApp) => {
+    let unreadyCubes: ReadyCube[] = [];
     let readyCubes: ReadyCube[] = [];
 
     for (var i = 0; i < GameSettings.players; i++) {
-        readyCubes[i] = new ReadyCube(scene, manager, i, appState);
+        unreadyCubes[i] = new ReadyCube(scene, manager, i, false, appState);
+        readyCubes[i] = new ReadyCube(scene, manager, i, true, appState);
+        readyCubes[i].disable();
     }
 
+    SceneController.unreadyCubes = unreadyCubes;
     SceneController.readyCubes = readyCubes;
 }
 
@@ -356,7 +360,7 @@ const buildReadyCubes = (scene: Scene, manager: GUI3DManager, appState: IApp) =>
     buildSeatCubes(scene, manager3D, appState);
     buildBidCubes(scene, manager3D);
     buildDeck(scene, manager3D);
-    buildNameplates(scene, manager2D, appState);
+    buildNameplates(manager2D);
     buildReadyCubes(scene, manager3D, appState);
     // dealCards(scene);
 

@@ -5,7 +5,6 @@ import { ShootServerClient } from '../../proto/ShootServiceClientPb';
 import { CreateGameRequest, CreateGameResponse, JoinGameRequest, Notification, SetReadyStatusRequest, StatusResponse, TakeSeatRequest } from '../../proto/shoot_pb';
 
 import { EventEmitter3D } from "../Game/Interface3D/EventEmitter3D";
-import { ValueAndUnit } from "@babylonjs/gui";
 
 export interface IApp {
     connection?: ShootServerClient
@@ -109,7 +108,7 @@ export const AppProvider: React.FC = ({ children }) => {
         request.setSeat(seat);
 
         connection.takeSeat(request, appState.metadata).then((value: StatusResponse) => {
-            appState.eventEmitter.emit('takeSeatRequestResponse', seat, true);
+            appState.eventEmitter.emit('takeSeatRequestResponse', seat, value.getSuccess());
             return value.getSuccess();
         }).catch((reason: any) => {
             appState.eventEmitter.emit('takeSeatRequestResponse', seat, false);
@@ -128,11 +127,9 @@ export const AppProvider: React.FC = ({ children }) => {
         request.setReady(ready);
 
         connection.setReadyStatus(request, appState.metadata).then((value: StatusResponse) => {
-            console.log("test");
             appState.eventEmitter.emit('setReadyStatusResponse', ready, value.getSuccess());
             return value.getSuccess();
         }).catch((reason: any) => { 
-            console.log('readyStatusResponse handler -- error');
             appState.eventEmitter.emit('setReadyStatusResponse', ready, false);
             return false;
         });
