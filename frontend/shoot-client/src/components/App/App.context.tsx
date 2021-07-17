@@ -108,7 +108,7 @@ export const AppProvider: React.FC = ({ children }) => {
         request.setSeat(seat);
 
         connection.takeSeat(request, appState.metadata).then((value: StatusResponse) => {
-            appState.eventEmitter.emit('takeSeatRequestResponse', seat, true);
+            appState.eventEmitter.emit('takeSeatRequestResponse', seat, value.getSuccess());
             return value.getSuccess();
         }).catch((reason: any) => {
             appState.eventEmitter.emit('takeSeatRequestResponse', seat, false);

@@ -5,7 +5,6 @@ import {
     TextBlock
 } from "@babylonjs/gui";
 
-import { IApp } from "../../App/App.context";
 import { SceneController } from "./SceneController";
 
 class Nameplate {
@@ -15,8 +14,7 @@ class Nameplate {
     name: string;
     static emptySeatLabel: string = "Waiting for Player";
 
-    // constructor (scene: Scene, manager2D: AdvancedDynamicTexture, player: number, appState: IApp) {
-    constructor (manager2D: AdvancedDynamicTexture, player: number, appState: IApp) {
+    constructor (manager2D: AdvancedDynamicTexture, player: number) {
         this.player = player;
         this.plate.width = 0.2;
         this.plate.height = 0.04;
@@ -27,12 +25,16 @@ class Nameplate {
         this.plate.verticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
         manager2D.addControl(this.plate);
 
-        this.name = Nameplate.emptySeatLabel;
+        if (SceneController.seats[player] && !SceneController.seats[player].empty)
+            this.name = SceneController.seats[player].name;
+        else
+            this.name = Nameplate.emptySeatLabel;
         this.textBlock.text = this.name;
         this.plate.addControl(this.textBlock);
 
-        this.plate.linkWithMesh(SceneController.seatCubes[player].mesh);   
+        this.plate.linkWithMesh(SceneController.seatCubes[player].mesh);
         this.plate.linkOffsetY = -100;
+
     }
 
     updateName (name: string) {

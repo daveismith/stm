@@ -24,6 +24,7 @@ import { CardStack } from "./CardStack3D";
 import { BidNumberCube } from "./BidNumberCube";
 import { BidSuitCube } from "./BidSuitCube";
 import { SeatCube } from "./SeatCube";
+import { ReadyCube } from "./ReadyCube";
 
 // @ts-ignore TS6133
 import sceneAssets from "./resources/stm.glb";
@@ -229,7 +230,6 @@ const buildSeatCubes = (scene: Scene, manager: GUI3DManager, appState: IApp) => 
     let seatCubes: SeatCube[] = [];
 
     for (var i = 0; i < GameSettings.players; i++) {
-        // eslint-disable-next-line
         seatCubes[i] = new SeatCube(scene, manager, i, appState);
     }
 
@@ -270,14 +270,28 @@ const buildBidCubes = (scene: Scene, manager: GUI3DManager) => {
     SceneController.bidSuitCubes = allBidSuitCubes;
 }
 
-const buildNameplates = (scene: Scene, manager2D: AdvancedDynamicTexture, appState: IApp) => {
+const buildNameplates = (manager2D: AdvancedDynamicTexture) => {
     const nameplates: Nameplate[] = [];
 
     for (let i = 0; i < GameSettings.players; i++) {
-        nameplates[i] = new Nameplate(manager2D, i, appState);
+        nameplates[i] = new Nameplate(manager2D, i);
     }
     
     SceneController.nameplates = nameplates;
+}
+
+const buildReadyCubes = (scene: Scene, manager: GUI3DManager, appState: IApp) => {
+    let unreadyCubes: ReadyCube[] = [];
+    let readyCubes: ReadyCube[] = [];
+
+    for (var i = 0; i < GameSettings.players; i++) {
+        unreadyCubes[i] = new ReadyCube(scene, manager, i, false, appState);
+        readyCubes[i] = new ReadyCube(scene, manager, i, true, appState);
+        readyCubes[i].disable();
+    }
+
+    SceneController.unreadyCubes = unreadyCubes;
+    SceneController.readyCubes = readyCubes;
 }
 
 // const dealCards = (scene: Scene) => {
@@ -346,7 +360,8 @@ const buildNameplates = (scene: Scene, manager2D: AdvancedDynamicTexture, appSta
     buildSeatCubes(scene, manager3D, appState);
     buildBidCubes(scene, manager3D);
     buildDeck(scene, manager3D);
-    buildNameplates(scene, manager2D, appState);
+    buildNameplates(manager2D);
+    buildReadyCubes(scene, manager3D, appState);
     // dealCards(scene);
 
     // SSAO code from https://playground.babylonjs.com/#N96NXC

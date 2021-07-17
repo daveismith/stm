@@ -15,6 +15,7 @@ import {
 } from "@babylonjs/gui";
 
 import { GameSettings } from "./GameSettings3D";
+import { SceneController } from "./SceneController";
 
 import iconTextures from "./resources/images/icons.png";
 import { IApp } from "../../App/App.context";
@@ -26,12 +27,14 @@ class SeatCube {
     player: number;
     pivot: TransformNode;
     button: MeshButton3D;
+    pivotStartingPosition: Vector3;
 
     constructor (scene: Scene, manager: GUI3DManager, player: number, appState: IApp) {
         var faceUV = new Array(6);
         this.player = player;
         this.pivot = new TransformNode("seatCubePivot", scene);
-        this.pivot.position = new Vector3(0, GameSettings.tableHeight, 0);
+        this.pivotStartingPosition = new Vector3(0, GameSettings.tableHeight, 0);
+        this.pivot.position = this.pivotStartingPosition.clone();
 
         faceUV[0] = new Vector4((player % 4) / 4, Math.floor(player / 4 + 2) / 4, (player % 4 + 1) / 4, Math.floor(player / 4 + 3) / 4);
         faceUV[1] = faceUV[0];
@@ -73,14 +76,17 @@ class SeatCube {
             GameSettings.tableRadius * this.seatCubeRatio
         );
 
-        const axis = new Vector3(0, 1, 0);
+        if (SceneController.seats[player] && !SceneController.seats[player].empty)
+            this.hideAndDisable();
+
+            const axis = new Vector3(0, 1, 0);
         const angle = player * 2 * Math.PI / GameSettings.players;
         this.pivot.rotate(axis, angle);
     }
 
-    disable () {
-        this.button.onPointerDownObservable.clear();
+    hideAndDisable () {
         this.mesh.visibility = 0;
+        this.mesh.isPickable = false;
     }
 }
 
