@@ -16,8 +16,11 @@ namespace ShootTheMoon.Game {
 
         StartGame = 16,
 
-        DealCards = 32
+        DealCards = 32,
 
+        RequestBid = 64,
+
+        BidUpdate = 128
     }
 
     public class GameEvent {

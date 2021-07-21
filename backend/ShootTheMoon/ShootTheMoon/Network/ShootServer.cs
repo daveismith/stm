@@ -79,12 +79,23 @@ namespace ShootTheMoon.Network
             // Process Start Game
             if ((info.Type & GameEventType.StartGame) == GameEventType.StartGame) {
                 // Handle Start Game
+                await StartGameUpdate(game);
             }
 
             if ((info.Type & GameEventType.DealCards) == GameEventType.DealCards) {
                 // Handle Card Dealing
+                await DealUpdate(game);
             }
 
+            if ((info.Type & GameEventType.RequestBid) == GameEventType.RequestBid) {
+                // Request A Bit From The Client Specified In info.Client
+            
+            }
+
+            if ((info.Type & GameEventType.BidUpdate) == GameEventType.BidUpdate) {
+                // Send A Bit List Update To All Players
+
+            }
         }
 
 
@@ -177,7 +188,8 @@ namespace ShootTheMoon.Network
                         game.Players[i] = null;
                     }
                 }
-                game.Clients.Remove(client);
+                //game.Clients.Remove(client);
+                game.RemoveClient(client);
 
                 // TODO: Replace The Player With A Bot If The Game Is In Progress
 
@@ -246,6 +258,41 @@ namespace ShootTheMoon.Network
 
             await BroadcastNotification(n, game);
         }
+
+        public async Task BidListUpdate(Game.Game game) {
+            BidList bidList = new BidList();
+            bidList.Bids.Clear();
+
+            foreach (Game.Bid bid in game.Bids) {
+                Proto.Bid b = new Proto.Bid();
+                // TODO: Seat Number
+                b.ShootNum = bid.ShootNumber;
+                b.Tricks = bid.Number;
+                b.Trump = GameTrumpToProtoTrump[bid.Trump];
+                bidList.Bids.Add(b);
+            }
+            
+            Notification n = new Notification();
+            n.BidList = bidList;
+
+            await BroadcastNotification(n, game);
+        }
+
+        public async Task StartGameUpdate(Game.Game game) {
+            Notification n = new Notification();
+            n.StartGame = new StartGame();
+            await BroadcastNotification(n, game);
+        }
+
+        private static Dictionary<Game.Trump, Proto.Trump> GameTrumpToProtoTrump = new Dictionary<Game.Trump, Proto.Trump>()
+        {
+            {Game.Trump.Clubs, Proto.Trump.Clubs},
+            {Game.Trump.Diamonds, Proto.Trump.Diamonds},
+            {Game.Trump.Hearts, Proto.Trump.Hearts},
+            {Game.Trump.Spades, Proto.Trump.Spades},
+            {Game.Trump.High, Proto.Trump.High},
+            {Game.Trump.Low, Proto.Trump.Low}
+        };
 
         private static Dictionary<Game.Suit, Proto.Card.Types.Suit> GameSuitToProtoSuite = new Dictionary<Suit, Proto.Card.Types.Suit>() 
         {

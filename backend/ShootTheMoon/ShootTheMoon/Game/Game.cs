@@ -49,6 +49,9 @@ namespace ShootTheMoon.Game
         public Client CurrentPlayer { get; set; }
         public int NextShootNum { get; set; }
         public List<Bid> Bids { get; set; }
+
+        public Bid CurrentBid { get; set; }
+
         public Trump CurrentTrump { get; set; }
         public int RequiredTricks { get; set; }
         public int CallingTeam { get; set; }
@@ -120,6 +123,9 @@ namespace ShootTheMoon.Game
                         EnterState(GameState.DEALING);
                     }
                     break;
+                case GameState.AWAITING_BIDS:
+                    EnterState(GameState.AWAITING_BIDS);
+                    break;
             }
 
         }
@@ -141,6 +147,17 @@ namespace ShootTheMoon.Game
 
                 PublishEvent(new GameEvent(eventType, this));
                 EnterState(GameState.AWAITING_BIDS);
+            } else if (State == GameState.AWAITING_BIDS) {
+
+                // If we're transitioning into awaiting bids, send an update
+                if (previousState != GameState.AWAITING_BIDS) {
+                    CurrentBid = null;
+                    Bids.Clear();
+                    CurrentPlayer = Players[(Dealer + 1) % NumPlayers];
+                }
+
+                GameEvent ge = new GameEvent(GameEventType.BidUpdate | GameEventType.RequestBid, this, CurrentPlayer);
+                PublishEvent(ge);
             }
 
         }
@@ -173,6 +190,9 @@ namespace ShootTheMoon.Game
         }
 
         public void RemoveClient(Client client) {
+
+            //TODO: If game is in progress, do we replace the player with a bot?
+
             if (Clients.Contains(client)) {
                 Clients = Clients.Remove(client);
                 client.Unsubscribe(this);
@@ -208,6 +228,54 @@ namespace ShootTheMoon.Game
             }
 
             return success;
+        }
+
+        public bool MakeBid(uint tricks, Trump trump, uint shoot, bool pass, Client client) {
+            if (client != CurrentPlayer) {
+                return false;
+            }
+
+            Bid b;
+            if (pass) {
+                b = Bid.makePassBid();
+            } else if (shoot == 0) {
+                b = Bid.makeNormalBid(tricks, trump);
+            } else {
+                b = Bid.makeShootBid(shoot, trump);
+            }
+
+            if (CurrentBid != null && !b.isBetterThan(CurrentBid)) {
+                return false;   // This Is A Bad Bid
+            }
+
+            Bids.Add(b);
+            
+            // Find Next Player
+            int nextPlayer = int.MinValue;
+            for (int index = Dealer+1; index < Dealer + NumPlayers; index++) {
+                int player = index % NumPlayers;
+                if (player == Dealer) {
+                    break;  // We've reached the end of the list
+                } else if (Players[player] == CurrentPlayer) {
+                    // Add One And Exit
+                    nextPlayer = (player + 1) % NumPlayers;
+                }
+            }
+
+            //TODO: Work On Actually Handling The Bidding
+            if (nextPlayer == int.MinValue) {
+                // We're Done Bidding
+                if (CurrentBid.isShoot()) {
+                    // Handle A Shoot Bid
+                } else {
+                    // Handle A Normal Bid`
+                }
+            } else {
+                // Trigger Next Bid
+                CurrentPlayer = Players[nextPlayer];
+                Tick();        
+            }
+            return true;
         }
 
         private void PublishEvent(GameEvent gameEvent) {

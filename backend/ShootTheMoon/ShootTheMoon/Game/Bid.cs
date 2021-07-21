@@ -7,14 +7,14 @@ namespace ShootTheMoon.Game
 {
     public class Bid
     {
-        public static readonly int PASS_NUM = 0;
-        public static readonly int SHOOT_NUM = 9;
+        public static readonly uint PASS_NUM = 0;
+        public static readonly uint SHOOT_NUM = 9;
 
-        public int Number { get; set; }
+        public uint Number { get; set; }
         public Trump Trump { get; set; }
-        public int ShootNumber { get; set; }
+        public uint ShootNumber { get; set; }
 
-        public static Bid makeNormalBid(int number, Trump trump)
+        public static Bid makeNormalBid(uint number, Trump trump)
         {
             return new Bid { Number = number, Trump = trump, ShootNumber = 0 };
         }
@@ -24,33 +24,9 @@ namespace ShootTheMoon.Game
             return new Bid { Number = PASS_NUM, Trump = null, ShootNumber = 0 };
         }
 
-        public static Bid makeShootBid(int shootNumber, Trump trump)
+        public static Bid makeShootBid(uint shootNumber, Trump trump)
         {
             return new Bid { Number = SHOOT_NUM, Trump = trump, ShootNumber = shootNumber };
-        }
-
-        public static Bid FromString(string bid)
-        {
-            int tricks = int.Parse(bid.Substring(0, 1));
-            int shootNum = int.Parse(bid.Substring(1, 1));
-            string t = bid.Substring(2);
-            Trump trump;
-
-            if (t == string.Empty || tricks == PASS_NUM)
-            {
-                return makePassBid();
-            }
-
-            trump = Trump.Trumps[t];
-
-            if (tricks == SHOOT_NUM)
-            {
-                return makeShootBid(shootNum, trump);
-            }
-            else
-            {
-                return makeNormalBid(tricks, trump);
-            }
         }
 
         public bool isPass()
