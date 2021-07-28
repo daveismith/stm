@@ -19,6 +19,10 @@ class EventEmitter3D extends EventEmitter {
         this.on('takeSeatRequestResponse', function(seatNumber: number, success: boolean) {
             SceneController.seatRequestResponseListener(seatNumber, success);
         });
+
+        this.on('setReadyStatusResponse', function(readyStatus: boolean, success: boolean) {
+            SceneController.readyStatusRequestResponseListener(readyStatus, success);
+        });
     }
 }
 

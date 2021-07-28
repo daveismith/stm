@@ -124,7 +124,7 @@ class BidNumberCube {
     }
 
     disable () {
-        this.button.onPointerDownObservable.clear();
+        this.mesh.isPickable = false;
         this.mesh.visibility = 0;
     }
 }

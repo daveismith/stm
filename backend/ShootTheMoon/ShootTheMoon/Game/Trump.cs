@@ -7,14 +7,21 @@ namespace ShootTheMoon.Game
 {
     public class Trump
     {
-        public static readonly Dictionary<string, Trump> Trumps = new Dictionary<string, Trump>
-        {
-            { Suit.Suits[0].LongName, new Trump {Name = Suit.Suits[0].LongName, Suit = Suit.Suits[0]} },
-            { Suit.Suits[1].LongName, new Trump {Name = Suit.Suits[1].LongName, Suit = Suit.Suits[1]} },
-            { Suit.Suits[2].LongName, new Trump {Name = Suit.Suits[2].LongName, Suit = Suit.Suits[2]} },
-            { Suit.Suits[3].LongName, new Trump {Name = Suit.Suits[3].LongName, Suit = Suit.Suits[3]} },
-            { "High",  new Trump {Name = "High"} },
-            { "Low",  new Trump {Name = "Low"} }
+        
+        public static Trump Spades = new Trump {Name = Suit.Spades.LongName, Suit = Suit.Spades };
+        public static Trump Hearts = new Trump {Name = Suit.Hearts.LongName, Suit = Suit.Hearts };
+        public static Trump Clubs = new Trump {Name = Suit.Clubs.LongName, Suit = Suit.Clubs };
+        public static Trump Diamonds = new Trump {Name = Suit.Diamonds.LongName, Suit = Suit.Diamonds };
+        public static Trump High = new Trump {Name = "High"};
+        public static Trump Low = new Trump {Name = "Low"};
+
+        public static readonly List<Trump> Trumps = new List<Trump>{
+            Spades,
+            Hearts,
+            Clubs,
+            Diamonds,
+            High,
+            Low
         };
 
         public string Name { get; set; }

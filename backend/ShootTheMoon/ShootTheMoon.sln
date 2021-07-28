@@ -5,6 +5,8 @@ VisualStudioVersion = 16.0.31019.35
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShootTheMoon", "ShootTheMoon\ShootTheMoon.csproj", "{2DF80BCE-C8B0-494A-B7AB-E446233E2005}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShootTheMoonTest", "ShootTheMoonTest\ShootTheMoonTest.csproj", "{075D344E-C12B-47B7-823F-06C539C0F33F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{2DF80BCE-C8B0-494A-B7AB-E446233E2005}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2DF80BCE-C8B0-494A-B7AB-E446233E2005}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2DF80BCE-C8B0-494A-B7AB-E446233E2005}.Release|Any CPU.Build.0 = Release|Any CPU
+		{075D344E-C12B-47B7-823F-06C539C0F33F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{075D344E-C12B-47B7-823F-06C539C0F33F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{075D344E-C12B-47B7-823F-06C539C0F33F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{075D344E-C12B-47B7-823F-06C539C0F33F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
