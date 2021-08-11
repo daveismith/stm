@@ -3,13 +3,15 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
+using Serilog;
 
 namespace ShootTheMoon.Game
 {
     public enum GameState {
         AWAITING_PLAYERS,
         DEALING,
-        AWAITING_BIDS
+        AWAITING_BIDS,
+        PLAYING_HAND
     }
 
     internal class Unsubscriber<T> : IDisposable {
@@ -72,9 +74,12 @@ namespace ShootTheMoon.Game
             Tricks = new int[] { 0, 0 };
             State = GameState.AWAITING_PLAYERS;
             GameSettings = gameSettings;
+            Bids = new List<Bid>();
 
             Random r = new Random();
             Dealer = r.Next(Players.Length);
+
+            Log.Debug("{0} player game created with UUID {1}, Dealer is {2}", NumPlayers, Uuid, Dealer);
 
             observers = new List<IObserver<GameEvent>>();
         }
@@ -135,6 +140,8 @@ namespace ShootTheMoon.Game
             GameState previousState = State;
             State = newState;
 
+            Log.Debug("{0} => {1}", previousState, newState);
+
             if (State == GameState.DEALING) {
                 GameEventType eventType = GameEventType.None;
 
@@ -157,6 +164,9 @@ namespace ShootTheMoon.Game
                 }
 
                 GameEvent ge = new GameEvent(GameEventType.BidUpdate | GameEventType.RequestBid, this, CurrentPlayer);
+                PublishEvent(ge);
+            } else if (State == GameState.PLAYING_HAND) {
+                GameEvent ge = new GameEvent(GameEventType.BidUpdate, this, CurrentPlayer);
                 PublishEvent(ge);
             }
 
@@ -235,13 +245,18 @@ namespace ShootTheMoon.Game
                 return false;
             }
 
+            uint seat = FindSeat(client);
+            if (seat >= NumPlayers) {
+                return false;
+            }
+
             Bid b;
             if (pass) {
-                b = Bid.makePassBid();
+                b = Bid.makePassBid(seat);
             } else if (shoot == 0) {
-                b = Bid.makeNormalBid(tricks, trump);
+                b = Bid.makeNormalBid(seat, tricks, trump);
             } else {
-                b = Bid.makeShootBid(shoot, trump);
+                b = Bid.makeShootBid(seat, shoot, trump);
             }
 
             if (CurrentBid != null && !b.isBetterThan(CurrentBid)) {
@@ -267,9 +282,14 @@ namespace ShootTheMoon.Game
                 // We're Done Bidding
                 if (CurrentBid.isShoot()) {
                     // Handle A Shoot Bid
+                    Log.Debug("Game {} received a Shoot Bid with {} shoots", Uuid, CurrentBid.ShootNumber);
                 } else {
-                    // Handle A Normal Bid`
+                    // Handle A Normal Bid
+                    Log.Debug("Game {} received a normal bid with {} {}", Uuid, CurrentBid.Number, CurrentBid.ShootNumber);
                 }
+                CurrentPlayer = Players[CurrentBid.Seat];
+                EnterState(GameState.PLAYING_HAND);
+
             } else {
                 // Trigger Next Bid
                 CurrentPlayer = Players[nextPlayer];
@@ -281,6 +301,15 @@ namespace ShootTheMoon.Game
         private void PublishEvent(GameEvent gameEvent) {
             foreach (var observer in observers)
                 observer.OnNext(gameEvent);
+        }
+
+        private uint FindSeat(Client client ) {
+            for (uint idx = 0; idx < NumPlayers; idx++) {
+                if (Players[idx] == client) {
+                    return idx;
+                }
+            }
+            return uint.MaxValue;
         }
 
     }

@@ -14,19 +14,21 @@ namespace ShootTheMoon.Game
         public Trump Trump { get; set; }
         public uint ShootNumber { get; set; }
 
-        public static Bid makeNormalBid(uint number, Trump trump)
+        public uint Seat { get; set; }
+
+        public static Bid makeNormalBid(uint seat, uint number, Trump trump)
         {
-            return new Bid { Number = number, Trump = trump, ShootNumber = 0 };
+            return new Bid { Seat = seat, Number = number, Trump = trump, ShootNumber = 0 };
         }
 
-        public static Bid makePassBid()
+        public static Bid makePassBid(uint seat)
         {
-            return new Bid { Number = PASS_NUM, Trump = null, ShootNumber = 0 };
+            return new Bid { Seat = seat, Number = PASS_NUM, Trump = null, ShootNumber = 0 };
         }
 
-        public static Bid makeShootBid(uint shootNumber, Trump trump)
+        public static Bid makeShootBid(uint seat, uint shootNumber, Trump trump)
         {
-            return new Bid { Number = SHOOT_NUM, Trump = trump, ShootNumber = shootNumber };
+            return new Bid { Seat = seat, Number = SHOOT_NUM, Trump = trump, ShootNumber = shootNumber };
         }
 
         public bool isPass()

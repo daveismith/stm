@@ -110,6 +110,14 @@ export const GameProvider: React.FC = ({ children }) => {
                         }
                         state.eventEmitter.emit("seats", seatDetailsList);
                     }));
+                } else if (notification.hasBidRequest()) {
+                    console.log('bid request');
+                    const obj: object = notification.toObject();
+                    console.log(obj);
+                } else if (notification.hasBidList()) {
+                    console.log('bid list');
+                    const obj: object = notification.toObject();
+                    console.log(obj);
                 } else {
                     console.log('game data');
                     const obj: object = notification.toObject();
