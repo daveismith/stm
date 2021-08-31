@@ -100,6 +100,20 @@ namespace ShootTheMoon.Network
             }
         }
 
+        private static async Task SendNotification(RpcClient client, Notification notification) {
+            bool sent = false;
+            while (!sent)
+            {
+                try {
+                    await client.Stream.WriteAsync(notification);
+                    sent = true;
+                }
+                catch (InvalidOperationException e) {
+                    Log.Debug(e.ToString());
+                    await Task.Delay(50);
+                }
+            }
+        }
 
         public override Task<CreateGameResponse> CreateGame(CreateGameRequest request, ServerCallContext context) {
 
@@ -107,6 +121,9 @@ namespace ShootTheMoon.Network
 
             GameSettings settings = GameSettings.GamePresets["SIXPLAYER"];
             switch (request.Seats) {
+                case 2:
+                    settings = GameSettings.GamePresets["TWOPLAYER"];
+                    break;
                 case 4:
                     settings = GameSettings.GamePresets["FOURPLAYER"];
                     break;
@@ -142,6 +159,7 @@ namespace ShootTheMoon.Network
         {
             Game.Game game;
             Notification n = new Notification();
+            RpcClient client = new RpcClient(responseStream, request.Name);
 
             try
             {
@@ -156,13 +174,13 @@ namespace ShootTheMoon.Network
                 n.Status.Success = false;
                 n.Status.ErrorNum = (int)ErrorCode.GAME_NOT_FOUND;
                 n.Status.ErrorText = "No Game Exists";
-                await responseStream.WriteAsync(n);
+                // await responseStream.WriteAsync(n);
+                await SendNotification(client, n);
                 return;
             }
 
             context.UserState.Add("gameId", request.Uuid);
 
-            RpcClient client = new RpcClient(responseStream, request.Name);
             game.AddClient(client);
             //game.Clients.Add(client);
 
@@ -170,7 +188,9 @@ namespace ShootTheMoon.Network
             JoinGameResponse jgr = new JoinGameResponse();
             jgr.Token = client.Token;
             n.JoinResponse = jgr;
-            await responseStream.WriteAsync(n);
+            // await responseStream.WriteAsync(n);
+            await SendNotification(client, n);
+
 
             // Call The Send Initial State Function To The Client 
             await SendCurrentState(game);
@@ -211,7 +231,8 @@ namespace ShootTheMoon.Network
                 if (c is RpcClient)
                 {
                     RpcClient rpcClient = (RpcClient)c;
-                    tasks.Add(rpcClient.Stream.WriteAsync(notification));
+                    // tasks.Add(rpcClient.Stream.WriteAsync(notification));
+                    tasks.Add(SendNotification(rpcClient, notification));
                 }
             }
 
@@ -355,7 +376,8 @@ namespace ShootTheMoon.Network
 
                     Notification n = new Notification();
                     n.Hand = hand;
-                    tasks.Add(rpcClient.Stream.WriteAsync(n));
+                    // tasks.Add(rpcClient.Stream.WriteAsync(n));
+                    tasks.Add(SendNotification(rpcClient, n));
                 }
             }
 
@@ -369,7 +391,8 @@ namespace ShootTheMoon.Network
 
                 Notification n = new Notification();
                 n.BidRequest = new BidRequest();
-                await rpcClient.Stream.WriteAsync(n);
+                // await rpcClient.Stream.WriteAsync(n);
+                await SendNotification(rpcClient, n);
                 Log.Debug("Request Bid Notification complete for game " + game.Name);
             }
         }

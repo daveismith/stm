@@ -1,5 +1,6 @@
-import { SeatDetails } from '../../../proto/shoot_pb';
+import { SeatDetails, BidDetails, Hand } from '../../../proto/shoot_pb';
 import { Seat } from "../Models/Seat";
+import { Bid } from "../Models/Bid";
 import { GameSettings } from "./GameSettings3D";
 import { baseRotation } from "./SceneFunctions";
 import { SeatCube } from "./SeatCube";
@@ -8,8 +9,12 @@ import { BidNumberCube } from './BidNumberCube';
 import { BidSuitCube } from './BidSuitCube';
 import { ReadyCube } from './ReadyCube';
 import { Seat3D } from './Seat3D';
+import { Card3D } from './Card3D';
+import { Scene } from '@babylonjs/core';
+import { CardStack3D } from './CardStack3D';
 
 class SceneController {
+    static scene: Scene;
     static seatCubes: SeatCube[] = [];
     static bidNumberCubes: BidNumberCube[][] = [];
     static bidSuitCubes: BidSuitCube[][] = [];
@@ -101,6 +106,43 @@ class SceneController {
                     this.unreadyCubes[GameSettings.currentPlayer].show();
                 }
             }
+        }
+    }
+
+    static startGameListener () {
+        for (let seatCube of this.seatCubes) {
+            seatCube.hideAndDisable();
+        }
+    }
+
+    static handListener (hand: Hand) {
+        // CardStack3D.arrangeDeck(hand.getHandList());
+
+        // Card3D.dealCards(this.scene);
+    }
+
+    static bidRequestListener () {
+        let player: number = GameSettings.currentPlayer;
+
+        for (let j = 0; j < this.bidSuitCubes[player].length; j++) {
+            this.bidSuitCubes[player][j].enable();
+        }
+        for (let j = 0; j < this.bidNumberCubes[player].length; j++) {
+            this.bidNumberCubes[player][j].enable();
+        }
+
+        this.unreadyCubes[GameSettings.currentPlayer].enable();
+        this.unreadyCubes[GameSettings.currentPlayer].show();
+    }
+
+    static bidsListener (bidDetailsList: BidDetails[]) {
+        for (let bidDetails of bidDetailsList) {
+            const bid: Bid = {
+                number: bidDetails.getTricks(),
+                shootNum: bidDetails.getShootNum(),
+                trump: bidDetails.getTrump(),
+                seat: bidDetails.getSeat(),
+            };
         }
     }
 

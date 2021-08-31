@@ -18,6 +18,7 @@ import {
 } from "@babylonjs/gui";
 
 import { GameSettings } from "./GameSettings3D";
+import { Bid } from "../Models/Bid";
 
 import iconTextures from "./resources/images/icons.png";
 
@@ -28,8 +29,11 @@ class BidSuitCube {
     mesh: Mesh;
     pivot: TransformNode;
     button: MeshButton3D;
+    suit: Bid.Trump;
 
-    constructor(scene: Scene, manager: GUI3DManager, pivot: TransformNode, i: number, j: number) {
+    constructor(scene: Scene, manager: GUI3DManager, pivot: TransformNode, i: number, j: number, suit: Bid.Trump) {
+        this.suit = suit;
+
         var faceUV = new Array(6);
 
         this.pivot = pivot;
@@ -117,6 +121,11 @@ class BidSuitCube {
     disable () {
         this.mesh.isPickable = false;
         this.mesh.visibility = 0;
+    }
+
+    enable () {
+        this.mesh.isPickable = true;
+        this.mesh.visibility = 1;
     }
 }
 

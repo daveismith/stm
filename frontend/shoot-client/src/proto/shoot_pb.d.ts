@@ -268,41 +268,41 @@ export namespace BidRequest {
   }
 }
 
-export class Bid extends jspb.Message {
+export class BidDetails extends jspb.Message {
   getTricks(): number;
-  setTricks(value: number): Bid;
+  setTricks(value: number): BidDetails;
 
   getShootNum(): number;
-  setShootNum(value: number): Bid;
+  setShootNum(value: number): BidDetails;
 
-  getTrump(): rump;
-  setTrump(value: rump): Bid;
+  getTrump(): Bid.Trump;
+  setTrump(value: Bid.Trump): BidDetails;
 
   getSeat(): number;
-  setSeat(value: number): Bid;
+  setSeat(value: number): BidDetails;
 
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): Bid.AsObject;
-  static toObject(includeInstance: boolean, msg: Bid): Bid.AsObject;
-  static serializeBinaryToWriter(message: Bid, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): Bid;
-  static deserializeBinaryFromReader(message: Bid, reader: jspb.BinaryReader): Bid;
+  toObject(includeInstance?: boolean): BidDetails.AsObject;
+  static toObject(includeInstance: boolean, msg: BidDetails): BidDetails.AsObject;
+  static serializeBinaryToWriter(message: BidDetails, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): BidDetails;
+  static deserializeBinaryFromReader(message: BidDetails, reader: jspb.BinaryReader): BidDetails;
 }
 
-export namespace Bid {
+export namespace BidDetails {
   export type AsObject = {
     tricks: number,
     shootNum: number,
-    trump: rump,
+    trump: Bid.Trump,
     seat: number,
   }
 }
 
 export class BidList extends jspb.Message {
-  getBidsList(): Array<Bid>;
+  getBidsList(): Array<BidDetails>;
   setBidsList(value: Array<Bid>): BidList;
   clearBidsList(): BidList;
-  addBids(value?: Bid, index?: number): Bid;
+  addBids(value?: BidDetails, index?: number): BidDetails;
 
   getCurrentBidder(): number;
   setCurrentBidder(value: number): BidList;
@@ -317,8 +317,38 @@ export class BidList extends jspb.Message {
 
 export namespace BidList {
   export type AsObject = {
-    bidsList: Array<Bid.AsObject>,
+    bidsList: Array<BidDetails.AsObject>,
     currentBidder: number,
+  }
+}
+
+export class createBidRequest extends jspb.Message {
+  getTricks(): number;
+  setTricks(value: number): BidDetails;
+
+  getShootNum(): number;
+  setShootNum(value: number): BidDetails;
+
+  getTrump(): Bid.Trump;
+  setTrump(value: Bid.Trump): BidDetails;
+
+  getSeat(): number;
+  setSeat(value: number): BidDetails;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): BidDetails.AsObject;
+  static toObject(includeInstance: boolean, msg: BidDetails): BidDetails.AsObject;
+  static serializeBinaryToWriter(message: BidDetails, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): BidDetails;
+  static deserializeBinaryFromReader(message: BidDetails, reader: jspb.BinaryReader): BidDetails;
+}
+
+export namespace createBidRequest {
+  export type AsObject = {
+    tricks: number,
+    shootNum: number,
+    trump: Bid.Trump,
+    seat: number,
   }
 }
 

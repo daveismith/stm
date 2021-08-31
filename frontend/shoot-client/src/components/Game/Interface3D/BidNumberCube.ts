@@ -27,8 +27,11 @@ class BidNumberCube {
     mesh: Mesh;
     pivot: TransformNode;
     button: MeshButton3D;
+    tricks: number;
 
-    constructor(scene: Scene, manager: GUI3DManager, pivot: TransformNode, i: number, j: number) {
+    constructor(scene: Scene, manager: GUI3DManager, pivot: TransformNode, i: number, j: number, tricks: number) {
+        this.tricks = tricks;
+
         var faceUV = new Array(6);
 
         this.pivot = pivot;
@@ -126,6 +129,11 @@ class BidNumberCube {
     disable () {
         this.mesh.isPickable = false;
         this.mesh.visibility = 0;
+    }
+
+    enable () {
+        this.mesh.isPickable = true;
+        this.mesh.visibility = 1;
     }
 }
 

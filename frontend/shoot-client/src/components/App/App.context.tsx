@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState } from "react";
 
 import * as grpcWeb from 'grpc-web';
 import { ShootServerClient } from '../../proto/ShootServiceClientPb';
-import { CreateGameRequest, CreateGameResponse, JoinGameRequest, Notification, SetReadyStatusRequest, StatusResponse, TakeSeatRequest } from '../../proto/shoot_pb';
+import { createBidRequest, CreateGameRequest, CreateGameResponse, JoinGameRequest, Notification, SetReadyStatusRequest, StatusResponse, TakeSeatRequest } from '../../proto/shoot_pb';
 
 import { EventEmitter3D } from "../Game/Interface3D/EventEmitter3D";
 
@@ -15,6 +15,7 @@ export interface IApp {
     joinGame?(gameId: string, name: string): boolean,
     takeSeat?(seat: number): void,
     setSeatReadyStatus?(ready: boolean): void,
+    createBid?(): void,
     metadata: grpcWeb.Metadata,
     joined: boolean,
     registered: boolean,
@@ -133,6 +134,16 @@ export const AppProvider: React.FC = ({ children }) => {
             appState.eventEmitter.emit('setReadyStatusResponse', ready, false);
             return false;
         });
+    };
+
+    appState.createBid = () => {
+        if (!appState.joined) {
+            return false;
+        }
+
+        console.log('create bid');
+
+        const request: createBidRequest = new createBidRequest();
     };
 
     return (

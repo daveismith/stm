@@ -17,6 +17,7 @@ const CreateGame: React.FC = () => {
 
     return (  
         <div>
+            <button onClick={ () => createGame(2) }>Create 2 Player Game</button><br />
             <button onClick={ () => createGame(4) }>Create 4 Player Game</button><br />
             <button onClick={ () => createGame(6) }>Create 6 Player Game</button><br />
             <strong>Game Id: </strong> {gameId}

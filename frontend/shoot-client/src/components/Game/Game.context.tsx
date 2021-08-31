@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { produce } from "immer";
 import { useParams } from "react-router-dom";
 import { useApp } from "../App/App.context";
-import { Notification, SeatDetails } from '../../proto/shoot_pb';
+import { Notification, SeatDetails, BidDetails } from '../../proto/shoot_pb';
 import { Card } from "./Models/Card";
 import { Seat } from "./Models/Seat";
 import { Bid } from "./Models/Bid";
@@ -41,7 +41,9 @@ const card2: Card = {
 
 const bid2: Bid = {
     number: 6,
-    trump: Bid.Trump.SPADES
+    trump: Bid.Trump.SPADES,
+    shootNum: -1,
+    seat: 1,
 };
 
 const initialState: IGame = {
@@ -110,21 +112,47 @@ export const GameProvider: React.FC = ({ children }) => {
                         }
                         state.eventEmitter.emit("seats", seatDetailsList);
                     }));
+                } else if (notification.hasStartGame()) {
+                    console.log('start game');
+                    const obj: object = notification.toObject();
+                    console.log(obj);
+                    state.eventEmitter.emit('startGame');
                 } else if (notification.hasBidRequest()) {
                     console.log('bid request');
                     const obj: object = notification.toObject();
                     console.log(obj);
+                    state.eventEmitter.emit("bidRequest");
                 } else if (notification.hasBidList()) {
                     console.log('bid list');
                     const obj: object = notification.toObject();
                     console.log(obj);
-                } else {
-                    console.log('game data');
+                    setState(produce(draft => {
+                        const bidDetailsList: BidDetails[] = notification.getBidList()?.getBidsList() as BidDetails[];
+                        
+                        draft.bids = new Map();
+                        for (let bidDetails of bidDetailsList) {
+                            const bid: Bid = {
+                                number: bidDetails.getTricks(),
+                                shootNum: bidDetails.getShootNum(),
+                                trump: bidDetails.getTrump(),
+                                seat: bidDetails.getSeat(),
+                            };
+                            draft.bids.set(bid.seat, bid);
+                        }
+                    state.eventEmitter.emit("bids", bidDetailsList);
+                }));
+                } else if (notification.hasHand()) {
+                    console.log('received hand');
                     const obj: object = notification.toObject();
                     console.log(obj);
+                    state.eventEmitter.emit("hand", notification.getHand());
+                } else {
+                        console.log('game data');
+                        const obj: object = notification.toObject();
+                        console.log(obj);
                 }
             });
-    
+        
             registered = true;
         }
     });

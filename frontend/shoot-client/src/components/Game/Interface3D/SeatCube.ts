@@ -22,7 +22,7 @@ import { IApp } from "../../App/App.context";
 
 class SeatCube {
     seatCubeRatio = 7/8;
-    seatCubeHeight = 1/3;
+    seatCubeHeight = 1/4;
     mesh: Mesh;
     player: number;
     pivot: TransformNode;
