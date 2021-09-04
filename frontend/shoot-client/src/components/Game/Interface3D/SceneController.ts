@@ -2,7 +2,7 @@ import { SeatDetails, BidDetails, Hand } from '../../../proto/shoot_pb';
 import { Seat } from "../Models/Seat";
 import { Bid } from "../Models/Bid";
 import { GameSettings } from "./GameSettings3D";
-import { baseRotation } from "./SceneFunctions";
+import { arrangeCardsInDeck, baseRotation } from "./SceneFunctions";
 import { SeatCube } from "./SeatCube";
 import { Nameplate } from "./Nameplate";
 import { BidNumberCube } from './BidNumberCube';
@@ -113,12 +113,40 @@ class SceneController {
         for (let seatCube of this.seatCubes) {
             seatCube.hideAndDisable();
         }
+        for (let unreadyCube of this.unreadyCubes) {
+            if (unreadyCube.startGameModeActive) {
+                unreadyCube.hide();
+                unreadyCube.disable();
+                unreadyCube.confirmBidMode();
+            }
+        }
+        for (let readyCube of this.readyCubes) {
+            if (readyCube.startGameModeActive) {
+                readyCube.hide();
+                readyCube.disable();
+                readyCube.confirmBidMode();
+            }
+        }
     }
 
     static handListener (hand: Hand) {
-        // CardStack3D.arrangeDeck(hand.getHandList());
+        CardStack3D.arrangeDeck(hand.getHandList());
 
-        // Card3D.dealCards(this.scene);
+        arrangeCardsInDeck(this.scene, CardStack3D.deck);
+
+        setTimeout(() => { Card3D.dealCards(this.scene); }, 1000);
+
+        setTimeout(() => { this.pickUpListener(); }, 7500);
+    }
+
+    static pickUpListener () {
+        Card3D.pickUpCards(GameSettings.currentPlayer, this.scene);
+
+        setTimeout(() => { this.fanListener() }, 2000);
+    }
+
+    static fanListener () {
+        Card3D.fanCards(GameSettings.currentPlayer, this.scene);
     }
 
     static bidRequestListener () {
@@ -131,19 +159,41 @@ class SceneController {
             this.bidNumberCubes[player][j].enable();
         }
 
-        this.unreadyCubes[GameSettings.currentPlayer].enable();
-        this.unreadyCubes[GameSettings.currentPlayer].show();
+        for (let unreadyCube of this.unreadyCubes) {
+            if (unreadyCube.startGameModeActive) {
+                unreadyCube.hide();
+                unreadyCube.disable();
+                unreadyCube.confirmBidMode();
+            }
+        }
+        for (let readyCube of this.readyCubes) {
+            if (readyCube.startGameModeActive) {
+                readyCube.hide();
+                readyCube.disable();
+                readyCube.confirmBidMode();
+            }
+        }
+
+        this.unreadyCubes[player].enable();
+        this.unreadyCubes[player].show();
+    }
+
+    static bidResponseListener (tricks: number, shootNum: number, trump: Bid.Trump, seat: number) {
+        this.unreadyCubes[seat].disable();
+        this.unreadyCubes[seat].hide();
+        this.readyCubes[seat].enable();
+        this.readyCubes[seat].show();
     }
 
     static bidsListener (bidDetailsList: BidDetails[]) {
-        for (let bidDetails of bidDetailsList) {
-            const bid: Bid = {
-                number: bidDetails.getTricks(),
-                shootNum: bidDetails.getShootNum(),
-                trump: bidDetails.getTrump(),
-                seat: bidDetails.getSeat(),
-            };
-        }
+        // for (let bidDetails of bidDetailsList) {
+        //     const bid: Bid = {
+        //         number: bidDetails.getTricks(),
+        //         shootNum: bidDetails.getShootNum(),
+        //         trump: bidDetails.getTrump(),
+        //         seat: bidDetails.getSeat(),
+        //     };
+        // }
     }
 
     static moveCameraToSeat(seatNumber: number) {

@@ -1,6 +1,7 @@
 import { EventEmitter } from 'events';
 import { SeatDetails, BidDetails, Hand } from '../../../proto/shoot_pb';
 import { SceneController } from "./SceneController";
+import { Bid } from "../../Game/Models/Bid";
 
 // const events = require('events');
 
@@ -39,6 +40,10 @@ class EventEmitter3D extends EventEmitter {
 
         this.on('bids', function(bidDetailsList: BidDetails[]) {
             SceneController.bidsListener(bidDetailsList);
+        });
+
+        this.on('createBidResponse', function(tricks: number, shootNum: number, trump: Bid.Trump, seat: number, success: boolean) {
+            SceneController.bidResponseListener(tricks, shootNum, trump, seat);
         });
     }
 }

@@ -39,7 +39,8 @@ class Card3D {
 
         var faceUV = new Array(6);
 
-        faceUV[5] = new Vector4(rank * 128 / 1024, suit * 128 / 1024, rank * 128 / 1024 + 77 / 1024, suit * 128 / 1024 + 115 / 1024);
+        // Use rank-2 below because we're not playing with 7s and 8s.
+        faceUV[5] = new Vector4((rank-2) * 128 / 1024, suit * 128 / 1024, (rank-2) * 128 / 1024 + 77 / 1024, suit * 128 / 1024 + 115 / 1024);
     
         this.mesh = MeshBuilder.CreateBox("card", {
             width: (1.4 * 3) / 4,
@@ -80,8 +81,10 @@ class Card3D {
     animateCardSlide (
         targetPosition: Vector3,
         targetRotation: Quaternion,
-        QueuePosition: number,
+        queuePosition: number,
+        stackPosition: number,
         cardsPerSecond: number,
+        arc: number,
         scene: Scene
     ) {
         const frameRate: number = 60;
@@ -105,12 +108,12 @@ class Card3D {
         });
     
         keyFramesPX.push({
-            frame: 0 + (frameRate * QueuePosition) / cardsPerSecond,
+            frame: 0 + (frameRate * queuePosition) / cardsPerSecond,
             value: this.mesh.position.x,
         });
     
         keyFramesPX.push({
-            frame: (frameRate + frameRate * QueuePosition) / cardsPerSecond,
+            frame: (frameRate + frameRate * queuePosition) / cardsPerSecond,
             value: targetPosition.x,
         });
     
@@ -136,19 +139,19 @@ class Card3D {
         });
     
         keyFramesPY.push({
-            frame: 0 + (frameRate * QueuePosition) / cardsPerSecond,
+            frame: 0 + (frameRate * queuePosition) / cardsPerSecond,
             value: this.mesh.position.y,
         });
     
         keyFramesPY.push({
-            frame: (frameRate / 2 + frameRate * QueuePosition) / cardsPerSecond,
-            value: targetPosition.y + 0.25,
+            frame: (frameRate / 2 + frameRate * queuePosition) / cardsPerSecond,
+            value: targetPosition.y + arc,
         });
     
         keyFramesPY.push({
-            frame: (frameRate + frameRate * QueuePosition) / cardsPerSecond,
+            frame: (frameRate + frameRate * queuePosition) / cardsPerSecond,
             value:
-                targetPosition.y + Math.floor(QueuePosition / GameSettings.players) * 0.0072,
+                targetPosition.y + Math.floor(stackPosition / GameSettings.players) * 0.0072,
         });
     
         ySlide.setKeys(keyFramesPY);
@@ -173,12 +176,12 @@ class Card3D {
         });
     
         keyFramesPZ.push({
-            frame: 0 + (frameRate * QueuePosition) / cardsPerSecond,
+            frame: 0 + (frameRate * queuePosition) / cardsPerSecond,
             value: this.mesh.position.z,
         });
     
         keyFramesPZ.push({
-            frame: (frameRate + frameRate * QueuePosition) / cardsPerSecond,
+            frame: (frameRate + frameRate * queuePosition) / cardsPerSecond,
             value: targetPosition.z,
         });
     
@@ -204,12 +207,12 @@ class Card3D {
         });
     
         keyFramesRQ.push({
-            frame: 0 + (frameRate * QueuePosition) / cardsPerSecond,
+            frame: 0 + (frameRate * queuePosition) / cardsPerSecond,
             value: this.mesh.rotationQuaternion,
         });
     
         keyFramesRQ.push({
-            frame: (frameRate + frameRate * QueuePosition) / cardsPerSecond,
+            frame: (frameRate + frameRate * queuePosition) / cardsPerSecond,
             value: targetRotation,
         });
     
@@ -220,7 +223,7 @@ class Card3D {
             this.mesh,
             [xSlide, ySlide, zSlide, qRotate],
             0,
-            (frameRate + frameRate * QueuePosition) / cardsPerSecond,
+            (frameRate + frameRate * queuePosition) / cardsPerSecond,
             true
         );    
     }
@@ -424,10 +427,11 @@ class Card3D {
         keyFramesPX.push({
             frame: frameRate / cardsPerSecond,
             value:
-            CardStack3D.handStacks[player].position.x +
+                // Math.sin((2 / GameSettings.players) * Math.PI * player) *
+                (CardStack3D.handStacks[player].position.x +
                 ((fanPosition - GameSettings.deckSize / GameSettings.players / 2) * GameSettings.handRadius.x) /
-                (GameSettings.deckSize / GameSettings.players),
-        });
+                (GameSettings.deckSize / GameSettings.players)),
+            });
     
         xSlide.setKeys(keyFramesPX);
         xSlide.setEasingFunction(xSlideEase);
@@ -482,11 +486,10 @@ class Card3D {
         keyFramesPZ.push({
             frame: frameRate / cardsPerSecond,
             value:
-                CardStack3D.handStacks[player].position.z +
-                ((-1 / 64) *
-                    Math.pow(fanPosition + 0.5 - GameSettings.deckSize / GameSettings.players / 2, 2) +
-                    0.5) *
-                GameSettings.handRadius.z,
+                    // Math.cos((2 / GameSettings.players) * Math.PI * player + Math.PI) *
+                    (CardStack3D.handStacks[player].position.z +
+                        ((-1 / 64) * Math.pow(fanPosition + 0.5 - GameSettings.deckSize / GameSettings.players / 2, 2) + 0.5) *
+                        GameSettings.handRadius.z),
         });
     
         zSlide.setKeys(keyFramesPZ);
@@ -533,7 +536,7 @@ class Card3D {
         )
     }
     
-    dealCard (scene: Scene, player: number, QueuePosition: number) {
+    dealCard (scene: Scene, player: number, queuePosition: number) {
         const targetStack = CardStack3D.dealMatStacks[player];
         targetStack.addToStack(this);
 
@@ -555,7 +558,7 @@ class Card3D {
         );
         const position = targetStack.position.add(stackHeightCompensation).add(positionDrift);
             
-        this.animateCardSlide(position, rotationQuaternion, QueuePosition, 8, scene);
+        this.animateCardSlide(position, rotationQuaternion, queuePosition, queuePosition, 8, 0.25, scene);
     }
 
     playCard (player: number, scene: Scene) {
@@ -580,7 +583,7 @@ class Card3D {
         );
         const position = targetStack.position.add(stackHeightCompensation).add(positionDrift);
             
-        this.animateCardSlide(position, rotationQuaternion, 0, 1, scene);
+        this.animateCardSlide(position, rotationQuaternion, 0, 0, 1, 0.25, scene);
     }
 
     equals (comparator: Card) {
@@ -594,8 +597,17 @@ class Card3D {
         this.animateCardToHand(player, 1, scene);
     }
 
+    static pickUpCards (player: number, scene: Scene) {
+        const targetStack: CardStack3D = CardStack3D.dealMatStacks[player];
+        const cardsInStack: number = targetStack.cardsInStack;
+
+        for (let i: number = 0; i < cardsInStack; i++) {
+            targetStack.index[i]?.pickUpCard(player, scene);
+        }
+    }
+
     fanCard (player: number, scene: Scene) {
-        const targetStack = CardStack3D.fanStacks[player];
+        const targetStack: CardStack3D = CardStack3D.fanStacks[player];
         targetStack.addToStack(this);
 
         const fanPosition: number = targetStack.cardsInStack;
@@ -603,22 +615,33 @@ class Card3D {
         this.animateAddCardToFan(player, fanPosition, 1, scene);
     }
 
+    static fanCards (player: number, scene: Scene) {
+        const targetStack: CardStack3D = CardStack3D.handStacks[player];
+        const cardsInStack: number = targetStack.cardsInStack;
+
+        for (let i: number = 0; i < cardsInStack; i++) {
+            targetStack.index[i]?.fanCard(player, scene);
+        }
+    }
+
     static dealCards (scene: Scene) {
         var deck: CardStack3D = CardStack3D.deck;
         var card: Card3D | null;
+
+        // console.log(deck.index);
     
-        for (var i = 0; i < GameSettings.deckSize; i++) {
-            card = deck.index[deck.cardsInStack - 1];
+        for (var i = GameSettings.deckSize - 1; i >= 0; i--) {
+            card = deck.index[i];
             
             if (card !== null) {
                 card.dealCard(
                     scene,
                     i % GameSettings.players,
-                    i
+                    GameSettings.deckSize - 1 - i
                 );
             }
         }
     } 
 }
 
-export { Card3D as Card3D };
+export { Card3D };

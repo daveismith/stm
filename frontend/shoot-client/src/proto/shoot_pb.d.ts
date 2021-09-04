@@ -322,28 +322,28 @@ export namespace BidList {
   }
 }
 
-export class createBidRequest extends jspb.Message {
+export class CreateBidRequest extends jspb.Message {
   getTricks(): number;
-  setTricks(value: number): BidDetails;
+  setTricks(value: number): CreateBidRequest;
 
   getShootNum(): number;
-  setShootNum(value: number): BidDetails;
+  setShootNum(value: number): CreateBidRequest;
 
   getTrump(): Bid.Trump;
-  setTrump(value: Bid.Trump): BidDetails;
+  setTrump(value: Bid.Trump): CreateBidRequest;
 
   getSeat(): number;
-  setSeat(value: number): BidDetails;
+  setSeat(value: number): CreateBidRequest;
 
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): BidDetails.AsObject;
-  static toObject(includeInstance: boolean, msg: BidDetails): BidDetails.AsObject;
-  static serializeBinaryToWriter(message: BidDetails, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): BidDetails;
-  static deserializeBinaryFromReader(message: BidDetails, reader: jspb.BinaryReader): BidDetails;
+  toObject(includeInstance?: boolean): CreateBidRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: CreateBidRequest): CreateBidRequest.AsObject;
+  static serializeBinaryToWriter(message: CreateBidRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): CreateBidRequest;
+  static deserializeBinaryFromReader(message: CreateBidRequest, reader: jspb.BinaryReader): CreateBidRequest;
 }
 
-export namespace createBidRequest {
+export namespace CreateBidRequest {
   export type AsObject = {
     tricks: number,
     shootNum: number,

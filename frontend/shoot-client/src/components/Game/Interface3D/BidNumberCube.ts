@@ -28,6 +28,8 @@ class BidNumberCube {
     pivot: TransformNode;
     button: MeshButton3D;
     tricks: number;
+    static activeCube: BidNumberCube | null;
+    isActiveCube: boolean = false;
 
     constructor(scene: Scene, manager: GUI3DManager, pivot: TransformNode, i: number, j: number, tricks: number) {
         this.tricks = tricks;
@@ -66,7 +68,10 @@ class BidNumberCube {
 
         this.button = new MeshButton3D(this.mesh, "bidNumberCubeButton");
         this.button.onPointerDownObservable.add(() => {
-            this.animateBidCube(scene, 1);
+            if (this.isActiveCube)
+                this.deactivate(scene);
+            else
+                this.activate(scene);
         });
 
         manager.addControl(this.button);
@@ -79,12 +84,28 @@ class BidNumberCube {
         );
     }
 
-    animateBidCube (scene: Scene, duration: number) {
+    activate (scene: Scene) {
+        BidNumberCube.activeCube?.deactivate(scene);
+
+        BidNumberCube.activeCube = this;
+        this.isActiveCube = true;
+
+        this.animateBidCube(scene, 1, true);
+    }
+
+    deactivate (scene: Scene) {
+        BidNumberCube.activeCube = null;
+        this.isActiveCube = false;
+
+        this.animateBidCube(scene, 1, false);
+    }
+
+    animateBidCube (scene: Scene, duration: number, directionUp: boolean) {
         const frameRate: number = 60;
         const bidCubeBounceHeight = 2;
         var targetHeight: number = 0;
     
-        if (this.mesh.position.y < 0) {
+        if (directionUp) {
             targetHeight = this.mesh.position.y + bidCubeBounceHeight;
         }
         else {

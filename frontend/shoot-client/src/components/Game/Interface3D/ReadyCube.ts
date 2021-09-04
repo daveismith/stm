@@ -32,6 +32,9 @@ class ReadyCube {
     appState: IApp;
     cubeStartingPosition: Vector3;
     pivotStartingPosition: Vector3;
+    startGameModeActive: boolean = false;
+    confirmBidModeActive: boolean = false;
+
 
     constructor (scene: Scene, manager: GUI3DManager, player: number, readyStatus: boolean, appState: IApp) {
         this.appState = appState;
@@ -118,6 +121,9 @@ class ReadyCube {
     }
 
     startGameMode() {
+        this.confirmBidModeActive = false;
+        this.startGameModeActive = true;
+
         this.button.onPointerDownObservable.clear();
 
         this.button.onPointerDownObservable.add(() => {
@@ -126,10 +132,13 @@ class ReadyCube {
     }
 
     confirmBidMode() {
+        this.startGameModeActive = false;
+        this.confirmBidModeActive = true;
+
         this.button.onPointerDownObservable.clear();
 
         this.button.onPointerDownObservable.add(() => {
-            if (this.appState.setSeatReadyStatus) this.appState.setSeatReadyStatus(!this.readyValue);
+            if (this.appState.createBid) this.appState.createBid(1, -1, 0, 0);
         });
     }
 }

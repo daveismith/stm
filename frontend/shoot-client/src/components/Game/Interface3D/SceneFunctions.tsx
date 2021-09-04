@@ -25,7 +25,6 @@ import { BidNumberCube } from "./BidNumberCube";
 import { BidSuitCube } from "./BidSuitCube";
 import { SeatCube } from "./SeatCube";
 import { ReadyCube } from "./ReadyCube";
-import { Bid } from "../Models/Bid";
 
 // @ts-ignore TS6133
 import sceneAssets from "./resources/stm.glb";
@@ -58,11 +57,17 @@ const baseRotationQuaternion = (seat: number) => {
 
 //Create a deck of cards at the deck position
 const buildDeck = (scene: Scene, manager: GUI3DManager) => {
-    var card: Card3D;
+    let card: Card3D;
+    let numRanks: number = 6;
+    let numSuits: number = 4;
 
-    for (var i = 0; i < GameSettings.deckSize; i++) {
-        card = new Card3D(scene, manager, i % 6 + 2, i % 4); // Add 2 since we're not including 7s and 8s for now.
-        CardStack3D.deck.addToStack(card);
+    for (let k = 0; k < 2; k++) { // Assuming 2 copies of each card.
+        for (let i = 0; i < numRanks; i++) {
+            for (let j = 0; j < numSuits; j++) {
+                card = new Card3D(scene, manager, i+2, j); // Add 2 since we're not including 7s and 8s.
+                CardStack3D.deck.addToStack(card);
+            }
+        }
     }
 };
 
@@ -135,6 +140,21 @@ const buildReadyCubes = (scene: Scene, manager: GUI3DManager, appState: IApp) =>
 
     SceneController.unreadyCubes = unreadyCubes;
     SceneController.readyCubes = readyCubes;
+}
+
+const arrangeCardsInDeck = (scene: Scene, deck: CardStack3D) => {
+    let card: Card3D;
+    let targetPosition: Vector3;
+    let targetY: number;
+
+    for (let i: number = 0; i < GameSettings.deckSize; i++) {
+        card = deck.index[i]!;
+
+        targetY = CardStack3D.deck.position.y + CardStack3D.cardStackSpacing * i;
+        targetPosition = new Vector3(card.mesh.position.x, targetY, card.mesh.position.z);
+
+        card.animateCardSlide(targetPosition, card.mesh.rotationQuaternion!, i, 0, 48, 0, scene);
+    }
 }
 
 export const onSceneReady = (scene: Scene, gameState: IGame, appState: IApp) => {
@@ -222,4 +242,4 @@ export const onRender = (scene: Scene) => {
     // }
 };
 
-export { baseRotation, baseRotationQuaternion, gaussianRandom };
+export { arrangeCardsInDeck, baseRotation, baseRotationQuaternion, gaussianRandom };

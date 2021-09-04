@@ -114,18 +114,18 @@ export const GameProvider: React.FC = ({ children }) => {
                     }));
                 } else if (notification.hasStartGame()) {
                     console.log('start game');
-                    const obj: object = notification.toObject();
-                    console.log(obj);
+                    // const obj: object = notification.toObject();
+                    // console.log(obj);
                     state.eventEmitter.emit('startGame');
                 } else if (notification.hasBidRequest()) {
                     console.log('bid request');
-                    const obj: object = notification.toObject();
-                    console.log(obj);
+                    // const obj: object = notification.toObject();
+                    // console.log(obj);
                     state.eventEmitter.emit("bidRequest");
                 } else if (notification.hasBidList()) {
                     console.log('bid list');
-                    const obj: object = notification.toObject();
-                    console.log(obj);
+                    // const obj: object = notification.toObject();
+                    // console.log(obj);
                     setState(produce(draft => {
                         const bidDetailsList: BidDetails[] = notification.getBidList()?.getBidsList() as BidDetails[];
                         

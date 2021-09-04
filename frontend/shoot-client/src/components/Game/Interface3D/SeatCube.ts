@@ -79,7 +79,7 @@ class SeatCube {
         if (SceneController.seats[player] && !SceneController.seats[player].empty)
             this.hideAndDisable();
 
-            const axis = new Vector3(0, 1, 0);
+        const axis = new Vector3(0, 1, 0);
         const angle = player * 2 * Math.PI / GameSettings.players;
         this.pivot.rotate(axis, angle);
     }
