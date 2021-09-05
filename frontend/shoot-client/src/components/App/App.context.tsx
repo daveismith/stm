@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState } from "react";
 import * as grpcWeb from 'grpc-web';
 import { ShootServerClient } from '../../proto/ShootServiceClientPb';
 import {
-    CreateBidRequest,
+    Bid as BidDetails,
     CreateGameRequest,
     CreateGameResponse, 
     JoinGameRequest,
@@ -153,7 +153,7 @@ export const AppProvider: React.FC = ({ children }) => {
 
         console.log('create bid');
 
-        const request: CreateBidRequest = new CreateBidRequest();
+        const request: BidDetails = new BidDetails();
         request.setTricks(tricks);
         request.setShootNum(shootNum);
         request.setTrump(trump);

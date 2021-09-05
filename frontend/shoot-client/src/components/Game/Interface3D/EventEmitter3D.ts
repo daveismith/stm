@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events';
-import { SeatDetails, BidDetails, Hand } from '../../../proto/shoot_pb';
+import { SeatDetails, Bid as BidDetails, Hand } from '../../../proto/shoot_pb';
 import { SceneController } from "./SceneController";
 import { Bid } from "../../Game/Models/Bid";
 

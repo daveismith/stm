@@ -129,7 +129,7 @@ class BidSuitCube {
     
         ySlide.setKeys(keyFramesPY);
         ySlide.setEasingFunction(ySlideEase);
-        debugger;
+        
         scene.beginDirectAnimation(
             this.mesh,
             [ySlide],

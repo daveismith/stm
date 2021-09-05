@@ -19,6 +19,9 @@ import { SceneController } from "./SceneController";
 
 import readyTextures from "./resources/images/ready.png";
 import { IApp } from "../../App/App.context";
+import { Bid } from "../Models/Bid";
+import { BidSuitCube } from "./BidSuitCube";
+import { BidNumberCube } from "./BidNumberCube";
 
 class ReadyCube {
     readyCubeRatio = 7/8;
@@ -138,7 +141,9 @@ class ReadyCube {
         this.button.onPointerDownObservable.clear();
 
         this.button.onPointerDownObservable.add(() => {
-            if (this.appState.createBid) this.appState.createBid(1, -1, 0, 0);
+            if (BidNumberCube.activeCube && BidSuitCube.activeCube) {
+                if (this.appState.createBid) this.appState.createBid(BidNumberCube.activeCube.tricks, 0, BidSuitCube.activeCube.suit, GameSettings.currentPlayer);
+            }
         });
     }
 }

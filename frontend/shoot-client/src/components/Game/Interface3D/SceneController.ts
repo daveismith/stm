@@ -1,4 +1,4 @@
-import { SeatDetails, BidDetails, Hand } from '../../../proto/shoot_pb';
+import { SeatDetails, Hand, Bid as BidDetails } from '../../../proto/shoot_pb';
 import { Seat } from "../Models/Seat";
 import { Bid } from "../Models/Bid";
 import { GameSettings } from "./GameSettings3D";
@@ -186,14 +186,14 @@ class SceneController {
     }
 
     static bidsListener (bidDetailsList: BidDetails[]) {
-        // for (let bidDetails of bidDetailsList) {
-        //     const bid: Bid = {
-        //         number: bidDetails.getTricks(),
-        //         shootNum: bidDetails.getShootNum(),
-        //         trump: bidDetails.getTrump(),
-        //         seat: bidDetails.getSeat(),
-        //     };
-        // }
+        for (let bidDetails of bidDetailsList) {
+            const bid: Bid = {
+                number: bidDetails.getTricks(),
+                shootNum: bidDetails.getShootNum(),
+                trump: bidDetails.getTrump(),
+                seat: bidDetails.getSeat(),
+            };
+        }
     }
 
     static moveCameraToSeat(seatNumber: number) {

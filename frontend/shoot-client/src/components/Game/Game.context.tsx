@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { produce } from "immer";
 import { useParams } from "react-router-dom";
 import { useApp } from "../App/App.context";
-import { Notification, SeatDetails, BidDetails } from '../../proto/shoot_pb';
+import { Notification, SeatDetails, Bid as BidDetails } from '../../proto/shoot_pb';
 import { Card } from "./Models/Card";
 import { Seat } from "./Models/Seat";
 import { Bid } from "./Models/Bid";
@@ -143,13 +143,13 @@ export const GameProvider: React.FC = ({ children }) => {
                 }));
                 } else if (notification.hasHand()) {
                     console.log('received hand');
-                    const obj: object = notification.toObject();
-                    console.log(obj);
+                    // const obj: object = notification.toObject();
+                    // console.log(obj);
                     state.eventEmitter.emit("hand", notification.getHand());
                 } else {
                         console.log('game data');
-                        const obj: object = notification.toObject();
-                        console.log(obj);
+                        // const obj: object = notification.toObject();
+                        // console.log(obj);
                 }
             });
         
