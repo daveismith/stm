@@ -19,7 +19,6 @@ import { SceneController } from "./SceneController";
 
 import readyTextures from "./resources/images/ready.png";
 import { IApp } from "../../App/App.context";
-import { Bid } from "../Models/Bid";
 import { BidSuitCube } from "./BidSuitCube";
 import { BidNumberCube } from "./BidNumberCube";
 

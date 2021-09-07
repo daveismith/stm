@@ -45,7 +45,7 @@ const gaussianRandom = () => {
 
 const baseRotation = (seat: number) => {
     const x = 0;
-    const y = 1/2 * Math.PI + 2 * Math.PI * seat / GameSettings.players;  //Rotations are offset by -PI/2
+    const y = 2 * Math.PI / GameSettings.players * seat + 1/2 * Math.PI;  //Rotations are offset by -PI/2
     const z = 0;
 
     return new Vector3(x, y, z);
@@ -182,7 +182,7 @@ export const onSceneReady = (scene: Scene, gameState: IGame, appState: IApp) => 
     );
     camera.upperBetaLimit = Math.PI / 2.2;
     camera.attachControl(canvas, true);
-    camera.inputs.clear();
+    // camera.inputs.clear();
     GameSettings.camera = camera;
     SceneController.moveCameraToSeat(0);
 

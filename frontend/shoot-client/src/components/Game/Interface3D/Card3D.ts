@@ -232,7 +232,8 @@ class Card3D {
     animateCardToHand (
         player: number,
         cardsPerSecond: number,
-        scene: Scene
+        scene: Scene,
+        flipToVisible: boolean
     ) {
         const frameRate: number = 60;
 
@@ -351,7 +352,9 @@ class Card3D {
 
         const handStackPosition = CardStack3D.handStacks[player].position;
         const rotationAxis = new Vector3(handStackPosition.x, 0, handStackPosition.z);
-        const targetQuaternion: Quaternion = Quaternion.RotationAxis(rotationAxis.normalize(), Math.PI).multiply(baseRotation(player).toQuaternion());
+        const targetQuaternion: Quaternion = flipToVisible?
+            Quaternion.RotationAxis(rotationAxis.normalize(), Math.PI).multiply(baseRotation(player).toQuaternion())
+            : this.mesh.rotationQuaternion!;
 
         var qRotate = new Animation(
             "qRotate",
@@ -427,10 +430,10 @@ class Card3D {
         keyFramesPX.push({
             frame: frameRate / cardsPerSecond,
             value:
-                // Math.sin((2 / GameSettings.players) * Math.PI * player) *
-                (CardStack3D.handStacks[player].position.x +
+                // CardStack3D.handStacks[player].position.x +
+                // (Math.cos((2 / GameSettings.players) * Math.PI * (player + 1)) *
                 ((fanPosition - GameSettings.deckSize / GameSettings.players / 2) * GameSettings.handRadius.x) /
-                (GameSettings.deckSize / GameSettings.players)),
+                (GameSettings.deckSize / GameSettings.players),
             });
     
         xSlide.setKeys(keyFramesPX);
@@ -457,7 +460,7 @@ class Card3D {
         keyFramesPY.push({
             frame: frameRate / cardsPerSecond,
             value:
-                CardStack3D.handStacks[player].position.y +
+                // CardStack3D.handStacks[player].position.y +
                 (0.016 * GameSettings.deckSize) / GameSettings.players -
                 0.0072 * (fanPosition + 1),
         });
@@ -486,20 +489,20 @@ class Card3D {
         keyFramesPZ.push({
             frame: frameRate / cardsPerSecond,
             value:
-                    // Math.cos((2 / GameSettings.players) * Math.PI * player + Math.PI) *
-                    (CardStack3D.handStacks[player].position.z +
-                        ((-1 / 64) * Math.pow(fanPosition + 0.5 - GameSettings.deckSize / GameSettings.players / 2, 2) + 0.5) *
-                        GameSettings.handRadius.z),
+                    // CardStack3D.handStacks[player].position.z +
+                    // (Math.cos((2 / GameSettings.players) * Math.PI * (player + 1)) *
+                    ((-1 / 64) * Math.pow(fanPosition + 0.5 - GameSettings.deckSize / GameSettings.players / 2, 2) + 0.5) *
+                        GameSettings.handRadius.z,
         });
     
         zSlide.setKeys(keyFramesPZ);
         zSlide.setEasingFunction(zSlideEase);
     
         const targetQuaternion: Quaternion = Quaternion.RotationYawPitchRoll(
-            -Math.PI + ((fanPosition + 0.5 - GameSettings.deckSize / GameSettings.players / 2) * Math.PI) / 16,
+            Math.PI/2 + ((fanPosition + 0.5 - GameSettings.deckSize / GameSettings.players / 2) * Math.PI) / 16,
             -(15 / 16) * Math.PI,
             -Math.PI / 32
-            ).multiply(baseRotationQuaternion(player));
+            );//.multiply(baseRotationQuaternion(player));
     
         var qRotate = new Animation(
             "qRotate",
@@ -592,9 +595,11 @@ class Card3D {
 
     pickUpCard (player: number, scene: Scene) {
         const targetStack = CardStack3D.handStacks[player];
+        const revealCards = player === GameSettings.currentPlayer;
+
         targetStack.addToStack(this);
 
-        this.animateCardToHand(player, 1, scene);
+        this.animateCardToHand(player, 1, scene, revealCards);
     }
 
     static pickUpCards (player: number, scene: Scene) {
@@ -611,6 +616,8 @@ class Card3D {
         targetStack.addToStack(this);
 
         const fanPosition: number = targetStack.cardsInStack;
+
+        this.mesh.setParent(CardStack3D.fanStacks[player].pivot);
 
         this.animateAddCardToFan(player, fanPosition, 1, scene);
     }

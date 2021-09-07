@@ -140,13 +140,15 @@ class SceneController {
     }
 
     static pickUpListener () {
-        Card3D.pickUpCards(GameSettings.currentPlayer, this.scene);
+        for (let i: number = 0; i < GameSettings.players; i++)
+            Card3D.pickUpCards(i, this.scene);
 
         setTimeout(() => { this.fanListener() }, 2000);
     }
 
     static fanListener () {
-        Card3D.fanCards(GameSettings.currentPlayer, this.scene);
+        for (let i: number = 0; i < GameSettings.players; i++)
+            Card3D.fanCards(i, this.scene);
     }
 
     static bidRequestListener () {
@@ -186,14 +188,14 @@ class SceneController {
     }
 
     static bidsListener (bidDetailsList: BidDetails[]) {
-        for (let bidDetails of bidDetailsList) {
-            const bid: Bid = {
-                number: bidDetails.getTricks(),
-                shootNum: bidDetails.getShootNum(),
-                trump: bidDetails.getTrump(),
-                seat: bidDetails.getSeat(),
-            };
-        }
+        // for (let bidDetails of bidDetailsList) {
+        //     const bid: Bid = {
+        //         number: bidDetails.getTricks(),
+        //         shootNum: bidDetails.getShootNum(),
+        //         trump: bidDetails.getTrump(),
+        //         seat: bidDetails.getSeat(),
+        //     };
+        // }
     }
 
     static moveCameraToSeat(seatNumber: number) {

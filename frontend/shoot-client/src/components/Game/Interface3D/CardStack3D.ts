@@ -1,4 +1,4 @@
-import { Vector3 } from "@babylonjs/core";
+import { TransformNode, Vector3 } from "@babylonjs/core";
 import { GameSettings } from "./GameSettings3D";
 import { Card3D } from "./Card3D";
 import { Card } from "../../../proto/shoot_pb";
@@ -7,6 +7,7 @@ class CardStack3D {
     cardsInStack: number = 0;
     position: Vector3 = new Vector3(0, 0, 0);
     index: Card3D[] | null[] = new Array(GameSettings.deckSize);
+    pivot: TransformNode | null = null;
 
     static cardStackSpacing = 0.008;
     static deck: CardStack3D;
@@ -32,6 +33,8 @@ class CardStack3D {
 
         CardStack3D.deck = new CardStack3D();
         CardStack3D.deck.position = new Vector3(1.5, GameSettings.tableHeight + 0.01, 1.5);
+        CardStack3D.deck.pivot = new TransformNode("deckStack");
+        CardStack3D.deck.pivot.position = CardStack3D.deck.position;
 
         // let test = MeshBuilder.CreateBox("test", {
         //     width: (1.4 * 3) / 4,
@@ -40,6 +43,9 @@ class CardStack3D {
         // );
         // test.position = CardStack3D.deck.position.clone();
         // test.position.x += 1;
+
+        let fanStackAxis: Vector3;
+        let fanStackAngle: number;
 
         //Populate all card positions
         for (i = 0; i < GameSettings.players; i++) {
@@ -52,6 +58,9 @@ class CardStack3D {
                 dealPositionRatio *
                 Math.cos((2 / GameSettings.players) * Math.PI * i)
             );
+            CardStack3D.dealMatStacks[i].pivot = new TransformNode("dealMatStack" + i);
+            CardStack3D.dealMatStacks[i].pivot!.position = CardStack3D.dealMatStacks[i].position;
+
             CardStack3D.playMatStacks[i].position = new Vector3(
                 GameSettings.tableRadius *
                 playMatRatio *
@@ -61,6 +70,9 @@ class CardStack3D {
                 playMatRatio *
                 Math.cos((2 / GameSettings.players) * Math.PI * i)
             );
+            CardStack3D.playMatStacks[i].pivot = new TransformNode("playMatStack" + i);
+            CardStack3D.playMatStacks[i].pivot!.position = CardStack3D.playMatStacks[i].position;
+            
             CardStack3D.handStacks[i].position = new Vector3(
                 GameSettings.tableRadius *
                 handRatio *
@@ -70,16 +82,27 @@ class CardStack3D {
                 handRatio *
                 Math.cos((2 / GameSettings.players) * Math.PI * i)
             );
+            CardStack3D.handStacks[i].pivot = new TransformNode("handStack" + i);
+            CardStack3D.handStacks[i].pivot!.position = CardStack3D.handStacks[i].position;
+            
             CardStack3D.fanStacks[i].position = new Vector3(
                 GameSettings.tableRadius *
                 handRatio *
                 Math.sin((2 / GameSettings.players) * Math.PI * i),
-                GameSettings.tableHeight + 0.05,
+                GameSettings.tableHeight + 0.1,
                 GameSettings.tableRadius *
                 handRatio *
                 Math.cos((2 / GameSettings.players) * Math.PI * i)
             );
-        }
+            CardStack3D.fanStacks[i].pivot = new TransformNode("fanStack" + i);
+            CardStack3D.fanStacks[i].pivot!.position = CardStack3D.fanStacks[i].position;            
+            fanStackAxis = new Vector3(0, 1, 0);
+            fanStackAngle = i * 2 * Math.PI / GameSettings.players - Math.PI;
+            CardStack3D.fanStacks[i].pivot?.rotate(fanStackAxis, fanStackAngle);
+            fanStackAxis = new Vector3(1, 0, 0);
+            fanStackAngle = -1/6 * Math.PI;
+            CardStack3D.fanStacks[i].pivot?.rotate(fanStackAxis, fanStackAngle);
+            }
     };
 
     removeFromStack (card: Card3D) {
