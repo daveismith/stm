@@ -538,7 +538,7 @@ namespace ShootTheMoon.Network
 
             try {
                 RpcClient client = FindClient(game, clientToken);
-                Log.Debug("Received a bid of (tricks: {}, suit: {}, shoot: {}) by {}", request.Tricks, request.Trump, request.ShootNum, client.Name);
+                Log.Debug("Received a bid of (tricks: {0}, suit: {1}, shoot: {2}) by {3}", request.Tricks, request.Trump, request.ShootNum, client.Name);
                 
                 Game.Trump trump = null;
                 foreach (KeyValuePair<Game.Trump, Proto.Trump> t in GameTrumpToProtoTrump) {

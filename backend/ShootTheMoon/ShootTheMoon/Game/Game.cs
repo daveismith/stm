@@ -259,11 +259,14 @@ namespace ShootTheMoon.Game
                 b = Bid.makeShootBid(seat, shoot, trump);
             }
 
-            if (CurrentBid != null && !b.isBetterThan(CurrentBid)) {
+            if (CurrentBid != null && (!b.isBetterThan(CurrentBid) || b.isPass())) {
                 return false;   // This Is A Bad Bid
             }
 
             Bids.Add(b);
+            if (CurrentBid == null || !b.isPass()) {
+                CurrentBid = b; // This Bid Replaces The Existing Bid
+            }
             
             // Find Next Player
             int nextPlayer = int.MinValue;
@@ -277,19 +280,21 @@ namespace ShootTheMoon.Game
                 }
             }
 
+            Log.Debug("Game {0} has nextPlayer of {1}, dealer: {3} and minValue of {2}, {4}", Name, nextPlayer, int.MinValue, Dealer, nextPlayer == int.MinValue);
+
             //TODO: Work On Actually Handling The Bidding
             if (nextPlayer == int.MinValue) {
                 // We're Done Bidding
                 if (CurrentBid.isShoot()) {
                     // Handle A Shoot Bid
-                    Log.Debug("Game {} received a Shoot Bid with {} shoots", Uuid, CurrentBid.ShootNumber);
+                    Log.Debug("Game {0} received a Shoot Bid with {1} shoots", Name, CurrentBid.ShootNumber);
                 } else {
                     // Handle A Normal Bid
-                    Log.Debug("Game {} received a normal bid with {} {}", Uuid, CurrentBid.Number, CurrentBid.ShootNumber);
+                    Log.Debug("Game {0} received a normal bid with {1} {2}", Name, CurrentBid.Number, CurrentBid.ShootNumber);
                 }
+                Log.Debug("Before Set Current Player");
                 CurrentPlayer = Players[CurrentBid.Seat];
                 EnterState(GameState.PLAYING_HAND);
-
             } else {
                 // Trigger Next Bid
                 CurrentPlayer = Players[nextPlayer];
