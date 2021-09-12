@@ -174,7 +174,6 @@ namespace ShootTheMoon.Network
                 n.Status.Success = false;
                 n.Status.ErrorNum = (int)ErrorCode.GAME_NOT_FOUND;
                 n.Status.ErrorText = "No Game Exists";
-                // await responseStream.WriteAsync(n);
                 await SendNotification(client, n);
                 return;
             }
@@ -188,7 +187,6 @@ namespace ShootTheMoon.Network
             JoinGameResponse jgr = new JoinGameResponse();
             jgr.Token = client.Token;
             n.JoinResponse = jgr;
-            // await responseStream.WriteAsync(n);
             await SendNotification(client, n);
 
 
@@ -231,7 +229,6 @@ namespace ShootTheMoon.Network
                 if (c is RpcClient)
                 {
                     RpcClient rpcClient = (RpcClient)c;
-                    // tasks.Add(rpcClient.Stream.WriteAsync(notification));
                     tasks.Add(SendNotification(rpcClient, notification));
                 }
             }
@@ -376,7 +373,6 @@ namespace ShootTheMoon.Network
 
                     Notification n = new Notification();
                     n.Hand = hand;
-                    // tasks.Add(rpcClient.Stream.WriteAsync(n));
                     tasks.Add(SendNotification(rpcClient, n));
                 }
             }
@@ -391,7 +387,6 @@ namespace ShootTheMoon.Network
 
                 Notification n = new Notification();
                 n.BidRequest = new BidRequest();
-                // await rpcClient.Stream.WriteAsync(n);
                 await SendNotification(rpcClient, n);
                 Log.Debug("Request Bid Notification complete for game " + game.Name);
             }
@@ -399,15 +394,12 @@ namespace ShootTheMoon.Network
 
         public async Task SendCurrentState(Game.Game game) {
             // Update The Seat List
-            //await SendSeatsList(game);
             await SeatListUpdate(game);
 
             // Update Scores
-            //await SendScore(game);
             await ScoreUpdate(game);
 
             // Update Tricks
-            //await SendTricks(game);
             await TricksUpdate(game);
 
             // Based On State, may need to send:
