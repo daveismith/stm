@@ -12,10 +12,10 @@ COPY ["ShootTheMoon/ShootTheMoon.csproj", "ShootTheMoon/"]
 RUN dotnet restore "ShootTheMoon/ShootTheMoon.csproj"
 COPY . .
 WORKDIR "/src/ShootTheMoon"
-RUN dotnet build "ShootTheMoon.csproj" -c Release -o /app/build
+RUN dotnet build "ShootTheMoon.csproj" -c Debug -o /app/build
 
 FROM build AS publish
-RUN dotnet publish "ShootTheMoon.csproj" -c Release -o /app/publish
+RUN dotnet publish "ShootTheMoon.csproj" -c Debug -o /app/publish
 
 FROM base AS final
 WORKDIR /app

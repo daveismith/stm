@@ -121,9 +121,11 @@ namespace ShootTheMoon.Network
 
             GameSettings settings = GameSettings.GamePresets["SIXPLAYER"];
             switch (request.Seats) {
+                #if DEBUG
                 case 2:
                     settings = GameSettings.GamePresets["TWOPLAYER"];
                     break;
+                #endif
                 case 4:
                     settings = GameSettings.GamePresets["FOURPLAYER"];
                     break;
