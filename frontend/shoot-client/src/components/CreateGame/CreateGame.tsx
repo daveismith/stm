@@ -11,7 +11,6 @@ const StyledDiv = styled.div`
     height: 100%;
 `;
 
-
 const useStyles = makeStyles({
     card: {
         padding: "32px",
@@ -22,7 +21,6 @@ const useStyles = makeStyles({
 });
 
 const CreateGame: React.FC = () => {
-
     const classes = useStyles();
     const [ appState ] = useApp();
     const { gameId, createGame }  = appState;
