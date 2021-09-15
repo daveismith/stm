@@ -13,6 +13,7 @@ class GameSettings {
     static deckSize = 48;
     static handRadius = new Vector3(2, 0, 1);
     static currentPlayer: number;
+    static currentDealer: number;
     static camera: ArcRotateCamera;
     static cameraAlpha: number = 3 * Math.PI / 2;
     static cameraBeta: number = Math.PI / 3;

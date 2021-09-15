@@ -89,15 +89,31 @@ namespace ShootTheMoon.Network
 
             if ((info.Type & GameEventType.RequestBid) == GameEventType.RequestBid) {
                 // Request A Bit From The Client Specified In info.Client
-            
+                if (info.AdditionalData is Client) {
+                    await RequestBid(game, (Client)info.AdditionalData);
+                }
             }
 
             if ((info.Type & GameEventType.BidUpdate) == GameEventType.BidUpdate) {
                 // Send A Bit List Update To All Players
-
+                await BidListUpdate(game);
             }
         }
 
+        private static async Task SendNotification(RpcClient client, Notification notification) {
+            bool sent = false;
+            while (!sent)
+            {
+                try {
+                    await client.Stream.WriteAsync(notification);
+                    sent = true;
+                }
+                catch (InvalidOperationException e) {
+                    Log.Debug(e.ToString());
+                    await Task.Delay(50);
+                }
+            }
+        }
 
         public override Task<CreateGameResponse> CreateGame(CreateGameRequest request, ServerCallContext context) {
 
@@ -105,6 +121,11 @@ namespace ShootTheMoon.Network
 
             GameSettings settings = GameSettings.GamePresets["SIXPLAYER"];
             switch (request.Seats) {
+                #if DEBUG
+                case 2:
+                    settings = GameSettings.GamePresets["TWOPLAYER"];
+                    break;
+                #endif
                 case 4:
                     settings = GameSettings.GamePresets["FOURPLAYER"];
                     break;
@@ -140,6 +161,7 @@ namespace ShootTheMoon.Network
         {
             Game.Game game;
             Notification n = new Notification();
+            RpcClient client = new RpcClient(responseStream, request.Name);
 
             try
             {
@@ -154,13 +176,12 @@ namespace ShootTheMoon.Network
                 n.Status.Success = false;
                 n.Status.ErrorNum = (int)ErrorCode.GAME_NOT_FOUND;
                 n.Status.ErrorText = "No Game Exists";
-                await responseStream.WriteAsync(n);
+                await SendNotification(client, n);
                 return;
             }
 
             context.UserState.Add("gameId", request.Uuid);
 
-            RpcClient client = new RpcClient(responseStream, request.Name);
             game.AddClient(client);
             //game.Clients.Add(client);
 
@@ -168,7 +189,8 @@ namespace ShootTheMoon.Network
             JoinGameResponse jgr = new JoinGameResponse();
             jgr.Token = client.Token;
             n.JoinResponse = jgr;
-            await responseStream.WriteAsync(n);
+            await SendNotification(client, n);
+
 
             // Call The Send Initial State Function To The Client 
             await SendCurrentState(game);
@@ -209,7 +231,7 @@ namespace ShootTheMoon.Network
                 if (c is RpcClient)
                 {
                     RpcClient rpcClient = (RpcClient)c;
-                    tasks.Add(rpcClient.Stream.WriteAsync(notification));
+                    tasks.Add(SendNotification(rpcClient, notification));
                 }
             }
 
@@ -270,6 +292,14 @@ namespace ShootTheMoon.Network
                 b.Tricks = bid.Number;
                 b.Trump = GameTrumpToProtoTrump[bid.Trump];
                 bidList.Bids.Add(b);
+            }
+
+            for (uint i = 0; i < game.NumPlayers; i++)
+            {
+                Client c = game.Players[i];
+                if (game.CurrentPlayer == c && game.State == GameState.AWAITING_BIDS) {
+                    bidList.CurrentBidder = i;
+                }
             }
             
             Notification n = new Notification();
@@ -345,7 +375,7 @@ namespace ShootTheMoon.Network
 
                     Notification n = new Notification();
                     n.Hand = hand;
-                    tasks.Add(rpcClient.Stream.WriteAsync(n));
+                    tasks.Add(SendNotification(rpcClient, n));
                 }
             }
 
@@ -353,17 +383,25 @@ namespace ShootTheMoon.Network
             Log.Debug("Deal Notification complete for game " + game.Name);
         }
 
+        public async Task RequestBid(Game.Game game, Client bidder) {
+            if (bidder is RpcClient) {
+                RpcClient rpcClient = (RpcClient)bidder;
+
+                Notification n = new Notification();
+                n.BidRequest = new BidRequest();
+                await SendNotification(rpcClient, n);
+                Log.Debug("Request Bid Notification complete for game " + game.Name);
+            }
+        }
+
         public async Task SendCurrentState(Game.Game game) {
             // Update The Seat List
-            //await SendSeatsList(game);
             await SeatListUpdate(game);
 
             // Update Scores
-            //await SendScore(game);
             await ScoreUpdate(game);
 
             // Update Tricks
-            //await SendTricks(game);
             await TricksUpdate(game);
 
             // Based On State, may need to send:
@@ -474,5 +512,71 @@ namespace ShootTheMoon.Network
 
             return r;
         }
+
+        public override async Task<StatusResponse> CreateBid(Proto.Bid request, ServerCallContext context) {
+            string uuid = context.RequestHeaders.GetValue(GAME_ID);
+            string clientToken = context.RequestHeaders.GetValue(CLIENT_TOKEN);
+
+            StatusResponse r = new StatusResponse();
+            Game.Game game;
+
+            try {
+                game = games[uuid];
+            }
+            catch (KeyNotFoundException) {
+                r.Success = false;
+                r.ErrorNum = (int)ErrorCode.GAME_NOT_FOUND;
+                r.ErrorText = "Game Not Found";
+                return r;
+            }
+
+            try {
+                RpcClient client = FindClient(game, clientToken);
+                Log.Debug("Received a bid of (tricks: {0}, suit: {1}, shoot: {2}) by {3}", request.Tricks, request.Trump, request.ShootNum, client.Name);
+                
+                Game.Trump trump = null;
+                foreach (KeyValuePair<Game.Trump, Proto.Trump> t in GameTrumpToProtoTrump) {
+                    if (t.Value == request.Trump) {
+                        trump = t.Key;
+                        break;
+                    }
+                }
+                game.MakeBid(request.Tricks, trump, request.ShootNum, false, client);
+            }
+            catch (KeyNotFoundException) {
+                r.Success = false;
+                r.ErrorNum = (int)ErrorCode.CLIENT_NOT_FOUND;
+                r.ErrorText = "Client Not Found";
+                return r;
+            }
+
+            r.Success = true;
+            r.ErrorNum = (int)ErrorCode.SUCCESS;
+            r.ErrorText = "";
+
+            return r;
+        }
+
+        /*
+        public virtual global::System.Threading.Tasks.Task<global::ShootTheMoon.Network.Proto.StatusResponse> TransferCard(global::ShootTheMoon.Network.Proto.Transfer request, grpc::ServerCallContext context)
+        {
+            throw new grpc::RpcException(new grpc::Status(grpc::StatusCode.Unimplemented, ""));
+        }
+
+        public virtual global::System.Threading.Tasks.Task<global::ShootTheMoon.Network.Proto.ThrowawayResponse> ThrowawayCard(global::ShootTheMoon.Network.Proto.Card request, grpc::ServerCallContext context)
+        {
+            throw new grpc::RpcException(new grpc::Status(grpc::StatusCode.Unimplemented, ""));
+        }
+
+        public virtual global::System.Threading.Tasks.Task<global::ShootTheMoon.Network.Proto.StatusResponse> PlayCard(global::ShootTheMoon.Network.Proto.Card request, grpc::ServerCallContext context)
+        {
+            throw new grpc::RpcException(new grpc::Status(grpc::StatusCode.Unimplemented, ""));
+        }
+
+        public virtual global::System.Threading.Tasks.Task<global::ShootTheMoon.Network.Proto.StatusResponse> LeaveGame(global::ShootTheMoon.Network.Proto.LeaveGameRequest request, grpc::ServerCallContext context)
+        {
+            throw new grpc::RpcException(new grpc::Status(grpc::StatusCode.Unimplemented, ""));
+        }
+        */
     }
 }

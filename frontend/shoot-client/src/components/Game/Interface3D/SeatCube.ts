@@ -22,7 +22,7 @@ import { IApp } from "../../App/App.context";
 
 class SeatCube {
     seatCubeRatio = 7/8;
-    seatCubeHeight = 1/3;
+    seatCubeHeight = 1/4;
     mesh: Mesh;
     player: number;
     pivot: TransformNode;
@@ -79,7 +79,7 @@ class SeatCube {
         if (SceneController.seats[player] && !SceneController.seats[player].empty)
             this.hideAndDisable();
 
-            const axis = new Vector3(0, 1, 0);
+        const axis = new Vector3(0, 1, 0);
         const angle = player * 2 * Math.PI / GameSettings.players;
         this.pivot.rotate(axis, angle);
     }

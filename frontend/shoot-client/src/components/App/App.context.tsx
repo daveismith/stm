@@ -2,9 +2,19 @@ import React, { createContext, useContext, useState } from "react";
 
 import * as grpcWeb from 'grpc-web';
 import { ShootServerClient } from '../../proto/ShootServiceClientPb';
-import { CreateGameRequest, CreateGameResponse, JoinGameRequest, Notification, SetReadyStatusRequest, StatusResponse, TakeSeatRequest } from '../../proto/shoot_pb';
+import {
+    Bid as BidDetails,
+    CreateGameRequest,
+    CreateGameResponse, 
+    JoinGameRequest,
+    Notification,
+    SetReadyStatusRequest,
+    StatusResponse,
+    TakeSeatRequest
+} from '../../proto/shoot_pb';
 
 import { EventEmitter3D } from "../Game/Interface3D/EventEmitter3D";
+import { Bid } from "../Game/Models/Bid";
 
 export interface IApp {
     connection?: ShootServerClient
@@ -15,6 +25,7 @@ export interface IApp {
     joinGame?(gameId: string, name: string): boolean,
     takeSeat?(seat: number): void,
     setSeatReadyStatus?(ready: boolean): void,
+    createBid?(tricks: number, shootNum: number, trump: Bid.Trump, seat: number): void,
     metadata: grpcWeb.Metadata,
     joined: boolean,
     registered: boolean,
@@ -131,6 +142,30 @@ export const AppProvider: React.FC = ({ children }) => {
             return value.getSuccess();
         }).catch((reason: any) => { 
             appState.eventEmitter.emit('setReadyStatusResponse', ready, false);
+            return false;
+        });
+    };
+
+    appState.createBid = (tricks: number, shootNum: number, trump: Bid.Trump, seat:number) => {
+        if (!appState.joined) {
+            return false;
+        }
+
+        console.log('create bid');
+
+        const request: BidDetails = new BidDetails();
+        request.setTricks(tricks);
+        request.setShootNum(shootNum);
+        request.setTrump(trump);
+        request.setSeat(seat);
+
+        connection.createBid(request, appState.metadata).then((value: StatusResponse) => {
+            appState.eventEmitter.emit('createBidResponse', tricks, shootNum, trump, seat, value.getSuccess());
+            console.log('bid succeeded');
+            return value.getSuccess();
+        }).catch((reason: any) => { 
+            appState.eventEmitter.emit('createBidResponse', tricks, shootNum, trump, seat, false);
+            console.log('bid failed ' + reason);
             return false;
         });
     };

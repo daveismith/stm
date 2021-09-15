@@ -1,7 +1,9 @@
 
 export interface Bid {
     number: number;
+    shootNum: number;
     trump: Bid.Trump;
+    seat: number;
 }
 
 export namespace Bid {

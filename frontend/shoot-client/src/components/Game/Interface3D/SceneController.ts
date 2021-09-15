@@ -1,15 +1,20 @@
-import { SeatDetails } from '../../../proto/shoot_pb';
+import { SeatDetails, Hand, Bid as BidDetails } from '../../../proto/shoot_pb';
 import { Seat } from "../Models/Seat";
+import { Bid } from "../Models/Bid";
 import { GameSettings } from "./GameSettings3D";
-import { baseRotation } from "./SceneFunctions";
+import { arrangeCardsInDeck, baseRotation } from "./SceneFunctions";
 import { SeatCube } from "./SeatCube";
 import { Nameplate } from "./Nameplate";
 import { BidNumberCube } from './BidNumberCube';
 import { BidSuitCube } from './BidSuitCube';
 import { ReadyCube } from './ReadyCube';
 import { Seat3D } from './Seat3D';
+import { Card3D } from './Card3D';
+import { Scene } from '@babylonjs/core';
+import { CardStack3D } from './CardStack3D';
 
 class SceneController {
+    static scene: Scene;
     static seatCubes: SeatCube[] = [];
     static bidNumberCubes: BidNumberCube[][] = [];
     static bidSuitCubes: BidSuitCube[][] = [];
@@ -102,6 +107,95 @@ class SceneController {
                 }
             }
         }
+    }
+
+    static startGameListener () {
+        for (let seatCube of this.seatCubes) {
+            seatCube.hideAndDisable();
+        }
+        for (let unreadyCube of this.unreadyCubes) {
+            if (unreadyCube.startGameModeActive) {
+                unreadyCube.hide();
+                unreadyCube.disable();
+                unreadyCube.confirmBidMode();
+            }
+        }
+        for (let readyCube of this.readyCubes) {
+            if (readyCube.startGameModeActive) {
+                readyCube.hide();
+                readyCube.disable();
+                readyCube.confirmBidMode();
+            }
+        }
+    }
+
+    static handListener (hand: Hand) {
+        CardStack3D.arrangeDeck(hand.getHandList());
+
+        arrangeCardsInDeck(this.scene, CardStack3D.deck);
+
+        setTimeout(() => { Card3D.dealCards(this.scene); }, 1000);
+
+        setTimeout(() => { this.pickUpListener(); }, 7500);
+    }
+
+    static pickUpListener () {
+        for (let i: number = 0; i < GameSettings.players; i++)
+            Card3D.pickUpCards(i, this.scene);
+
+        setTimeout(() => { this.fanListener() }, 2000);
+    }
+
+    static fanListener () {
+        for (let i: number = 0; i < GameSettings.players; i++)
+            Card3D.fanCards(i, this.scene);
+    }
+
+    static bidRequestListener () {
+        let player: number = GameSettings.currentPlayer;
+
+        for (let j = 0; j < this.bidSuitCubes[player].length; j++) {
+            this.bidSuitCubes[player][j].enable();
+        }
+        for (let j = 0; j < this.bidNumberCubes[player].length; j++) {
+            this.bidNumberCubes[player][j].enable();
+        }
+
+        for (let unreadyCube of this.unreadyCubes) {
+            if (unreadyCube.startGameModeActive) {
+                unreadyCube.hide();
+                unreadyCube.disable();
+                unreadyCube.confirmBidMode();
+            }
+        }
+        for (let readyCube of this.readyCubes) {
+            if (readyCube.startGameModeActive) {
+                readyCube.hide();
+                readyCube.disable();
+                readyCube.confirmBidMode();
+            }
+        }
+
+        this.unreadyCubes[player].enable();
+        this.unreadyCubes[player].show();
+    }
+
+    static bidResponseListener (tricks: number, shootNum: number, trump: Bid.Trump, seat: number) {
+        this.unreadyCubes[seat].disable();
+        this.unreadyCubes[seat].hide();
+        this.readyCubes[seat].enable();
+        this.readyCubes[seat].show();
+    }
+
+    static bidsListener (bidDetailsList: BidDetails[]) {
+        // for (let bidDetails of bidDetailsList) {
+        //     const bid: Bid = {
+        //         number: bidDetails.getTricks(),
+        //         shootNum: bidDetails.getShootNum(),
+        //         trump: bidDetails.getTrump(),
+        //         seat: bidDetails.getSeat(),
+        //     };
+        // }
     }
 
     static moveCameraToSeat(seatNumber: number) {

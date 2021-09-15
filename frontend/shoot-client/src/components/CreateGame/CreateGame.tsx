@@ -51,6 +51,8 @@ const CreateGame: React.FC = () => {
                     ̿̿ ̿̿ ̿̿ ̿'̿'\̵͇̿̿\з= ( ▀ ͜͞ʖ▀) =ε/̵͇̿̿/’̿’̿ ̿ ̿̿ ̿̿ ̿̿
                     </h2>
                     <br />
+                    <button variant="contained" className={classes.button} onClick={ () => createGame(2) }>Create 2 Player Game</button>
+                    <br />
                     <Button variant="contained" className={classes.button} onClick={ () => createGame(4) }>Create 4 Player Game</Button>
                     <br />
                     <Button variant="contained" className={classes.button} onClick={ () => createGame(6) }>Create 6 Player Game</Button>
