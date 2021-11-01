@@ -13,6 +13,18 @@ import { Card3D } from './Card3D';
 import { Scene } from '@babylonjs/core';
 import { CardStack3D } from './CardStack3D';
 
+enum GameState {
+    Unknown = -1,
+    ChoosingSeat = 0,
+    WaitingForSeatConfirmation = 1,
+    SeatedNotReady = 2,
+    WaitingForReadyConfirmation = 3,
+    SeatedReady = 4,
+    ObservingBids = 10,
+    ChoosingBid = 11,
+    WaitingForBidConfirmation = 12
+}
+
 class SceneController {
     static scene: Scene;
     static seatCubes: SeatCube[] = [];
@@ -22,6 +34,9 @@ class SceneController {
     static unreadyCubes: ReadyCube[] = [];
     static readyCubes: ReadyCube[] = [];
     static seats: Seat3D[] = [];
+    static bids: Bid[] = [];
+    static currentBid: Bid;
+    static gameState: GameState = GameState.ChoosingSeat;
 
     static tricksListener () {
     }
@@ -70,19 +85,27 @@ class SceneController {
     // Server response to our take-seat request.
     static seatRequestResponseListener (seatNumber: number, success: boolean) {
         if (success) {
-            this.moveCameraToSeat(seatNumber);
+            // Assign seat number to the client player.
+            GameSettings.currentPlayer = seatNumber;
+
+            this.moveCameraToSeat(GameSettings.currentPlayer);
             // this.nameplates[seatNumber].disable();
 
+            // Hide seat selection buttons.
             for (let seatCube of this.seatCubes) {
                 seatCube.hideAndDisable();
             }
 
+            // Show start-game ready buttons.
             for (let seat of this.seats) {
                 if (seat.ready) this.readyCubes[seat.index].show();
                 else this.unreadyCubes[seat.index].show();
             }
 
+            // Show the client's ready button, defaulting to not ready.
             this.unreadyCubes[seatNumber].enable();
+
+            this.gameState = GameState.SeatedNotReady;
         }
     }
 
@@ -91,19 +114,23 @@ class SceneController {
         if (this.readyCubes[GameSettings.currentPlayer] && this.unreadyCubes[GameSettings.currentPlayer]) {
 
             if (success) {
-                if (readyStatus)
+                if (readyStatus && this.gameState === GameState.WaitingForReadyConfirmation)
                 {
                     this.unreadyCubes[GameSettings.currentPlayer].disable();
                     this.unreadyCubes[GameSettings.currentPlayer].hide();
                     this.readyCubes[GameSettings.currentPlayer].enable();
                     this.readyCubes[GameSettings.currentPlayer].show();
+
+                    this.gameState = GameState.SeatedReady;
                 }
-                else
+                else if (this.gameState === GameState.WaitingForReadyConfirmation)
                 {
                     this.readyCubes[GameSettings.currentPlayer].disable();
                     this.readyCubes[GameSettings.currentPlayer].hide();
                     this.unreadyCubes[GameSettings.currentPlayer].enable();
                     this.unreadyCubes[GameSettings.currentPlayer].show();
+
+                    this.gameState = GameState.SeatedNotReady;
                 }
             }
         }
@@ -127,6 +154,8 @@ class SceneController {
                 readyCube.confirmBidMode();
             }
         }
+
+        this.gameState = GameState.ObservingBids;
     }
 
     static handListener (hand: Hand) {
@@ -153,14 +182,23 @@ class SceneController {
 
     static bidRequestListener () {
         let player: number = GameSettings.currentPlayer;
+        let highestBid: number = 0;
 
+        if (this.currentBid) highestBid = this.currentBid.number;
+
+        // Activate bidding cubes for the client player.
         for (let j = 0; j < this.bidSuitCubes[player].length; j++) {
-            this.bidSuitCubes[player][j].enable();
+            this.bidSuitCubes[player][j].enableAndShow();
         }
         for (let j = 0; j < this.bidNumberCubes[player].length; j++) {
-            this.bidNumberCubes[player][j].enable();
+            // If the cube number is higher than the current bid then show it, otherwise hide it.
+            if (this.bidNumberCubes[player][j].tricks > highestBid || j === this.bidNumberCubes[player].length-1)
+                this.bidNumberCubes[player][j].enableAndShow();
+            else
+                this.bidNumberCubes[player][j].disableAndHide();
         }
 
+        // Hide all unready and ready cubes and set them to bid mode.
         for (let unreadyCube of this.unreadyCubes) {
             if (unreadyCube.startGameModeActive) {
                 unreadyCube.hide();
@@ -176,30 +214,76 @@ class SceneController {
             }
         }
 
+        // Enable the unready cube just for the client player as a bid-ready button.
         this.unreadyCubes[player].enable();
         this.unreadyCubes[player].show();
+
+        this.gameState = GameState.ChoosingBid;
     }
 
     static bidResponseListener (tricks: number, shootNum: number, trump: Bid.Trump, seat: number) {
+        let player: number = GameSettings.currentPlayer;
+
+        // Show bid as ready
         this.unreadyCubes[seat].disable();
         this.unreadyCubes[seat].hide();
         this.readyCubes[seat].enable();
         this.readyCubes[seat].show();
+
+        for (let bidSuitCube of this.bidSuitCubes[player]) {
+            if (!bidSuitCube.isActiveCube) bidSuitCube.disableAndHide();
+            else {
+                bidSuitCube.deactivate(this.scene);
+                bidSuitCube.disable();
+            }
+        }
+
+        for (let bidNumberCube of this.bidNumberCubes[player]) {
+            if (!bidNumberCube.isActiveCube) bidNumberCube.disableAndHide();
+            else {
+                bidNumberCube.deactivate(this.scene);
+                bidNumberCube.disable();
+            }
+        }
     }
 
     static bidsListener (bidDetailsList: BidDetails[]) {
-        // for (let bidDetails of bidDetailsList) {
-        //     const bid: Bid = {
-        //         number: bidDetails.getTricks(),
-        //         shootNum: bidDetails.getShootNum(),
-        //         trump: bidDetails.getTrump(),
-        //         seat: bidDetails.getSeat(),
-        //     };
-        // }
+        let player: number = GameSettings.currentPlayer;
+        this.bids = []; // reset the bid list
+        let highestBid: number = 0;
+
+        for (let bidDetails of bidDetailsList) {
+            const bid: Bid = {
+                number: bidDetails.getTricks(),
+                shootNum: bidDetails.getShootNum(),
+                trump: bidDetails.getTrump(),
+                seat: bidDetails.getSeat(),
+            };
+            this.bids[bid.seat] = bid; // Store the bid for later use.
+            if (bid.number > 0) {
+                this.currentBid = bid; // If the bid is not a pass, make it the current highest bid.
+
+                // show bid cubes for other players' bids
+                this.bidNumberCubes[bid.seat][bid.number-1].show();
+                this.bidSuitCubes[bid.seat][bid.trump].show();
+            }
+        }
+
+        console.log(this.bids);
+
+        // Make sure that invalid bid cubes are disabled if they haven't been already.
+        if (this.gameState === GameState.ChoosingBid) {
+            if (this.currentBid) highestBid = this.currentBid.number;
+
+            // Disable invalid cubes. Only do n-1 since we never want to disable the shoot cube.
+            for (let j = 0; j < this.bidNumberCubes[player].length - 1; j++) {
+                if (this.bidNumberCubes[player][j].tricks <= highestBid)
+                    this.bidNumberCubes[player][j].disableAndHide();
+            }
+        }
     }
 
     static moveCameraToSeat(seatNumber: number) {
-        GameSettings.currentPlayer = seatNumber;
         GameSettings.camera.target = GameSettings.cameraTargets[seatNumber];
         GameSettings.camera.alpha = -1 * baseRotation(seatNumber).y + Math.PI;
         GameSettings.camera.beta = GameSettings.cameraBeta;
@@ -207,4 +291,4 @@ class SceneController {
     }
 }
 
-export { SceneController };
+export { SceneController, GameState };

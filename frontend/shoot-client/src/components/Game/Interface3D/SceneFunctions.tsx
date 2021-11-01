@@ -94,19 +94,16 @@ const buildBidCubes = (scene: Scene, manager: GUI3DManager) => {
     
         allBidNumberCubes[i] = [];
         for (var j = 0; j < 9; j++) {
-            if (j < 8)
-                { tricks = j + 1 }
-            else
-                { tricks = -1; }
+            tricks = j + 1;
 
             allBidNumberCubes[i][j] = new BidNumberCube(scene, manager, pivot, i, j, tricks);
-            allBidNumberCubes[i][j].disable();
+            allBidNumberCubes[i][j].disableAndHide();
         }
 
         allBidSuitCubes[i] = [];
         for (j = 0; j < 6; j++) {
             allBidSuitCubes[i][j] = new BidSuitCube(scene, manager, pivot, i, j, j);
-            allBidSuitCubes[i][j].disable();
+            allBidSuitCubes[i][j].disableAndHide();
         }
 
         const axis = new Vector3(0, 1, 0);

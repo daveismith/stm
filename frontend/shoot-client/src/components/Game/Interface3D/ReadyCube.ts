@@ -15,12 +15,13 @@ import {
 } from "@babylonjs/gui";
 
 import { GameSettings } from "./GameSettings3D";
-import { SceneController } from "./SceneController";
+import { GameState, SceneController } from "./SceneController";
 
 import readyTextures from "./resources/images/ready.png";
 import { IApp } from "../../App/App.context";
 import { BidSuitCube } from "./BidSuitCube";
 import { BidNumberCube } from "./BidNumberCube";
+import { Bid } from "../Models/Bid";
 
 class ReadyCube {
     readyCubeRatio = 7/8;
@@ -129,6 +130,8 @@ class ReadyCube {
         this.button.onPointerDownObservable.clear();
 
         this.button.onPointerDownObservable.add(() => {
+            SceneController.gameState = GameState.WaitingForReadyConfirmation;
+                
             if (this.appState.setSeatReadyStatus) this.appState.setSeatReadyStatus(!this.readyValue);
         });
     }
@@ -140,10 +143,30 @@ class ReadyCube {
         this.button.onPointerDownObservable.clear();
 
         this.button.onPointerDownObservable.add(() => {
-            if (BidNumberCube.activeCube && BidSuitCube.activeCube) {
-                if (this.appState.createBid) this.appState.createBid(BidNumberCube.activeCube.tricks, 0, BidSuitCube.activeCube.suit, GameSettings.currentPlayer);
+            let tricks: number = -1;
+            let shootNumber: number = 0;
+            let currentShootNumber: number = 0;
+            let suit: Bid.Trump = Bid.Trump.HIGH; // Should never use the default
+
+            if (BidNumberCube.activeCube && BidSuitCube.activeCube) { // If a number and suit cube are activated, bid.
+                tricks = BidNumberCube.activeCube.tricks;
+
+                if (SceneController.currentBid) currentShootNumber = SceneController.currentBid.shootNum;
+                if (tricks === 9) shootNumber = currentShootNumber + 1; // TODO: Change from 9 to dynamic shoot trick number
+
+                suit = BidSuitCube.activeCube.suit;
             }
-        });
+            else if (!BidNumberCube.activeCube && !BidSuitCube.activeCube) { // If no cubes are activated, pass.
+                tricks = 0;
+            }
+
+            // If tricks is at least 0 then submit the bid.
+            if (tricks >= 0) {
+                SceneController.gameState = GameState.WaitingForBidConfirmation;
+                    
+                if (this.appState.createBid) this.appState.createBid(tricks, shootNumber, suit, GameSettings.currentPlayer);
+            }
+    });
     }
 }
 

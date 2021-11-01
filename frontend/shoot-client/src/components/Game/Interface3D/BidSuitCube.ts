@@ -71,7 +71,7 @@ class BidSuitCube {
         this.mesh.parent = this.pivot;
         this.mesh.position = new Vector3(
             (2.5 - j) * this.bidCubeHeight,
-            0.1 - this.bidCubeHeight/2,
+            0.1,
             GameSettings.tableRadius * this.bidSuitCubeRatio
         );
     }
@@ -101,7 +101,7 @@ class BidSuitCube {
             targetHeight = this.mesh.position.y + bidCubeBounceHeight;
         }
         else {
-            targetHeight = 0.1 - this.bidCubeHeight/2;
+            targetHeight = 0.1;
         }
             
         var ySlide = new Animation(
@@ -139,14 +139,30 @@ class BidSuitCube {
         );    
     }
 
+    disableAndHide () {
+        this.disable();
+        this.hide();
+    }
+
+    enableAndShow () {
+        this.enable();
+        this.show();
+    }
+
     disable () {
         this.mesh.isPickable = false;
-        this.mesh.visibility = 0;
     }
 
     enable () {
         this.mesh.isPickable = true;
+    }
+
+    show () {
         this.mesh.visibility = 1;
+    }
+
+    hide () {
+        this.mesh.visibility = 0;
     }
 }
 
