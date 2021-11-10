@@ -15,7 +15,7 @@ import {
 } from "@babylonjs/gui";
 
 import { GameSettings } from "./GameSettings3D";
-import { SceneController } from "./SceneController";
+import { SceneController, GameState } from "./SceneController";
 
 import iconTextures from "./resources/images/icons.png";
 import { IApp } from "../../App/App.context";
@@ -57,6 +57,7 @@ class SeatCube {
 
         this.button = new MeshButton3D(this.mesh, "seatCubeButton");
         this.button.onPointerDownObservable.add(() => {
+            SceneController.gameState = GameState.WaitingForSeatConfirmation;
             if (appState.takeSeat) appState.takeSeat(player);
 
             // GameSettings.currentPlayer = player;

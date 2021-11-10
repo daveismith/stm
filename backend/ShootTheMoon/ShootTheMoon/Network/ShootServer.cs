@@ -287,7 +287,7 @@ namespace ShootTheMoon.Network
 
             foreach (Game.Bid bid in game.Bids) {
                 Proto.Bid b = new Proto.Bid();
-                // TODO: Seat Number
+                b.Seat = bid.Seat;
                 b.ShootNum = bid.ShootNumber;
                 b.Tricks = bid.Number;
                 b.Trump = GameTrumpToProtoTrump[bid.Trump];
