@@ -107,35 +107,35 @@ namespace ShootTheMoon.Game
         public virtual void OnNext(Client client) {
 
             GameState startState = State;
-            Tick();
+            Task.Run(Tick);
             if (startState == State) {
                 // If the Tick causes a change in the state, then the update isn't needed.
                 if (Players.Contains(client)) {
-                    PublishEvent(new GameEvent(GameEventType.ClientUpdate | GameEventType.SeatListUpdate, this));
+                    Task.Run(() => PublishEvent(new GameEvent(GameEventType.ClientUpdate | GameEventType.SeatListUpdate, this)));
                 } else {
-                    PublishEvent(new GameEvent(GameEventType.ClientUpdate, this));
+                    Task.Run(() => PublishEvent(new GameEvent(GameEventType.ClientUpdate, this)));
                 }
             }
 
         }
 
-        private void Tick() {
+        private async Task Tick() {
 
             // Implements The Game State Machine
             switch (State) {
                 case GameState.AWAITING_PLAYERS:
                     if (AllPlayersReady) {
-                        EnterState(GameState.DEALING);
+                        await EnterState(GameState.DEALING);
                     }
                     break;
                 case GameState.AWAITING_BIDS:
-                    EnterState(GameState.AWAITING_BIDS);
+                    await EnterState(GameState.AWAITING_BIDS);
                     break;
             }
 
         }
 
-        private void EnterState(GameState newState) {
+        private async Task EnterState(GameState newState) {
         
             GameState previousState = State;
             State = newState;
@@ -149,11 +149,11 @@ namespace ShootTheMoon.Game
                     eventType |= (GameEventType.StartGame | GameEventType.ClientUpdate | GameEventType.SeatListUpdate);
                 }
 
-                Deal();
+                await Deal();
                 eventType |= GameEventType.DealCards;
 
-                PublishEvent(new GameEvent(eventType, this));
-                EnterState(GameState.AWAITING_BIDS);
+                await PublishEvent(new GameEvent(eventType, this));
+                await EnterState(GameState.AWAITING_BIDS);
             } else if (State == GameState.AWAITING_BIDS) {
 
                 // If we're transitioning into awaiting bids, send an update
@@ -164,18 +164,18 @@ namespace ShootTheMoon.Game
                 }
 
                 GameEvent ge = new GameEvent(GameEventType.BidUpdate | GameEventType.RequestBid, this, CurrentPlayer);
-                PublishEvent(ge);
+                await PublishEvent(ge);
             } else if (State == GameState.PLAYING_HAND) {
                 GameEvent ge = new GameEvent(GameEventType.BidUpdate, this, CurrentPlayer);
-                PublishEvent(ge);
+                await PublishEvent(ge);
             }
 
         }
 
-        private void Deal() {
+        private async Task Deal() {
             // TODO: Get The Deck Somehow So It Can Be Injected
             var deck = new Deck(GameSettings.NumDuplicateCards);
-            deck.Shuffle();
+            await deck.Shuffle();
 
             int dealTo = (Dealer + 1) % NumPlayers;
 
@@ -191,25 +191,27 @@ namespace ShootTheMoon.Game
             }
         }
 
-        public void AddClient(Client client) {
+        public Task AddClient(Client client) {
             if (Clients.Contains(client))
-                return; // Already Exists
+                return Task.CompletedTask; // Already Exists
 
             Clients = Clients.Add(client);
             client.Subscribe(this);
+
+            return Task.CompletedTask;
         }
 
-        public void RemoveClient(Client client) {
+        public async Task RemoveClient(Client client) {
 
             //TODO: If game is in progress, do we replace the player with a bot?
 
             if (Clients.Contains(client)) {
                 Clients = Clients.Remove(client);
                 client.Unsubscribe(this);
-                PublishEvent(new GameEvent(GameEventType.ClientUpdate, this));
+                await PublishEvent(new GameEvent(GameEventType.ClientUpdate, this));
             }
         }
-        public bool TakeSeat(uint? seat, Client client) {
+        public async Task<bool> TakeSeat(uint? seat, Client client) {
             bool changed = false;
             bool success = false;
 
@@ -234,13 +236,13 @@ namespace ShootTheMoon.Game
 
             if (changed) {
                 GameEvent seatTaken = new GameEvent(GameEventType.SeatListUpdate, this);
-                PublishEvent(seatTaken);
+                await PublishEvent(seatTaken);
             }
 
             return success;
         }
 
-        public bool MakeBid(uint tricks, Trump trump, uint shoot, bool pass, Client client) {
+        public async Task<bool> MakeBid(uint tricks, Trump trump, uint shoot, bool pass, Client client) {
             if (client != CurrentPlayer) {
                 return false;
             }
@@ -294,18 +296,18 @@ namespace ShootTheMoon.Game
                 }
                 Log.Debug("Before Set Current Player");
                 CurrentPlayer = Players[CurrentBid.Seat];
-                EnterState(GameState.PLAYING_HAND);
+                await EnterState(GameState.PLAYING_HAND);
             } else {
                 // Trigger Next Bid
                 CurrentPlayer = Players[nextPlayer];
-                Tick();        
+                await Tick();        
             }
             return true;
         }
 
-        private void PublishEvent(GameEvent gameEvent) {
+        private async Task PublishEvent(GameEvent gameEvent) {
             foreach (var observer in observers)
-                observer.OnNext(gameEvent);
+                await Task.Run(() => observer.OnNext(gameEvent));
         }
 
         private uint FindSeat(Client client ) {

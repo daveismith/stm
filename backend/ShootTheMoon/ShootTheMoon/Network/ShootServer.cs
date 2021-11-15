@@ -102,6 +102,9 @@ namespace ShootTheMoon.Network
 
         private static async Task SendNotification(RpcClient client, Notification notification) {
             bool sent = false;
+            const int MAX_RETRIES = 10;
+            int retriesAttempted = 0;
+
             while (!sent)
             {
                 try {
@@ -110,7 +113,9 @@ namespace ShootTheMoon.Network
                 }
                 catch (InvalidOperationException e) {
                     Log.Debug(e.ToString());
-                    await Task.Delay(50);
+                    if (retriesAttempted > MAX_RETRIES) return;
+                    retriesAttempted++;
+                    await Task.Delay(100);
                 }
             }
         }
@@ -182,8 +187,7 @@ namespace ShootTheMoon.Network
 
             context.UserState.Add("gameId", request.Uuid);
 
-            game.AddClient(client);
-            //game.Clients.Add(client);
+            await game.AddClient(client);
 
             // Send A Join Game Response
             JoinGameResponse jgr = new JoinGameResponse();
@@ -210,8 +214,7 @@ namespace ShootTheMoon.Network
                         game.Players[i] = null;
                     }
                 }
-                //game.Clients.Remove(client);
-                game.RemoveClient(client);
+                await game.RemoveClient(client);
 
                 // TODO: Replace The Player With A Bot If The Game Is In Progress
 
@@ -415,14 +418,14 @@ namespace ShootTheMoon.Network
             //   * Played Cards
         } 
 
-        private RpcClient FindClient(Game.Game game, string token) {
+        private Task<RpcClient> FindClient(Game.Game game, string token) {
             foreach (Client c in game.Clients) {
                 if (c is not RpcClient)
                     continue;
 
                 RpcClient client = (RpcClient)c;
                 if (c.Token.Equals(token)) {
-                    return client;
+                    return Task.FromResult(client);
                 }
             }
             throw new KeyNotFoundException();
@@ -460,8 +463,8 @@ namespace ShootTheMoon.Network
             else
             {
                 try {
-                    RpcClient client = FindClient(game, clientToken);
-                    game.TakeSeat(request.Seat, client);
+                    RpcClient client = await FindClient(game, clientToken);
+                    await game.TakeSeat(request.Seat, client);
                 }
                 catch (KeyNotFoundException) {
                     r.Success = false;
@@ -496,7 +499,7 @@ namespace ShootTheMoon.Network
             }
 
             try {
-                RpcClient client = FindClient(game, clientToken);
+                RpcClient client = await FindClient(game, clientToken);
                 client.Ready = request.Ready;
             }
             catch (KeyNotFoundException) {
@@ -531,7 +534,7 @@ namespace ShootTheMoon.Network
             }
 
             try {
-                RpcClient client = FindClient(game, clientToken);
+                RpcClient client = await FindClient(game, clientToken);
                 Log.Debug("Received a bid of (tricks: {0}, suit: {1}, shoot: {2}) by {3}", request.Tricks, request.Trump, request.ShootNum, client.Name);
                 
                 Game.Trump trump = null;
@@ -541,7 +544,7 @@ namespace ShootTheMoon.Network
                         break;
                     }
                 }
-                game.MakeBid(request.Tricks, trump, request.ShootNum, false, client);
+                await game.MakeBid(request.Tricks, trump, request.ShootNum, false, client);
             }
             catch (KeyNotFoundException) {
                 r.Success = false;

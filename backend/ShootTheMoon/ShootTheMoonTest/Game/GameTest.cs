@@ -3,6 +3,7 @@ using Moq;
 using System;
 using ShootTheMoon;
 using ShootTheMoon.Game;
+using System.Threading.Tasks;
 
 namespace ShootTheMoonTest.Game
 {
@@ -57,15 +58,15 @@ namespace ShootTheMoonTest.Game
         }               
 
         [TestMethod]
-        public void TestTakeSeat()
+        public async Task TestTakeSeat()
         {
             var observer = new Mock<IObserver<ShootTheMoon.Game.GameEvent>>();
             ShootTheMoon.Game.Game game = new ShootTheMoon.Game.Game(ShootTheMoon.Game.GameSettings.GamePresets["SIXPLAYER"]);
             game.Subscribe(observer.Object);
 
             Client c = new Client();
-            game.AddClient(c);
-            game.TakeSeat(0, c);
+            await game.AddClient(c);
+            await game.TakeSeat(0, c);
 
             observer.Verify(x => x.OnNext(It.Is<GameEvent>(p => p.Type == GameEventType.ClientUpdate && p.Game == game)), Times.Once);
             observer.Verify(x => x.OnNext(It.Is<GameEvent>(p => p.Type == GameEventType.SeatListUpdate && p.Game == game)), Times.Once);
@@ -80,11 +81,11 @@ namespace ShootTheMoonTest.Game
             for (int index = 1; index < game.NumPlayers; index++) {
                 Client client = new Client();
                 client.Ready = true;
-                game.AddClient(client);
+                await game.AddClient(client);
                 observer.Verify(x => x.OnNext(It.Is<GameEvent>(p => p.Type == GameEventType.ClientUpdate && p.Game == game)), Times.Exactly(1 + index));
                 Assert.AreEqual(index+1, game.Clients.Count);
 
-                game.TakeSeat((uint)index, client);
+                await game.TakeSeat((uint)index, client);
                 observer.Verify(x => x.OnNext(It.Is<GameEvent>(p => p.Type == GameEventType.SeatListUpdate && p.Game == game)), Times.Exactly(index+1));
             }
 
