@@ -129,6 +129,13 @@ message ThrowawayResponse {
 	Card card_removed = 2;
 }
 
+message TrumpUpdate {
+	uint32 tricks = 1;
+	uint32 shoot_num = 2;
+	Trump trump = 3;
+	uint32 seat = 4;
+}
+
 message PlayCardRequest {
 	uint32 seat = 1;
 	uint32 timeout = 2;
@@ -181,12 +188,13 @@ message Notification {
 		TransferRequest transfer_request = 10;
 		Transfer transfer = 11;
 		ThrowawayRequest throwaway_request = 12;
-		PlayCardRequest play_card_request = 13;
-		UpdateTimeout update_timeout = 14;
-		PlayedCards played_cards = 15;
-		Tricks tricks = 16;
-		Scores scores = 17;
-		EndGame end_game = 18;
+		TrumpUpdate trump_update = 13;
+		PlayCardRequest play_card_request = 14;
+		UpdateTimeout update_timeout = 15;
+		PlayedCards played_cards = 16;
+		Tricks tricks = 17;
+		Scores scores = 18;
+		EndGame end_game = 19;
 	}
 }
 // [END messages]
