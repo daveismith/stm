@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace ShootTheMoon.Game
 {
@@ -25,10 +26,10 @@ namespace ShootTheMoon.Game
                 }
             }
 
-            if (shuffle) Shuffle();
+            if (shuffle) Task.Run(Shuffle);
         }
 
-        public void Shuffle()
+        public Task Shuffle()
         {
             int n = Cards.Count;
             while(n > 1)
@@ -39,6 +40,8 @@ namespace ShootTheMoon.Game
                 Cards[k] = Cards[n];
                 Cards[n] = c;
             }
+
+            return Task.CompletedTask;
         }
 
         public Card Draw()
