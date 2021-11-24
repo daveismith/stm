@@ -30,7 +30,10 @@ namespace ShootTheMoon.Network
             SUCCESS = 0,
             GAME_NOT_FOUND = 1,
             SEAT_IN_USE = 2,
-            CLIENT_NOT_FOUND = 3
+            CLIENT_NOT_FOUND = 3,
+            INVALID_BID = 4,
+            INVALID_CARD_PLAYED = 5
+            
         }
 
         Dictionary<string, Game.Game> games = new Dictionary<string, Game.Game>();
@@ -97,6 +100,13 @@ namespace ShootTheMoon.Network
             if ((info.Type & GameEventType.BidUpdate) == GameEventType.BidUpdate) {
                 // Send A Bit List Update To All Players
                 await BidListUpdate(game);
+            }
+
+            if ((info.Type & GameEventType.PlayCardRequest) == GameEventType.PlayCardRequest) {
+                // Send A Play Card Request To The Client Specified in info.Client
+                if (info.AdditionalData is Client) {
+                    await PlayCardRequest(game, (Client)info.AdditionalData);
+                }
             }
         }
 
@@ -397,6 +407,22 @@ namespace ShootTheMoon.Network
             }
         }
 
+        public async Task PlayCardRequest(Game.Game game, Client currentPlayer) {
+            if (currentPlayer is RpcClient) {
+                RpcClient rpcClient = (RpcClient)currentPlayer;
+
+                Notification n = new Notification();
+                n.PlayCardRequest = new PlayCardRequest();
+
+                // Figure Out How To Indicate The Seat
+                n.PlayCardRequest.Seat = game.FindSeat(currentPlayer);
+                n.PlayCardRequest.Timeout = 30000;  // Just Hard Code 30 seconds
+
+                await SendNotification(rpcClient, n);
+                Log.Debug("Play Card Request for game " + game.Name);
+            }
+        }
+
         public async Task SendCurrentState(Game.Game game) {
             // Update The Seat List
             await SeatListUpdate(game);
@@ -533,6 +559,7 @@ namespace ShootTheMoon.Network
                 return r;
             }
 
+            bool result = false;
             try {
                 RpcClient client = await FindClient(game, clientToken);
                 Log.Debug("Received a bid of (tricks: {0}, suit: {1}, shoot: {2}) by {3}", request.Tricks, request.Trump, request.ShootNum, client.Name);
@@ -544,7 +571,9 @@ namespace ShootTheMoon.Network
                         break;
                     }
                 }
-                await game.MakeBid(request.Tricks, trump, request.ShootNum, false, client);
+                
+                bool pass = (request.ShootNum == 0) && (request.Tricks == 0);
+                await game.MakeBid(request.Tricks, trump, request.ShootNum, pass, client);
             }
             catch (KeyNotFoundException) {
                 r.Success = false;
@@ -553,9 +582,14 @@ namespace ShootTheMoon.Network
                 return r;
             }
 
-            r.Success = true;
-            r.ErrorNum = (int)ErrorCode.SUCCESS;
-            r.ErrorText = "";
+            r.Success = result;
+            if (result) {
+                r.ErrorNum = (int)ErrorCode.SUCCESS;
+                r.ErrorText = "";
+            } else {
+                r.ErrorNum = (int)ErrorCode.INVALID_BID;
+                r.ErrorText = "Invalid Bid";
+            }
 
             return r;
         }
@@ -570,16 +604,81 @@ namespace ShootTheMoon.Network
         {
             throw new grpc::RpcException(new grpc::Status(grpc::StatusCode.Unimplemented, ""));
         }
+        */
 
-        public virtual global::System.Threading.Tasks.Task<global::ShootTheMoon.Network.Proto.StatusResponse> PlayCard(global::ShootTheMoon.Network.Proto.Card request, grpc::ServerCallContext context)
+        public override async Task<StatusResponse> PlayCard(Proto.Card request, ServerCallContext context)
         {
-            throw new grpc::RpcException(new grpc::Status(grpc::StatusCode.Unimplemented, ""));
+            string uuid = context.RequestHeaders.GetValue(GAME_ID);
+            string clientToken = context.RequestHeaders.GetValue(CLIENT_TOKEN);
+
+            StatusResponse r = new StatusResponse();
+            Game.Game game;
+
+            try {
+                game = games[uuid];
+            }
+            catch (KeyNotFoundException) {
+                r.Success = false;
+                r.ErrorNum = (int)ErrorCode.GAME_NOT_FOUND;
+                r.ErrorText = "Game Not Found";
+                return r;
+            }
+
+            Boolean result = false;
+            try {
+                RpcClient client = FindClient(game, clientToken);
+                Log.Debug("Received a card of (suit: {0}, rank: {1}) from {2}", request.Suit, request.Rank, client.Name);
+                
+                result = game.PlayCard(GameSuitFromProto(request.Suit), GameRankFromProto(request.Rank), client);
+            }
+            catch (KeyNotFoundException) {
+                r.Success = false;
+                r.ErrorNum = (int)ErrorCode.CLIENT_NOT_FOUND;
+                r.ErrorText = "Client Not Found";
+                return r;
+            }
+
+            r.Success = result;
+            if (result) {
+                r.ErrorNum = (int)ErrorCode.SUCCESS;
+                r.ErrorText = "";
+            } else {
+                r.ErrorNum = (int)ErrorCode.INVALID_CARD_PLAYED;
+                r.ErrorText = "Card Played Was Invalid";
+            }
+
+            return r;
         }
 
+        /*
         public virtual global::System.Threading.Tasks.Task<global::ShootTheMoon.Network.Proto.StatusResponse> LeaveGame(global::ShootTheMoon.Network.Proto.LeaveGameRequest request, grpc::ServerCallContext context)
         {
             throw new grpc::RpcException(new grpc::Status(grpc::StatusCode.Unimplemented, ""));
         }
         */
+
+        private Game.Suit GameSuitFromProto(Proto.Card.Types.Suit suit) {
+            Game.Suit gameSuit = null;
+            foreach (KeyValuePair<Game.Suit, Proto.Card.Types.Suit> t in GameSuitToProtoSuite) {
+                if (t.Value == suit) {
+                    gameSuit = t.Key;
+                    break;
+                }
+            }
+            return gameSuit;
+        }
+
+
+        private Game.Rank GameRankFromProto(Proto.Card.Types.Rank rank) {
+            Game.Rank gameRank = null;
+            foreach (KeyValuePair<Game.Rank, Proto.Card.Types.Rank> t in GameRankToProtoRank) {
+                if (t.Value == rank) {
+                    gameRank = t.Key;
+                    break;
+                }
+            }
+            return gameRank;
+        }
+
     }
 }
