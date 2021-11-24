@@ -146,6 +146,20 @@ export const GameProvider: React.FC = ({ children }) => {
                     // const obj: object = notification.toObject();
                     // console.log(obj);
                     state.eventEmitter.emit("hand", notification.getHand());
+                } else if (notification.hasTransferRequest()) {
+                    console.log('transfer request');
+                } else if (notification.hasTransfer()) {
+                    console.log('transfer');
+                } else if (notification.hasThrowawayRequest()) {
+                    console.log('throwaway request');
+                } else if (notification.hasTrumpUpdate()) {
+                    console.log('trump update');
+                } else if (notification.hasPlayCardRequest()) {
+                    console.log('play card request');
+                } else if(notification.hasUpdateTimeout()) {
+                    console.log('update timeout');
+                } else if (notification.hasPlayedCards()) {
+                    console.log('played cards');
                 } else {
                         console.log('game data');
                         // const obj: object = notification.toObject();

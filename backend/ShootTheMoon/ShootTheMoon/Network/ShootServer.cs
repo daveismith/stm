@@ -102,6 +102,11 @@ namespace ShootTheMoon.Network
                 await BidListUpdate(game);
             }
 
+            if ((info.Type & GameEventType.TrumpUpdate) == GameEventType.TrumpUpdate) {
+                // Send A Trump Update
+                await TrumpUpdate(game);
+            }            
+
             if ((info.Type & GameEventType.PlayCardRequest) == GameEventType.PlayCardRequest) {
                 // Send A Play Card Request To The Client Specified in info.Client
                 if (info.AdditionalData is Client) {
@@ -317,6 +322,20 @@ namespace ShootTheMoon.Network
             
             Notification n = new Notification();
             n.BidList = bidList;
+
+            await BroadcastNotification(n, game);
+        }
+
+        public async Task TrumpUpdate(Game.Game game) {
+            TrumpUpdate trumpUpdate = new TrumpUpdate();
+            
+            trumpUpdate.Tricks = game.CurrentBid.Number;
+            trumpUpdate.ShootNum = game.CurrentBid.ShootNumber;
+            trumpUpdate.Trump = GameTrumpToProtoTrump[game.CurrentBid.Trump];
+            trumpUpdate.Seat = game.CurrentBid.Seat;
+            
+            Notification n = new Notification();
+            n.TrumpUpdate = trumpUpdate;
 
             await BroadcastNotification(n, game);
         }
@@ -626,7 +645,7 @@ namespace ShootTheMoon.Network
 
             Boolean result = false;
             try {
-                RpcClient client = FindClient(game, clientToken);
+                RpcClient client = await FindClient(game, clientToken);
                 Log.Debug("Received a card of (suit: {0}, rank: {1}) from {2}", request.Suit, request.Rank, client.Name);
                 
                 result = game.PlayCard(GameSuitFromProto(request.Suit), GameRankFromProto(request.Rank), client);

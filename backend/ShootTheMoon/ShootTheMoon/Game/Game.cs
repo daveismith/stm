@@ -75,6 +75,7 @@ namespace ShootTheMoon.Game
             State = GameState.AWAITING_PLAYERS;
             GameSettings = gameSettings;
             Bids = new List<Bid>();
+            PlayedCards = new List<Card>();
 
             Random r = new Random();
             Dealer = r.Next(Players.Length);
@@ -166,7 +167,7 @@ namespace ShootTheMoon.Game
                 GameEvent ge = new GameEvent(GameEventType.BidUpdate | GameEventType.RequestBid, this, CurrentPlayer);
                 await PublishEvent(ge);
             } else if (State == GameState.PLAYING_HAND) {
-                GameEvent ge = new GameEvent(GameEventType.BidUpdate | GameEventType.PlayCardRequest, this, CurrentPlayer);
+                GameEvent ge = new GameEvent(GameEventType.BidUpdate | GameEventType.TrumpUpdate | GameEventType.PlayCardRequest, this, CurrentPlayer);
                 await PublishEvent(ge);
             }
 
