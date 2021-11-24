@@ -446,6 +446,36 @@ export namespace ThrowawayResponse {
   }
 }
 
+export class TrumpUpdate extends jspb.Message {
+  getTricks(): number;
+  setTricks(value: number): TrumpUpdate;
+
+  getShootNum(): number;
+  setShootNum(value: number): TrumpUpdate;
+
+  getTrump(): rump;
+  setTrump(value: rump): TrumpUpdate;
+
+  getSeat(): number;
+  setSeat(value: number): TrumpUpdate;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): TrumpUpdate.AsObject;
+  static toObject(includeInstance: boolean, msg: TrumpUpdate): TrumpUpdate.AsObject;
+  static serializeBinaryToWriter(message: TrumpUpdate, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): TrumpUpdate;
+  static deserializeBinaryFromReader(message: TrumpUpdate, reader: jspb.BinaryReader): TrumpUpdate;
+}
+
+export namespace TrumpUpdate {
+  export type AsObject = {
+    tricks: number,
+    shootNum: number,
+    trump: rump,
+    seat: number,
+  }
+}
+
 export class PlayCardRequest extends jspb.Message {
   getSeat(): number;
   setSeat(value: number): PlayCardRequest;
@@ -679,6 +709,11 @@ export class Notification extends jspb.Message {
   hasThrowawayRequest(): boolean;
   clearThrowawayRequest(): Notification;
 
+  getTrumpUpdate(): TrumpUpdate | undefined;
+  setTrumpUpdate(value?: TrumpUpdate): Notification;
+  hasTrumpUpdate(): boolean;
+  clearTrumpUpdate(): Notification;
+
   getPlayCardRequest(): PlayCardRequest | undefined;
   setPlayCardRequest(value?: PlayCardRequest): Notification;
   hasPlayCardRequest(): boolean;
@@ -733,6 +768,7 @@ export namespace Notification {
     transferRequest?: TransferRequest.AsObject,
     transfer?: Transfer.AsObject,
     throwawayRequest?: ThrowawayRequest.AsObject,
+    trumpUpdate?: TrumpUpdate.AsObject,
     playCardRequest?: PlayCardRequest.AsObject,
     updateTimeout?: UpdateTimeout.AsObject,
     playedCards?: PlayedCards.AsObject,
@@ -755,12 +791,13 @@ export namespace Notification {
     TRANSFER_REQUEST = 10,
     TRANSFER = 11,
     THROWAWAY_REQUEST = 12,
-    PLAY_CARD_REQUEST = 13,
-    UPDATE_TIMEOUT = 14,
-    PLAYED_CARDS = 15,
-    TRICKS = 16,
-    SCORES = 17,
-    END_GAME = 18,
+    TRUMP_UPDATE = 13,
+    PLAY_CARD_REQUEST = 14,
+    UPDATE_TIMEOUT = 15,
+    PLAYED_CARDS = 16,
+    TRICKS = 17,
+    SCORES = 18,
+    END_GAME = 19,
   }
 }
 
