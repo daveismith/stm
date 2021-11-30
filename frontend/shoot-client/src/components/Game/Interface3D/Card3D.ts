@@ -1,6 +1,7 @@
 import {
     Animation,
     CircleEase,
+    Color3,
     EasingFunction,
     Mesh,
     MeshBuilder,
@@ -23,6 +24,8 @@ import { baseRotation, baseRotationQuaternion, gaussianRandom } from "./SceneFun
 import { Card } from "../../../proto/shoot_pb";
 
 import cardTextures from "./resources/images/cards.png";
+import { GameState, SceneController } from "./SceneController";
+import { IApp } from "../../App/App.context";
 
 class Card3D {
     cardStack: CardStack3D | null = null;
@@ -31,8 +34,10 @@ class Card3D {
     static cardHeight = 0.007;
     static cardBaseRotation: Quaternion = Quaternion.RotationYawPitchRoll(-Math.PI / 2, 0, 0);
     card: Card;
+    appState: IApp;
 
-    constructor(scene: Scene, manager: GUI3DManager, rank: number, suit: number) {
+    constructor(scene: Scene, manager: GUI3DManager, rank: number, suit: number, appState: IApp) {
+        this.appState = appState;
         this.card = new Card();
         this.card.setRank(rank);
         this.card.setSuit(suit);
@@ -62,7 +67,9 @@ class Card3D {
         this.mesh.material = cardMaterial;
     
         const cardButton = new MeshButton3D(this.mesh, "cardButton");
-        // cardButton.onPointerDownObservable.add(() => {
+        cardButton.onPointerDownObservable.add(() => {
+            if (SceneController.gameState === GameState.ChoosingPlay)
+                this.playCard();
         //     // if (this.mesh.position.z === CardStack3D.deck.position.z)
         //     //     this.dealCard(scene, 3, 0);
         //     if (this.mesh.position.z > CardStack3D.dealMatStacks[3].position.z - 0.3 && this.mesh.position.z < CardStack3D.dealMatStacks[3].position.z + 0.3)
@@ -73,9 +80,17 @@ class Card3D {
         //     else if (this.mesh.position.z > CardStack3D.handStacks[3].position.z - 0.5 && this.mesh.position.z < CardStack3D.handStacks[3].position.z + 0.5) {
         //         this.playCard(3, scene);
         //     }
-        // });
+        });
     
         manager.addControl(cardButton);
+    }
+
+    toggleGlow (glow: boolean) {
+        let cardMaterial: StandardMaterial = this.mesh.material as StandardMaterial;
+        if (glow)
+            cardMaterial.emissiveColor = Color3.White();
+        else
+            cardMaterial.emissiveColor = Color3.Black();
     }
 
     animateCardSlide (
@@ -564,7 +579,12 @@ class Card3D {
         this.animateCardSlide(position, rotationQuaternion, queuePosition, queuePosition, 8, 0.25, scene);
     }
 
-    playCard (player: number, scene: Scene) {
+    playCard () {
+        SceneController.currentCard = this;
+        if (this.appState.playCard) this.appState.playCard(this.card);
+    }
+
+    playCardAnimation (player: number, scene: Scene) {
         const targetStack = CardStack3D.playMatStacks[player];
         targetStack.addToStack(this);
 
@@ -598,6 +618,8 @@ class Card3D {
         const revealCards = player === GameSettings.currentPlayer;
 
         targetStack.addToStack(this);
+
+        SceneController.hand[SceneController.hand.length] = this;
 
         this.animateCardToHand(player, 1, scene, revealCards);
     }
@@ -648,7 +670,7 @@ class Card3D {
                 );
             }
         }
-    } 
+    }
 }
 
 export { Card3D };

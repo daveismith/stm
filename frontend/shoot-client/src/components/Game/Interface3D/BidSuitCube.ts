@@ -1,6 +1,7 @@
 import {
     Animation,
     CircleEase,
+    Color3,
     EasingFunction,
     Mesh,
     MeshBuilder,
@@ -74,6 +75,14 @@ class BidSuitCube {
             0.1,
             GameSettings.tableRadius * this.bidSuitCubeRatio
         );
+    }
+
+    toggleGlow (glow: boolean) {
+        let cubeMaterial: StandardMaterial = this.mesh.material as StandardMaterial;
+        if (glow)
+            cubeMaterial.emissiveColor = Color3.White();
+        else
+            cubeMaterial.emissiveColor = Color3.Black();
     }
 
     activate (scene: Scene) {
@@ -150,11 +159,13 @@ class BidSuitCube {
     }
 
     disable () {
+        this.toggleGlow(false);
         this.mesh.isPickable = false;
     }
 
     enable () {
         this.mesh.isPickable = true;
+        this.toggleGlow(true);
     }
 
     show () {

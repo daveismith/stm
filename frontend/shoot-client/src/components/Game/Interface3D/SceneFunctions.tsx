@@ -5,7 +5,9 @@ import {
     Vector3,
     SSAORenderingPipeline,
     TransformNode,
-    SceneLoader
+    SceneLoader,
+    PointLight,
+    GlowLayer
 } from "@babylonjs/core";
 
 import {
@@ -56,7 +58,7 @@ const baseRotationQuaternion = (seat: number) => {
 }
 
 //Create a deck of cards at the deck position
-const buildDeck = (scene: Scene, manager: GUI3DManager) => {
+const buildDeck = (scene: Scene, manager: GUI3DManager, appState: IApp) => {
     let card: Card3D;
     let numRanks: number = 6;
     let numSuits: number = 4;
@@ -64,7 +66,7 @@ const buildDeck = (scene: Scene, manager: GUI3DManager) => {
     for (let k = 0; k < 2; k++) { // Assuming 2 copies of each card.
         for (let i = 0; i < numRanks; i++) {
             for (let j = 0; j < numSuits; j++) {
-                card = new Card3D(scene, manager, i+2, j); // Add 2 since we're not including 7s and 8s.
+                card = new Card3D(scene, manager, i+2, j, appState); // Add 2 since we're not including 7s and 8s.
                 CardStack3D.deck.addToStack(card);
             }
         }
@@ -139,6 +141,11 @@ const buildReadyCubes = (scene: Scene, manager: GUI3DManager, appState: IApp) =>
     SceneController.readyCubes = readyCubes;
 }
 
+// const buildTurnLight = (scene: Scene) => {
+//     let turnLight = new PointLight("turnLight", new Vector3(0, 10, 0), scene);
+//     SceneController.turnLight = turnLight;
+// }
+
 const arrangeCardsInDeck = (scene: Scene, deck: CardStack3D) => {
     let card: Card3D;
     let targetPosition: Vector3;
@@ -189,24 +196,26 @@ export const onSceneReady = (scene: Scene, gameState: IGame, appState: IApp) => 
     const light1 = new HemisphericLight("light1", lightVector1, scene);
     const light2 = new HemisphericLight("light2", lightVector2, scene);
     const light3 = new HemisphericLight("light3", lightVector3, scene);
+    const glow = new GlowLayer("glow", scene);
+    glow.intensity = 0.2;
 
     // This attaches the camera to the canvas
     camera.attachControl(canvas, true);
 
     // Default intensity is 1
-    light1.intensity = 0.4;
-    light2.intensity = 0.4;
-    light3.intensity = 0.4;
+    light1.intensity = 0.3;
+    light2.intensity = 0.3;
+    light3.intensity = 0.3;
 
     SceneLoader.Append(sceneAssets, "", scene, function (scene) { });
 
     SceneController.scene = scene;
     buildSeatCubes(scene, manager3D, appState);
     buildBidCubes(scene, manager3D);
-    buildDeck(scene, manager3D);
+    buildDeck(scene, manager3D, appState);
     buildNameplates(manager2D);
     buildReadyCubes(scene, manager3D, appState);
-    // dealCards(scene);
+    // buildTurnLight(scene);
 
     // SSAO code from https://playground.babylonjs.com/#N96NXC
     // Create SSAO and configure all properties (for the example)
