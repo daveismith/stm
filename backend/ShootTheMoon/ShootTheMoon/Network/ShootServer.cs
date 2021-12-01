@@ -113,6 +113,11 @@ namespace ShootTheMoon.Network
                     await PlayCardRequest(game, (Client)info.AdditionalData);
                 }
             }
+
+            if ((info.Type & GameEventType.PlayedCards) == GameEventType.PlayedCards) {
+                // Send A Played Cards Event
+                await PlayedCardsUpdate(game);
+            }
         }
 
         private static async Task SendNotification(RpcClient client, Notification notification) {
@@ -307,8 +312,10 @@ namespace ShootTheMoon.Network
                 Proto.Bid b = new Proto.Bid();
                 b.Seat = bid.Seat;
                 b.ShootNum = bid.ShootNumber;
-                b.Tricks = bid.Number;
-                b.Trump = GameTrumpToProtoTrump[bid.Trump];
+                b.Tricks = bid.Number;                
+                if (b.Tricks > 0 || b.ShootNum > 0) {
+                    b.Trump = GameTrumpToProtoTrump[bid.Trump];
+                }
                 bidList.Bids.Add(b);
             }
 
@@ -424,7 +431,7 @@ namespace ShootTheMoon.Network
                 await SendNotification(rpcClient, n);
                 Log.Debug("Request Bid Notification complete for game " + game.Name);
             }
-        }
+        }   
 
         public async Task PlayCardRequest(Game.Game game, Client currentPlayer) {
             if (currentPlayer is RpcClient) {
@@ -438,9 +445,33 @@ namespace ShootTheMoon.Network
                 n.PlayCardRequest.Timeout = 30000;  // Just Hard Code 30 seconds
 
                 await SendNotification(rpcClient, n);
-                Log.Debug("Play Card Request for game " + game.Name);
+                Log.Debug("Play Card Request for game " + game.Name + " to player " + currentPlayer.Name);
             }
         }
+        public async Task PlayedCardsUpdate(Game.Game game) {
+            PlayedCards playedCards = new PlayedCards();
+            playedCards.Cards.Clear();
+
+            foreach (Game.PlayedCard card in game.PlayedCards) {
+                Proto.PlayedCard pc = new Proto.PlayedCard();
+                Proto.Card c = new Proto.Card();
+                c.Rank = GameRankToProtoRank[card.Card.Rank];
+                c.Suit = GameSuitToProtoSuite[card.Card.Suit];
+                pc.Card = c;
+                pc.Order = card.Order;
+                pc.Seat = card.Seat;
+                
+                playedCards.Cards.Add(pc);
+            }
+
+            //TODO: Handle Current Winner
+            
+            Notification n = new Notification();
+            n.PlayedCards = playedCards;
+
+            await BroadcastNotification(n, game);
+            Log.Debug("Played Cards Notification complete for game " + game.Name);
+        }     
 
         public async Task SendCurrentState(Game.Game game) {
             // Update The Seat List
@@ -648,7 +679,7 @@ namespace ShootTheMoon.Network
                 RpcClient client = await FindClient(game, clientToken);
                 Log.Debug("Received a card of (suit: {0}, rank: {1}) from {2}", request.Suit, request.Rank, client.Name);
                 
-                result = game.PlayCard(GameSuitFromProto(request.Suit), GameRankFromProto(request.Rank), client);
+                result = await game.PlayCard(GameSuitFromProto(request.Suit), GameRankFromProto(request.Rank), client);
             }
             catch (KeyNotFoundException) {
                 r.Success = false;
