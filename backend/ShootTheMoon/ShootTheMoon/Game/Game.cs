@@ -75,6 +75,7 @@ namespace ShootTheMoon.Game
             State = GameState.AWAITING_PLAYERS;
             GameSettings = gameSettings;
             Bids = new List<Bid>();
+            PlayedCards = new List<Card>();
 
             Random r = new Random();
             Dealer = r.Next(Players.Length);
@@ -166,10 +167,14 @@ namespace ShootTheMoon.Game
                 GameEvent ge = new GameEvent(GameEventType.BidUpdate | GameEventType.RequestBid, this, CurrentPlayer);
                 await PublishEvent(ge);
             } else if (State == GameState.PLAYING_HAND) {
-                GameEvent ge = new GameEvent(GameEventType.BidUpdate, this, CurrentPlayer);
+                GameEvent ge = new GameEvent(GameEventType.BidUpdate | GameEventType.TrumpUpdate | GameEventType.PlayCardRequest, this, CurrentPlayer);
                 await PublishEvent(ge);
             }
 
+        }
+
+        private void ResetHand() {
+            PlayedCards.Clear();
         }
 
         private async Task Deal() {
@@ -189,6 +194,8 @@ namespace ShootTheMoon.Game
                 player.Hand.Add(dealtCard);
                 dealTo = (dealTo + 1) % NumPlayers;
             }
+
+            ResetHand();
         }
 
         public Task AddClient(Client client) {
@@ -305,12 +312,51 @@ namespace ShootTheMoon.Game
             return true;
         }
 
+        public bool PlayCard(Suit suit, Rank rank, Client client) {
+            if (client != CurrentPlayer) {
+                // Only Accept A Play From The Current Player
+                return false;
+            }
+
+            uint seat = FindSeat(client);
+            if (seat >= NumPlayers) {
+                return false;
+            }
+
+            Card playedCard = new Card();
+            playedCard.Suit = suit;
+            playedCard.Rank = rank;
+
+            // TODO: Validate Card Is Valid For The Player
+
+            PlayedCards.Add(playedCard);
+
+            if (PlayedCards.Count < NumPlayers) {
+                // Find Next Player
+                int nextPlayer = int.MinValue;
+                for (int index = Dealer+1; index < Dealer + NumPlayers; index++) {
+                    int player = index % NumPlayers;
+                    if (Players[player] == CurrentPlayer) {
+                        // Add One And Exit
+                        nextPlayer = (player + 1) % NumPlayers;
+                        break;
+                    }
+                }
+                CurrentPlayer = Players[nextPlayer];
+                Tick();
+            } else {
+                // Trick Played Out
+            }
+
+            return true;
+        }
+
         private async Task PublishEvent(GameEvent gameEvent) {
             foreach (var observer in observers)
                 await Task.Run(() => observer.OnNext(gameEvent));
         }
 
-        private uint FindSeat(Client client ) {
+        public uint FindSeat(Client client ) {
             for (uint idx = 0; idx < NumPlayers; idx++) {
                 if (Players[idx] == client) {
                     return idx;
@@ -318,6 +364,5 @@ namespace ShootTheMoon.Game
             }
             return uint.MaxValue;
         }
-
     }
 }
