@@ -605,6 +605,8 @@ class Card3D {
             gaussianRandom() * positionDriftFactor.z
         );
         const position = targetStack.position.add(stackHeightCompensation).add(positionDrift);
+
+        this.mesh.setParent(null);
             
         this.animateCardSlide(position, rotationQuaternion, 0, 0, 1, 0.25, scene);
     }

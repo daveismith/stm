@@ -6,7 +6,6 @@ import {
     SSAORenderingPipeline,
     TransformNode,
     SceneLoader,
-    PointLight,
     GlowLayer
 } from "@babylonjs/core";
 
