@@ -1,4 +1,4 @@
-import { SeatDetails, Hand, Bid as BidDetails } from '../../../proto/shoot_pb';
+import { SeatDetails, Hand, Bid as BidDetails, TrumpUpdate } from '../../../proto/shoot_pb';
 import { Seat } from "../Models/Seat";
 import { Bid } from "../Models/Bid";
 import { GameSettings } from "./GameSettings3D";
@@ -10,7 +10,7 @@ import { BidSuitCube } from './BidSuitCube';
 import { ReadyCube } from './ReadyCube';
 import { Seat3D } from './Seat3D';
 import { Card3D } from './Card3D';
-import { Scene } from '@babylonjs/core';
+import { Scene, PointLight } from '@babylonjs/core';
 import { CardStack3D } from './CardStack3D';
 
 enum GameState {
@@ -22,7 +22,9 @@ enum GameState {
     SeatedReady = 4,
     ObservingBids = 10,
     ChoosingBid = 11,
-    WaitingForBidConfirmation = 12
+    WaitingForBidConfirmation = 12,
+    ObservingPlay = 100,
+    ChoosingPlay = 101
 }
 
 class SceneController {
@@ -33,10 +35,14 @@ class SceneController {
     static nameplates: Nameplate[] = [];
     static unreadyCubes: ReadyCube[] = [];
     static readyCubes: ReadyCube[] = [];
+    static turnLight: PointLight;
     static seats: Seat3D[] = [];
     static bids: Bid[] = [];
+    static hand: Card3D[] = [];
     static currentBid: Bid;
     static gameState: GameState = GameState.ChoosingSeat;
+    static currentTrump: TrumpUpdate;
+    static currentCard: Card3D;
 
     static tricksListener () {
     }
@@ -222,6 +228,8 @@ class SceneController {
     }
 
     static bidResponseListener (tricks: number, shootNum: number, trump: Bid.Trump, seat: number) {
+        if (this.gameState >= 100) return;
+
         let player: number = GameSettings.currentPlayer;
 
         // Show bid as ready
@@ -245,6 +253,8 @@ class SceneController {
                 bidNumberCube.disable();
             }
         }
+
+        this.gameState = GameState.ObservingBids;
     }
 
     static bidsListener (bidDetailsList: BidDetails[]) {
@@ -281,6 +291,48 @@ class SceneController {
                     this.bidNumberCubes[player][j].disableAndHide();
             }
         }
+    }
+
+    static trumpUpdateListener(trumpUpdate: TrumpUpdate) {
+        this.currentTrump = trumpUpdate;
+        let seat: number = trumpUpdate.getSeat();
+        let nameplate: Nameplate = this.nameplates[seat];
+
+        if (nameplate) nameplate.updateName(nameplate.name + ": " + trumpUpdate.getTricks() + Bid.trumpString(trumpUpdate.getTrump()));
+
+        for (let seat of this.seats) {
+            for (let bidSuitCube of this.bidSuitCubes[seat.index]) {
+                bidSuitCube.deactivate(this.scene);
+                bidSuitCube.disableAndHide();
+            }
+
+            for (let bidNumberCube of this.bidNumberCubes[seat.index]) {
+                bidNumberCube.deactivate(this.scene);
+                bidNumberCube.disableAndHide();
+            }
+
+            this.readyCubes[seat.index].disable();
+            this.readyCubes[seat.index].hide();
+            this.unreadyCubes[seat.index].disable();
+            this.unreadyCubes[seat.index].hide();
+        }
+
+        if (this.gameState < 100) this.gameState = GameState.ObservingPlay;
+    }
+
+    static cardRequestListener() {
+        for (let card of this.hand) card.toggleGlow(true);
+        this.gameState = GameState.ChoosingPlay;
+    }
+
+    static playCardResponseListener() {
+        let card: Card3D = this.currentCard;
+
+        card.playCardAnimation(GameSettings.currentPlayer, this.scene);
+
+        for (let card of this.hand) card.toggleGlow(false);
+
+        this.gameState = GameState.ObservingPlay;
     }
 
     static moveCameraToSeat(seatNumber: number) {

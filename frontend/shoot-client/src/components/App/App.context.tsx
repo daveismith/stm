@@ -4,6 +4,7 @@ import * as grpcWeb from 'grpc-web';
 import { ShootServerClient } from '../../proto/ShootServiceClientPb';
 import {
     Bid as BidDetails,
+    Card,
     CreateGameRequest,
     CreateGameResponse, 
     JoinGameRequest,
@@ -26,6 +27,7 @@ export interface IApp {
     takeSeat?(seat: number): void,
     setSeatReadyStatus?(ready: boolean): void,
     createBid?(tricks: number, shootNum: number, trump: Bid.Trump, seat: number): void,
+    playCard?(card: Card): void,
     metadata: grpcWeb.Metadata,
     joined: boolean,
     registered: boolean,
@@ -166,6 +168,26 @@ export const AppProvider: React.FC = ({ children }) => {
         }).catch((reason: any) => { 
             appState.eventEmitter.emit('createBidResponse', tricks, shootNum, trump, seat, false);
             console.log('bid failed ' + reason);
+            return false;
+        });
+    };
+
+    appState.playCard = (card: Card) => {
+        if (!appState.joined) {
+            return false;
+        }
+
+        console.log('play card');
+
+        const request: Card = card;
+
+        connection.playCard(request, appState.metadata).then((value: StatusResponse) => {
+            appState.eventEmitter.emit('playCardResponse', card, value.getSuccess());
+            console.log('play card succeeded');
+            return value.getSuccess();
+        }).catch((reason: any) => { 
+            appState.eventEmitter.emit('playCardResponse', card, false);
+            console.log('play card failed ' + reason);
             return false;
         });
     };

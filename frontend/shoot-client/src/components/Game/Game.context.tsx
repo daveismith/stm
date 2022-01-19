@@ -154,8 +154,10 @@ export const GameProvider: React.FC = ({ children }) => {
                     console.log('throwaway request');
                 } else if (notification.hasTrumpUpdate()) {
                     console.log('trump update');
+                    state.eventEmitter.emit("trumpUpdate", notification.getTrumpUpdate());
                 } else if (notification.hasPlayCardRequest()) {
                     console.log('play card request');
+                    state.eventEmitter.emit("cardRequest");
                 } else if(notification.hasUpdateTimeout()) {
                     console.log('update timeout');
                 } else if (notification.hasPlayedCards()) {

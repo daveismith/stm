@@ -11,7 +11,10 @@ namespace ShootTheMoon.Game
         AWAITING_PLAYERS,
         DEALING,
         AWAITING_BIDS,
-        PLAYING_HAND
+        NEW_TRICK,
+        PLAYING_HAND, 
+        TRICK_COMPLETE,
+        HAND_COMPLETE
     }
 
     internal class Unsubscriber<T> : IDisposable {
@@ -58,9 +61,9 @@ namespace ShootTheMoon.Game
         public int RequiredTricks { get; set; }
         public int CallingTeam { get; set; }
         public int[] Tricks { get; set; }
-        public List<Card> PlayedCards { get; set; }
-        public Card HighCard { get; set; }
-        public Card LeadCard { get; set; }
+        public List<PlayedCard> PlayedCards { get; set; }
+        public PlayedCard HighCard { get; set; }
+        public PlayedCard LeadCard { get; set; }
 
         public GameState State { get; private set; }
 
@@ -75,7 +78,7 @@ namespace ShootTheMoon.Game
             State = GameState.AWAITING_PLAYERS;
             GameSettings = gameSettings;
             Bids = new List<Bid>();
-            PlayedCards = new List<Card>();
+            PlayedCards = new List<PlayedCard>();
 
             Random r = new Random();
             Dealer = r.Next(Players.Length);
@@ -132,6 +135,9 @@ namespace ShootTheMoon.Game
                 case GameState.AWAITING_BIDS:
                     await EnterState(GameState.AWAITING_BIDS);
                     break;
+                case GameState.PLAYING_HAND:
+                    await EnterState(GameState.PLAYING_HAND);
+                    break;
             }
 
         }
@@ -166,9 +172,37 @@ namespace ShootTheMoon.Game
 
                 GameEvent ge = new GameEvent(GameEventType.BidUpdate | GameEventType.RequestBid, this, CurrentPlayer);
                 await PublishEvent(ge);
+            } else if (State == GameState.NEW_TRICK) {
+                // Clear Out The Current 
+                PlayedCards.Clear();
+                HighCard = null;
+                LeadCard = null;
+
+                if (previousState == GameState.AWAITING_BIDS) {
+                    GameEvent ge = new GameEvent( GameEventType.BidUpdate | GameEventType.TrumpUpdate, this, CurrentPlayer);
+                    await PublishEvent(ge);
+                }
+
+                await EnterState(GameState.PLAYING_HAND);
             } else if (State == GameState.PLAYING_HAND) {
-                GameEvent ge = new GameEvent(GameEventType.BidUpdate | GameEventType.TrumpUpdate | GameEventType.PlayCardRequest, this, CurrentPlayer);
+                // All That Updates Here Is The Cards Played and Who IS Playing
+                GameEvent ge = new GameEvent( GameEventType.PlayCardRequest | GameEventType.PlayedCards, this, CurrentPlayer);
                 await PublishEvent(ge);
+            } else if (State == GameState.TRICK_COMPLETE) {
+                // Figure Out The Winner
+                // Send Played Card Update
+                // Send Tricks Update
+                Tricks[0]++;
+                // Move To Playing Hand
+                GameEvent ge = new GameEvent( GameEventType.PlayedCards | GameEventType.TricksUpdate, this, CurrentPlayer);
+                await PublishEvent(ge);
+
+                // This Could Also Need To Move To Hand Complete
+                await EnterState(GameState.NEW_TRICK);
+            } else if (State == GameState.HAND_COMPLETE) {
+                // Figure Out Score
+                Tricks[0] = 0;
+                Tricks[1] = 0;
             }
 
         }
@@ -268,7 +302,7 @@ namespace ShootTheMoon.Game
                 b = Bid.makeShootBid(seat, shoot, trump);
             }
 
-            if (CurrentBid != null && (!b.isBetterThan(CurrentBid) || b.isPass())) {
+            if (CurrentBid != null && !b.isBetterThan(CurrentBid) && !b.isPass()) {
                 return false;   // This Is A Bad Bid
             }
 
@@ -303,7 +337,7 @@ namespace ShootTheMoon.Game
                 }
                 Log.Debug("Before Set Current Player");
                 CurrentPlayer = Players[CurrentBid.Seat];
-                await EnterState(GameState.PLAYING_HAND);
+                await EnterState(GameState.NEW_TRICK);
             } else {
                 // Trigger Next Bid
                 CurrentPlayer = Players[nextPlayer];
@@ -312,7 +346,7 @@ namespace ShootTheMoon.Game
             return true;
         }
 
-        public bool PlayCard(Suit suit, Rank rank, Client client) {
+        public async Task<bool> PlayCard(Suit suit, Rank rank, Client client) {
             if (client != CurrentPlayer) {
                 // Only Accept A Play From The Current Player
                 return false;
@@ -323,18 +357,24 @@ namespace ShootTheMoon.Game
                 return false;
             }
 
-            Card playedCard = new Card();
-            playedCard.Suit = suit;
-            playedCard.Rank = rank;
+            Card card = new Card();
+            card.Suit = suit;
+            card.Rank = rank;
+
+            PlayedCard playedCard = new PlayedCard();
+            playedCard.Card = card;
+            playedCard.Seat = seat;
+            playedCard.Order = Convert.ToUInt16(PlayedCards.Count);
 
             // TODO: Validate Card Is Valid For The Player
+            // TODO: Remove From Playe's Hand Or Mark As Played
 
             PlayedCards.Add(playedCard);
 
             if (PlayedCards.Count < NumPlayers) {
                 // Find Next Player
                 int nextPlayer = int.MinValue;
-                for (int index = Dealer+1; index < Dealer + NumPlayers; index++) {
+                for (int index = Dealer+1; index <= Dealer + NumPlayers; index++) {
                     int player = index % NumPlayers;
                     if (Players[player] == CurrentPlayer) {
                         // Add One And Exit
@@ -343,9 +383,10 @@ namespace ShootTheMoon.Game
                     }
                 }
                 CurrentPlayer = Players[nextPlayer];
-                Tick();
+                await Tick();
             } else {
                 // Trick Played Out
+                await EnterState(GameState.TRICK_COMPLETE);
             }
 
             return true;
