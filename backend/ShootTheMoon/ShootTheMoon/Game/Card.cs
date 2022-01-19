@@ -9,5 +9,10 @@ namespace ShootTheMoon.Game
     {
         public Suit Suit { get; set; }
         public Rank Rank { get; set; }
+
+        public Card(Suit suit, Rank rank) {
+            Suit = suit;
+            Rank = rank;
+        }
     }
 }

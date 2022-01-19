@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Grpc.Core;
@@ -16,12 +17,23 @@ namespace ShootTheMoon.Network
         class RpcClient : Game.Client
         {
 
-            public IServerStreamWriter<Notification> Stream { get; }
+            private SemaphoreSlim semaphore;
+            private IServerStreamWriter<Notification> Stream { get; }
 
             public RpcClient(IServerStreamWriter<Notification> stream, string name)
             {
                 Stream = stream;
-                Name = name;                
+                Name = name;   
+                semaphore = new SemaphoreSlim(1, 1);             
+            }
+
+            public async Task WriteAsync(Notification message) {
+                await semaphore.WaitAsync();
+                try {
+                    await Stream.WriteAsync(message);
+                } finally {
+                    semaphore.Release();
+                }
             }
 
         }
@@ -128,7 +140,7 @@ namespace ShootTheMoon.Network
             while (!sent)
             {
                 try {
-                    await client.Stream.WriteAsync(notification);
+                    await client.WriteAsync(notification);
                     sent = true;
                 }
                 catch (InvalidOperationException e) {

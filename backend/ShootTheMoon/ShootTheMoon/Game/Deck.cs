@@ -21,7 +21,7 @@ namespace ShootTheMoon.Game
                 {
                     foreach (var rank in Rank.Ranks)
                     {
-                        Cards.Add(new Card { Suit = suit, Rank = rank });
+                        Cards.Add(new Card(suit, rank));
                     }
                 }
             }

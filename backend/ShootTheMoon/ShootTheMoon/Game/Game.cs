@@ -14,7 +14,8 @@ namespace ShootTheMoon.Game
         NEW_TRICK,
         PLAYING_HAND, 
         TRICK_COMPLETE,
-        HAND_COMPLETE
+        HAND_COMPLETE,
+        GAME_COMPLETE
     }
 
     internal class Unsubscriber<T> : IDisposable {
@@ -150,65 +151,116 @@ namespace ShootTheMoon.Game
             Log.Debug("{0} => {1}", previousState, newState);
 
             if (State == GameState.DEALING) {
-                GameEventType eventType = GameEventType.None;
-
-                if (previousState == GameState.AWAITING_PLAYERS) {
-                    eventType |= (GameEventType.StartGame | GameEventType.ClientUpdate | GameEventType.SeatListUpdate);
-                }
-
-                await Deal();
-                eventType |= GameEventType.DealCards;
-
-                await PublishEvent(new GameEvent(eventType, this));
-                await EnterState(GameState.AWAITING_BIDS);
+                await EnterDealing(previousState);
             } else if (State == GameState.AWAITING_BIDS) {
-
-                // If we're transitioning into awaiting bids, send an update
-                if (previousState != GameState.AWAITING_BIDS) {
-                    CurrentBid = null;
-                    Bids.Clear();
-                    CurrentPlayer = Players[(Dealer + 1) % NumPlayers];
-                }
-
-                GameEvent ge = new GameEvent(GameEventType.BidUpdate | GameEventType.RequestBid, this, CurrentPlayer);
-                await PublishEvent(ge);
+                await EnterAwaitingBids(previousState);
             } else if (State == GameState.NEW_TRICK) {
-                // Clear Out The Current 
-                PlayedCards.Clear();
-                HighCard = null;
-                LeadCard = null;
-
-                if (previousState == GameState.AWAITING_BIDS) {
-                    GameEvent ge = new GameEvent( GameEventType.BidUpdate | GameEventType.TrumpUpdate, this, CurrentPlayer);
-                    await PublishEvent(ge);
-                }
-
-                await EnterState(GameState.PLAYING_HAND);
+                await EnterNewTrick(previousState);
             } else if (State == GameState.PLAYING_HAND) {
                 // All That Updates Here Is The Cards Played and Who IS Playing
                 GameEvent ge = new GameEvent( GameEventType.PlayCardRequest | GameEventType.PlayedCards, this, CurrentPlayer);
                 await PublishEvent(ge);
             } else if (State == GameState.TRICK_COMPLETE) {
-                // Figure Out The Winner
-                // Send Played Card Update
-                // Send Tricks Update
-                Tricks[0]++;
-                // Move To Playing Hand
-                GameEvent ge = new GameEvent( GameEventType.PlayedCards | GameEventType.TricksUpdate, this, CurrentPlayer);
-                await PublishEvent(ge);
-
-                // This Could Also Need To Move To Hand Complete
-                await EnterState(GameState.NEW_TRICK);
+                await EnterTrickComplete();
             } else if (State == GameState.HAND_COMPLETE) {
-                // Figure Out Score
-                Tricks[0] = 0;
-                Tricks[1] = 0;
+                await EnterHandComplete();
             }
 
         }
 
-        private void ResetHand() {
+        protected async Task EnterDealing(GameState previousState) {
+            GameEventType eventType = GameEventType.None;
+
+            if (previousState == GameState.AWAITING_PLAYERS) {
+                eventType |= (GameEventType.StartGame | GameEventType.ClientUpdate | GameEventType.SeatListUpdate);
+            }
+
+            ResetHand();
+            await Deal();
+            eventType |= GameEventType.DealCards;
+
+            await PublishEvent(new GameEvent(eventType, this));
+            await EnterState(GameState.AWAITING_BIDS);
+        }
+
+        protected async Task EnterAwaitingBids(GameState previousState) {
+            // If we're transitioning into awaiting bids, send an update
+            if (previousState != GameState.AWAITING_BIDS) {
+                CurrentBid = null;
+                Bids.Clear();
+                CurrentPlayer = Players[(Dealer + 1) % NumPlayers];
+            }
+
+            GameEvent ge = new GameEvent(GameEventType.BidUpdate | GameEventType.RequestBid, this, CurrentPlayer);
+            await PublishEvent(ge);
+        }
+
+        protected async Task EnterNewTrick(GameState previousState) {
+            // Clear Out The Current 
+            ResetTrick();
+
+            if (previousState == GameState.AWAITING_BIDS) {
+                GameEvent ge = new GameEvent( GameEventType.BidUpdate | GameEventType.TrumpUpdate, this, CurrentPlayer);
+                await PublishEvent(ge);
+            }
+
+            await EnterState(GameState.PLAYING_HAND);
+        }
+
+        protected async Task EnterTrickComplete() {
+            // Figure Out The Winner
+            Log.Debug("Lead Card: {0}, High Card: {1}, TricksPerHand: {2}", LeadCard, HighCard, GameSettings.TricksPerHand);
+            uint winningTeam = (HighCard.Seat % 2);
+            Log.Debug("Trick Winner: {0}, Team: {1}", HighCard.Seat, winningTeam);
+
+            // Send Played Card Update
+
+            // Send Tricks Update
+            Tricks[winningTeam]++;
+
+            // Move To Playing Hand
+            GameEvent ge = new GameEvent( GameEventType.PlayedCards | GameEventType.TricksUpdate, this, CurrentPlayer);
+            await PublishEvent(ge);
+
+            // This Could Also Need To Move To Hand Complete
+            int tricksPlayed = Tricks[0] + Tricks[1];
+            if (tricksPlayed >= GameSettings.TricksPerHand) {
+                await EnterState(GameState.HAND_COMPLETE);
+            } else {
+                CurrentPlayer = Players[HighCard.Seat];
+                await EnterState(GameState.NEW_TRICK);
+            }
+        }
+
+        protected async Task EnterHandComplete() {
+            // Leech Limit Is:
+            //   - half the max number of tricks from winning subtracted from score
+            // Winner is determined based on the winning bid (eg, if the winning bidder's team makes their )
+            uint handWinner = 0;
+
+            // Update The Score
+            Score[0] += (Tricks[0] < GameSettings.LeechLimit || handWinner == 0) ? Tricks[0] : 0;
+            Score[1] += (Tricks[1] < GameSettings.LeechLimit || handWinner == 1) ? Tricks[1] : 0;
+
+            // Check If Game Over
+            if (Score[0] >= GameSettings.ScoreNeededToWin || Score[1] >= GameSettings.ScoreNeededToWin) {
+                await EnterState(GameState.GAME_COMPLETE);
+            } else {
+                await EnterState(GameState.DEALING);
+            }
+        }
+
+        private void ResetTrick() {
             PlayedCards.Clear();
+            LeadCard = null;
+            HighCard = null;
+        }
+
+        private void ResetHand() {
+            ResetTrick();
+            Tricks[0] = 0;
+            Tricks[1] = 0;
+            CurrentTrump = null;
         }
 
         private async Task Deal() {
@@ -337,6 +389,7 @@ namespace ShootTheMoon.Game
                 }
                 Log.Debug("Before Set Current Player");
                 CurrentPlayer = Players[CurrentBid.Seat];
+                CurrentTrump = CurrentBid.Trump;
                 await EnterState(GameState.NEW_TRICK);
             } else {
                 // Trigger Next Bid
@@ -357,19 +410,26 @@ namespace ShootTheMoon.Game
                 return false;
             }
 
-            Card card = new Card();
-            card.Suit = suit;
-            card.Rank = rank;
+            Card card = new Card(suit, rank);
 
-            PlayedCard playedCard = new PlayedCard();
-            playedCard.Card = card;
-            playedCard.Seat = seat;
-            playedCard.Order = Convert.ToUInt16(PlayedCards.Count);
+
+            PlayedCard playedCard = new PlayedCard(card, seat, Convert.ToUInt16(PlayedCards.Count));
 
             // TODO: Validate Card Is Valid For The Player
-            // TODO: Remove From Playe's Hand Or Mark As Played
+            
+            // Remove From Player's Hand Or Mark As Played
+            CurrentPlayer.Hand.Remove(card);
 
             PlayedCards.Add(playedCard);
+            if (LeadCard == null) {
+                LeadCard = playedCard;
+            }
+
+            if (playedCard.winsAgainst(HighCard, LeadCard.Card.Suit, CurrentTrump)) {
+                // Check If This Card Is Higher Than The High Card
+                // ie, is this a higher face value or is it higher trump
+                HighCard = playedCard;
+            }
 
             if (PlayedCards.Count < NumPlayers) {
                 // Find Next Player
