@@ -10,6 +10,13 @@ namespace ShootTheMoon.Game
         public Suit Suit { get; set; }
         public Rank Rank { get; set; }
 
+        public Suit EffectiveSuit(Trump trump) {
+            if (Suit == trump.SameColour && Rank == Rank.Jack) {
+                return trump.Suit;
+            }
+            return Suit;
+        }
+
         public Card(Suit suit, Rank rank) {
             Suit = suit;
             Rank = rank;

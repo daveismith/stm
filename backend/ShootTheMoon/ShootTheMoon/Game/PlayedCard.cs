@@ -31,6 +31,33 @@ namespace ShootTheMoon.Game
             Seat = seat;
         }
 
+        public bool isValidWithHand(List<Card> hand, Suit lead, Trump trump) {
+            // Rules for card validation are:
+            // 1. Card must be in your hand
+            // 2. Player must follow lead if they have it.
+
+            if (!hand.Contains(Card)) {
+                // The hand doesn't contain the card
+                return false;
+            }
+
+            if (this.Card.EffectiveSuit(trump) == lead) {
+                // The card lead is in the hand and follows the lead
+                return true;
+            }
+
+            foreach (Card card in hand) {
+                if (card.EffectiveSuit(trump) == lead) {
+                    // The player can follow suit but is not doing so
+                    return false;
+                }
+            }
+
+            // Anything is valid as the card is contained in the hand,
+            // and the hand does not contain the suit which was led.
+            return true;
+        }
+
         public int cardScore(Suit lead, Trump trump) {
             int score = this.Card.Rank.Value;
 
@@ -38,15 +65,13 @@ namespace ShootTheMoon.Game
                 score = RANK_SIZE - score;
             }
 
-            if (this.Card.Suit == trump.Suit) {
+            if (this.Card.EffectiveSuit(trump) == trump.Suit) {
                 // Anything Trump gets 64 points automatically
                 score += TRUMP_OFFSET;
                 if (this.Card.Rank == Rank.Jack) {
-                    score += RIGHT_OFFSET; // Bump Ahead Of The Ace, Leaving room for the left
+                    score += (this.Card.Suit == trump.Suit) ? RIGHT_OFFSET : LEFT_OFFSET; // Bump Ahead Of The Ace, Leaving room for the left
                 }
-            } else if ((this.Card.Suit == trump.SameColour) && (this.Card.Rank == Rank.Jack)) {
-                score += TRUMP_OFFSET + LEFT_OFFSET;    // This is actually a trump card and the left
-            } else if (this.Card.Suit == lead) {
+            } else if (this.Card.EffectiveSuit(trump) == lead) {
                 score += LEAD_OFFSET;
             }
 
