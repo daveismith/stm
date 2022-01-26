@@ -12,6 +12,8 @@ namespace ShootTheMoonTest.Game
     {
         Card nineOfHearts = new Card(Suit.Hearts, Rank.Nine);
 
+        Card jackOfClubs = new Card(Suit.Clubs, Rank.Jack);
+
         Card nineOfSpades = new Card(Suit.Spades, Rank.Nine);
         Card tenOfSpades = new Card(Suit.Spades, Rank.Ten);
         Card jackOfSpades = new Card(Suit.Spades, Rank.Jack);
@@ -47,6 +49,35 @@ namespace ShootTheMoonTest.Game
             second = new PlayedCard(aceOfSpades, 5, 5);
             Assert.IsTrue(second.winsAgainst(first, Suit.Clubs, Trump.Diamonds));
             Assert.IsFalse(first.winsAgainst(second, Suit.Clubs, Trump.Diamonds));            
+        }
+
+        [TestMethod]
+        public void TestHigherCardNotLeadLowTrump()
+        {
+            PlayedCard first = new PlayedCard(nineOfSpades, 0, 0);
+            PlayedCard second = new PlayedCard(tenOfSpades, 1, 1);
+            Assert.IsFalse(second.winsAgainst(first, Suit.Clubs, Trump.Low));
+            Assert.IsTrue(first.winsAgainst(second, Suit.Clubs, Trump.Low));
+
+            first = second;
+            second = new PlayedCard(jackOfSpades, 2, 2);
+            Assert.IsFalse(second.winsAgainst(first, Suit.Clubs, Trump.Low));
+            Assert.IsTrue(first.winsAgainst(second, Suit.Clubs, Trump.Low));
+
+            first = second;
+            second = new PlayedCard(queenOfSpades, 3, 3);
+            Assert.IsFalse(second.winsAgainst(first, Suit.Clubs, Trump.Low));
+            Assert.IsTrue(first.winsAgainst(second, Suit.Clubs, Trump.Low));
+
+            first = second;
+            second = new PlayedCard(kingOfSpades, 4, 4);
+            Assert.IsFalse(second.winsAgainst(first, Suit.Clubs, Trump.Low));
+            Assert.IsTrue(first.winsAgainst(second, Suit.Clubs, Trump.Low));
+
+            first = second;
+            second = new PlayedCard(aceOfSpades, 5, 5);
+            Assert.IsFalse(second.winsAgainst(first, Suit.Clubs, Trump.Low));
+            Assert.IsTrue(first.winsAgainst(second, Suit.Clubs, Trump.Low));            
         }
 
         [TestMethod]
@@ -146,6 +177,45 @@ namespace ShootTheMoonTest.Game
             PlayedCard second = new PlayedCard(nineOfSpades, 1, 1);
             Assert.IsTrue(first.winsAgainst(second, Suit.Clubs, Trump.Diamonds));
             Assert.IsFalse(second.winsAgainst(first, Suit.Clubs, Trump.Diamonds));         
+
+            Assert.IsTrue(first.winsAgainst(second, Suit.Clubs, Trump.Low));
+            Assert.IsFalse(second.winsAgainst(first, Suit.Clubs, Trump.Low));  
+        }
+
+        [TestMethod]
+        public void TestRightBeatsLeft() {
+            PlayedCard first = new PlayedCard(jackOfSpades, 0, 0);
+            PlayedCard second = new PlayedCard(jackOfClubs, 1, 1);
+
+            Assert.IsTrue(first.winsAgainst(second, Suit.Clubs, Trump.Spades));
+            Assert.IsFalse(second.winsAgainst(first, Suit.Clubs, Trump.Spades));
+
+            Assert.IsFalse(first.winsAgainst(second, Suit.Clubs, Trump.Clubs));
+            Assert.IsTrue(second.winsAgainst(first, Suit.Clubs, Trump.Clubs));
+        }
+
+        [TestMethod]
+        public void TestRightBeatAce() {
+            PlayedCard first = new PlayedCard(jackOfSpades, 0, 1);
+            PlayedCard second = new PlayedCard(aceOfSpades, 1, 1);
+
+            Assert.IsTrue(first.winsAgainst(second, Suit.Spades, Trump.Spades));
+            Assert.IsFalse(second.winsAgainst(first, Suit.Spades, Trump.Spades));   
+        }
+
+        [TestMethod]
+        public void TestLeftBeatAce() {
+            PlayedCard first = new PlayedCard(jackOfClubs, 0, 0);
+            PlayedCard second = new PlayedCard(aceOfSpades, 1, 1);
+
+            Assert.IsTrue(first.winsAgainst(second, Suit.Spades, Trump.Spades));
+            Assert.IsFalse(second.winsAgainst(first, Suit.Spades, Trump.Spades));
+
+            first = new PlayedCard(aceOfSpades, 0, 0);
+            second = new PlayedCard(jackOfClubs, 1, 1);
+
+            Assert.IsFalse(first.winsAgainst(second, Suit.Spades, Trump.Spades));
+            Assert.IsTrue(second.winsAgainst(first, Suit.Spades, Trump.Spades));               
         }
 
     }

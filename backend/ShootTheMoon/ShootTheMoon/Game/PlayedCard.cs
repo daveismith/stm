@@ -7,6 +7,12 @@ namespace ShootTheMoon.Game
 {
     public class PlayedCard
     {
+        private static int TRUMP_OFFSET = 64;
+        private static int LEAD_OFFSET = 32;
+        private static int RANK_SIZE = 16;
+        private static int RIGHT_OFFSET = (Rank.Ace.Value - Rank.Jack.Value) + 2;
+        private static int LEFT_OFFSET = (Rank.Ace.Value - Rank.Jack.Value) + 1;
+
         public Card Card { get; set; }
 
         public uint Order { get; set; }
@@ -25,54 +31,45 @@ namespace ShootTheMoon.Game
             Seat = seat;
         }
 
-        public bool compareOnValue(PlayedCard otherCard) {
-            // Check Higher Value, If Equal, first ordered card wins
-            if (this.Card.Rank.Value > otherCard.Card.Rank.Value) {
-                return true;
-            } else if (this.Card.Rank.Value < otherCard.Card.Rank.Value) {
-                return false;
+        public int cardScore(Suit lead, Trump trump) {
+            int score = this.Card.Rank.Value;
+
+            if (trump == Trump.Low) {
+                score = RANK_SIZE - score;
             }
 
-            // The cards have the same value, so it comes down to which was played first 
-            return this.Order < otherCard.Order;
+            if (this.Card.Suit == trump.Suit) {
+                // Anything Trump gets 64 points automatically
+                score += TRUMP_OFFSET;
+                if (this.Card.Rank == Rank.Jack) {
+                    score += RIGHT_OFFSET; // Bump Ahead Of The Ace, Leaving room for the left
+                }
+            } else if ((this.Card.Suit == trump.SameColour) && (this.Card.Rank == Rank.Jack)) {
+                score += TRUMP_OFFSET + LEFT_OFFSET;    // This is actually a trump card and the left
+            } else if (this.Card.Suit == lead) {
+                score += LEAD_OFFSET;
+            }
+
+            return score;
         }
 
         public bool winsAgainst(PlayedCard otherCard, Suit lead, Trump trump) {
             if (otherCard == null) {
                 return true;
             }
-            
-            bool thisIsTrump = Card.Suit.Equals(trump.Suit);
-            bool thatIsTrump = otherCard.Card.Suit.Equals(trump.Suit);
 
-            if (thisIsTrump && thatIsTrump) {
-                return compareOnValue(otherCard);
-            } 
-            
-            
-            if (thatIsTrump) {
-                // The passed in card is trump, and this one isn't so it always loses
-                return false;
-            }
-            
-            if (thisIsTrump) {
-                // This card is trump, and the other isn't so this always wins
-                return true;
-            }
+            int valueA = this.cardScore(lead, trump);
+            int valueB = otherCard.cardScore(lead, trump);
 
-            // Process No Trump Involvement
-            bool thisIsLead = this.Card.Suit.Equals(lead);
-            bool thatIsLead = otherCard.Card.Suit.Equals(lead);
-            if (thisIsLead && thatIsLead) {
-                return compareOnValue(otherCard);
-            } else if (thisIsLead) {
+            // Check Higher Value, If Equal, first ordered card wins
+            if (valueA > valueB) {
                 return true;
-            } else if (thatIsLead) {
+            } else if (valueA < valueB) {
                 return false;
             }
 
-            // Neither Card Is The Lead Suit or Trump, So Highest Card Wins
-            return compareOnValue(otherCard);
+            // The cards have the same value, so it comes down to which was played first 
+            return this.Order < otherCard.Order;
         }
 
     }
