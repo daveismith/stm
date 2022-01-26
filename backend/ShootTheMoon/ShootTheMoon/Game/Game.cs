@@ -413,7 +413,7 @@ namespace ShootTheMoon.Game
             Card card = new Card(suit, rank);
 
 
-            PlayedCard playedCard = new PlayedCard(card, seat, Convert.ToUInt16(PlayedCards.Count));
+            PlayedCard playedCard = new PlayedCard(card, Convert.ToUInt16(PlayedCards.Count), seat);
 
             // TODO: Validate Card Is Valid For The Player
             
