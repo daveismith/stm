@@ -256,7 +256,7 @@ namespace ShootTheMoonTest.Game
 
 
         [TestMethod]
-        public void TestNotFollowingLeadRulesWithLeft() {
+        public void TestLeadRulesWithLeft() {
             PlayedCard first = new PlayedCard(jackOfClubs, 0, 0);
             List<Card> hand = new List<Card>();
             hand.Add(nineOfSpades);
@@ -269,6 +269,34 @@ namespace ShootTheMoonTest.Game
             Assert.IsFalse(first.isValidWithHand(hand, Suit.Diamonds, Trump.Spades));
             Assert.IsFalse(first.isValidWithHand(hand, Suit.Hearts, Trump.Spades));
         }  
+
+        [TestMethod]
+        public void TestLeadRulesWithRight() {
+            PlayedCard first = new PlayedCard(jackOfClubs, 0, 0);
+            List<Card> hand = new List<Card>();
+            hand.Add(nineOfSpades);
+            hand.Add(jackOfClubs);
+            hand.Add(nineOfDiamonds);
+            hand.Add(nineOfHearts);
+
+            Assert.IsTrue(first.isValidWithHand(hand, Suit.Clubs, Trump.Clubs));  // Right
+            Assert.IsFalse(first.isValidWithHand(hand, Suit.Spades, Trump.Clubs));
+            Assert.IsFalse(first.isValidWithHand(hand, Suit.Diamonds, Trump.Clubs));
+            Assert.IsFalse(first.isValidWithHand(hand, Suit.Hearts, Trump.Clubs));
+        }          
+
+
+        [TestMethod]
+        public void TestLeadRulesOnlyThisCard() {
+            PlayedCard first = new PlayedCard(jackOfClubs, 0, 0);
+            List<Card> hand = new List<Card>();
+            hand.Add(jackOfClubs);
+            
+            Assert.IsTrue(first.isValidWithHand(hand, Suit.Clubs, Trump.Spades));  // Right
+            Assert.IsTrue(first.isValidWithHand(hand, Suit.Spades, Trump.Spades));
+            Assert.IsTrue(first.isValidWithHand(hand, Suit.Diamonds, Trump.Spades));
+            Assert.IsTrue(first.isValidWithHand(hand, Suit.Hearts, Trump.Spades));
+        }               
 
     }
 

@@ -415,7 +415,11 @@ namespace ShootTheMoon.Game
 
             PlayedCard playedCard = new PlayedCard(card, Convert.ToUInt16(PlayedCards.Count), seat);
 
-            // TODO: Validate Card Is Valid For The Player
+            // Validate Card Is Valid For The Player
+            Suit leadSuit = (LeadCard != null) ? LeadCard.Card.Suit : null;
+            if (!playedCard.isValidWithHand(CurrentPlayer.Hand, leadSuit, CurrentTrump)) {
+                return false;
+            }
             
             // Remove From Player's Hand Or Mark As Played
             CurrentPlayer.Hand.Remove(card);
