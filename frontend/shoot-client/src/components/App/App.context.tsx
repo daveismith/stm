@@ -11,7 +11,8 @@ import {
     Notification,
     SetReadyStatusRequest,
     StatusResponse,
-    TakeSeatRequest
+    TakeSeatRequest,
+    Trump
 } from '../../proto/shoot_pb';
 
 import { EventEmitter3D } from "../Game/Interface3D/EventEmitter3D";
@@ -158,12 +159,12 @@ export const AppProvider: React.FC = ({ children }) => {
         const request: BidDetails = new BidDetails();
         request.setTricks(tricks);
         request.setShootNum(shootNum);
-        request.setTrump(trump);
+        request.setTrump(Bid.toProtoTrump(trump));
         request.setSeat(seat);
 
         connection.createBid(request, appState.metadata).then((value: StatusResponse) => {
             appState.eventEmitter.emit('createBidResponse', tricks, shootNum, trump, seat, value.getSuccess());
-            console.log('bid succeeded');
+            console.log('bid response: ' + value.getSuccess());
             return value.getSuccess();
         }).catch((reason: any) => { 
             appState.eventEmitter.emit('createBidResponse', tricks, shootNum, trump, seat, false);
@@ -183,7 +184,7 @@ export const AppProvider: React.FC = ({ children }) => {
 
         connection.playCard(request, appState.metadata).then((value: StatusResponse) => {
             appState.eventEmitter.emit('playCardResponse', card, value.getSuccess());
-            console.log('play card succeeded');
+            console.log('play card result: ' + value.getSuccess());
             return value.getSuccess();
         }).catch((reason: any) => { 
             appState.eventEmitter.emit('playCardResponse', card, false);

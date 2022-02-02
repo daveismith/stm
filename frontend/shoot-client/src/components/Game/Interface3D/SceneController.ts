@@ -1,4 +1,4 @@
-import { SeatDetails, Hand, Bid as BidDetails, TrumpUpdate } from '../../../proto/shoot_pb';
+import { SeatDetails, Hand, Bid as BidDetails, TrumpUpdate, Card } from '../../../proto/shoot_pb';
 import { Seat } from "../Models/Seat";
 import { Bid } from "../Models/Bid";
 import { GameSettings } from "./GameSettings3D";
@@ -298,7 +298,10 @@ class SceneController {
         let seat: number = trumpUpdate.getSeat();
         let nameplate: Nameplate = this.nameplates[seat];
 
-        if (nameplate) nameplate.updateName(nameplate.name + ": " + trumpUpdate.getTricks() + Bid.trumpString(trumpUpdate.getTrump()));
+        if (nameplate) {
+            let trump: Bid.Trump = Bid.fromProtoTrump(trumpUpdate.getTrump());
+            nameplate.updateName(nameplate.name + ": " + trumpUpdate.getTricks() + Bid.trumpString(trump));
+        }
 
         for (let seat of this.seats) {
             for (let bidSuitCube of this.bidSuitCubes[seat.index]) {
@@ -325,14 +328,18 @@ class SceneController {
         this.gameState = GameState.ChoosingPlay;
     }
 
-    static playCardResponseListener() {
-        let card: Card3D = this.currentCard;
+    static playCardResponseListener(playedCard: Card, success: boolean) {
+        if (success) {
+            let card: Card3D = this.currentCard;
 
-        card.playCardAnimation(GameSettings.currentPlayer, this.scene);
+            card.playCardAnimation(GameSettings.currentPlayer, this.scene);
 
-        for (let card of this.hand) card.toggleGlow(false);
+            for (let card of this.hand) card.toggleGlow(false);
 
-        this.gameState = GameState.ObservingPlay;
+            this.gameState = GameState.ObservingPlay;
+        } else {
+            console.log("Error Playing Card");
+        }
     }
 
     static moveCameraToSeat(seatNumber: number) {

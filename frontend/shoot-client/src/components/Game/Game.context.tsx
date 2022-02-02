@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { produce } from "immer";
 import { useParams } from "react-router-dom";
 import { useApp } from "../App/App.context";
-import { Notification, SeatDetails, Bid as BidDetails } from '../../proto/shoot_pb';
+import { Trump, Notification, SeatDetails, Bid as BidDetails } from '../../proto/shoot_pb';
 import { Card } from "./Models/Card";
 import { Seat } from "./Models/Seat";
 import { Bid } from "./Models/Bid";
@@ -134,7 +134,7 @@ export const GameProvider: React.FC = ({ children }) => {
                             const bid: Bid = {
                                 number: bidDetails.getTricks(),
                                 shootNum: bidDetails.getShootNum(),
-                                trump: bidDetails.getTrump(),
+                                trump: Bid.fromProtoTrump(bidDetails.getTrump()),
                                 seat: bidDetails.getSeat(),
                             };
                             draft.bids.set(bid.seat, bid);
