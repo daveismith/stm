@@ -466,7 +466,8 @@ namespace ShootTheMoon.Network
             PlayedCards playedCards = new PlayedCards();
             playedCards.Cards.Clear();
 
-            foreach (Game.PlayedCard card in game.PlayedCards) {
+            Game.PlayedCard[] cards = game.PlayedCards.ToArray();
+            foreach (Game.PlayedCard card in cards) {
                 Proto.PlayedCard pc = new Proto.PlayedCard();
                 Proto.Card c = new Proto.Card();
                 c.Rank = GameRankToProtoRank[card.Card.Rank];

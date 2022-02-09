@@ -429,7 +429,10 @@ namespace ShootTheMoon.Game
                 LeadCard = playedCard;
             }
 
-            if (playedCard.winsAgainst(HighCard, LeadCard.Card.Suit, CurrentTrump)) {
+            bool winner = playedCard.winsAgainst(HighCard, LeadCard.Card.Suit, CurrentTrump);
+            Log.Debug("{0} {1} {2} (lead: {3}, current trump: {4})", card, (winner ? "beats" : "is beaten by"), HighCard.Card, LeadCard.Card.Suit.LongName, CurrentTrump.Name);
+
+            if (HighCard == null || winner) {
                 // Check If This Card Is Higher Than The High Card
                 // ie, is this a higher face value or is it higher trump
                 HighCard = playedCard;

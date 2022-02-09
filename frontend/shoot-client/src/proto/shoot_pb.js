@@ -6500,8 +6500,8 @@ proto.Trump = {
   HEARTS: 1,
   DIAMONDS: 2,
   CLUBS: 3,
-  HIGH: 4,
-  LOW: 5
+  LOW: 4,
+  HIGH: 5
 };
 
 goog.object.extend(exports, proto);

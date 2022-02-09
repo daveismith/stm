@@ -97,5 +97,9 @@ namespace ShootTheMoon.Game
             return this.Order < otherCard.Order;
         }
 
+        public override string ToString()
+        {
+            return "[" + Card.ToString() + ", seat: " + Seat + ", order: " + Order + "]";
+        }
     }
 }

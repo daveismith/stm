@@ -67,5 +67,10 @@ namespace ShootTheMoon.Game
         }
 
         public static bool operator !=(Card lhs, Card rhs) => !(lhs == rhs);        
+
+        public override string ToString()
+        {
+            return Rank.LongName + " of " + Suit.LongName;
+        }        
     }
 }
