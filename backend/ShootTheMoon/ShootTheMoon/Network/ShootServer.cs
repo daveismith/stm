@@ -16,20 +16,22 @@ namespace ShootTheMoon.Network
 
         class RpcClient : Game.Client
         {
-
+            private UInt32 sequence;
             private SemaphoreSlim semaphore;
             private IServerStreamWriter<Notification> Stream { get; }
 
             public RpcClient(IServerStreamWriter<Notification> stream, string name)
             {
+                sequence = 0;
                 Stream = stream;
                 Name = name;   
-                semaphore = new SemaphoreSlim(1, 1);             
+                semaphore = new SemaphoreSlim(1, 1);
             }
 
             public async Task WriteAsync(Notification message) {
                 await semaphore.WaitAsync();
                 try {
+                    message.Sequence = sequence++;
                     await Stream.WriteAsync(message);
                 } finally {
                     semaphore.Release();

@@ -175,27 +175,28 @@ message LeaveGameRequest {
 }
 
 message Notification {
+	uint32 sequence = 1;
 	oneof notification {
-		StatusResponse status = 1;
-		JoinGameResponse join_response = 2;
-		SeatsList seat_list = 3;
-		SeatDetails seat_update = 4;
-		StartGame start_game = 5;
-		Hand hand = 6;
-		BidRequest bid_request = 7;
-		Bid bid = 8;
-		BidList bid_list = 9;
-		TransferRequest transfer_request = 10;
-		Transfer transfer = 11;
-		ThrowawayRequest throwaway_request = 12;
-		TrumpUpdate trump_update = 13;
-		PlayCardRequest play_card_request = 14;
-		UpdateTimeout update_timeout = 15;
-		PlayedCards played_cards = 16;
-		Tricks tricks = 17;
-		Scores scores = 18;
-		EndGame end_game = 19;
-	}
+		StatusResponse status = 2;
+		JoinGameResponse join_response = 3;
+		SeatsList seat_list = 4;
+		SeatDetails seat_update = 5;
+		StartGame start_game = 6;
+		Hand hand = 7;
+		BidRequest bid_request = 8;
+		Bid bid = 9;
+		BidList bid_list = 10;
+		TransferRequest transfer_request = 11;
+		Transfer transfer = 12;
+		ThrowawayRequest throwaway_request = 13;
+		TrumpUpdate trump_update = 14;
+		PlayCardRequest play_card_request = 15;
+		UpdateTimeout update_timeout = 16;
+		PlayedCards played_cards = 17;
+		Tricks tricks = 18;
+		Scores scores = 19;
+		EndGame end_game = 20;
+	};
 }
 // [END messages]
 

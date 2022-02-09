@@ -78,6 +78,7 @@ export const GameProvider: React.FC = ({ children }) => {
             joinGame(id, state.playerName);
         } else if (!registered) {
             appState.stream.on('data', (notification: Notification) => {
+                console.log("rx notification sequence: " + notification.getSequence());
                 if (notification.hasScores()) {
                     console.log('score update');
                     // Handle A Score Update

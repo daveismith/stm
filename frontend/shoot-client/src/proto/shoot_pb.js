@@ -5359,32 +5359,32 @@ proto.LeaveGameRequest.serializeBinaryToWriter = function(message, writer) {
  * @private {!Array<!Array<number>>}
  * @const
  */
-proto.Notification.oneofGroups_ = [[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]];
+proto.Notification.oneofGroups_ = [[2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]];
 
 /**
  * @enum {number}
  */
 proto.Notification.NotificationCase = {
   NOTIFICATION_NOT_SET: 0,
-  STATUS: 1,
-  JOIN_RESPONSE: 2,
-  SEAT_LIST: 3,
-  SEAT_UPDATE: 4,
-  START_GAME: 5,
-  HAND: 6,
-  BID_REQUEST: 7,
-  BID: 8,
-  BID_LIST: 9,
-  TRANSFER_REQUEST: 10,
-  TRANSFER: 11,
-  THROWAWAY_REQUEST: 12,
-  TRUMP_UPDATE: 13,
-  PLAY_CARD_REQUEST: 14,
-  UPDATE_TIMEOUT: 15,
-  PLAYED_CARDS: 16,
-  TRICKS: 17,
-  SCORES: 18,
-  END_GAME: 19
+  STATUS: 2,
+  JOIN_RESPONSE: 3,
+  SEAT_LIST: 4,
+  SEAT_UPDATE: 5,
+  START_GAME: 6,
+  HAND: 7,
+  BID_REQUEST: 8,
+  BID: 9,
+  BID_LIST: 10,
+  TRANSFER_REQUEST: 11,
+  TRANSFER: 12,
+  THROWAWAY_REQUEST: 13,
+  TRUMP_UPDATE: 14,
+  PLAY_CARD_REQUEST: 15,
+  UPDATE_TIMEOUT: 16,
+  PLAYED_CARDS: 17,
+  TRICKS: 18,
+  SCORES: 19,
+  END_GAME: 20
 };
 
 /**
@@ -5425,6 +5425,7 @@ proto.Notification.prototype.toObject = function(opt_includeInstance) {
  */
 proto.Notification.toObject = function(includeInstance, msg) {
   var f, obj = {
+    sequence: jspb.Message.getFieldWithDefault(msg, 1, 0),
     status: (f = msg.getStatus()) && proto.StatusResponse.toObject(includeInstance, f),
     joinResponse: (f = msg.getJoinResponse()) && proto.JoinGameResponse.toObject(includeInstance, f),
     seatList: (f = msg.getSeatList()) && proto.SeatsList.toObject(includeInstance, f),
@@ -5481,96 +5482,100 @@ proto.Notification.deserializeBinaryFromReader = function(msg, reader) {
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
+      var value = /** @type {number} */ (reader.readUint32());
+      msg.setSequence(value);
+      break;
+    case 2:
       var value = new proto.StatusResponse;
       reader.readMessage(value,proto.StatusResponse.deserializeBinaryFromReader);
       msg.setStatus(value);
       break;
-    case 2:
+    case 3:
       var value = new proto.JoinGameResponse;
       reader.readMessage(value,proto.JoinGameResponse.deserializeBinaryFromReader);
       msg.setJoinResponse(value);
       break;
-    case 3:
+    case 4:
       var value = new proto.SeatsList;
       reader.readMessage(value,proto.SeatsList.deserializeBinaryFromReader);
       msg.setSeatList(value);
       break;
-    case 4:
+    case 5:
       var value = new proto.SeatDetails;
       reader.readMessage(value,proto.SeatDetails.deserializeBinaryFromReader);
       msg.setSeatUpdate(value);
       break;
-    case 5:
+    case 6:
       var value = new proto.StartGame;
       reader.readMessage(value,proto.StartGame.deserializeBinaryFromReader);
       msg.setStartGame(value);
       break;
-    case 6:
+    case 7:
       var value = new proto.Hand;
       reader.readMessage(value,proto.Hand.deserializeBinaryFromReader);
       msg.setHand(value);
       break;
-    case 7:
+    case 8:
       var value = new proto.BidRequest;
       reader.readMessage(value,proto.BidRequest.deserializeBinaryFromReader);
       msg.setBidRequest(value);
       break;
-    case 8:
+    case 9:
       var value = new proto.Bid;
       reader.readMessage(value,proto.Bid.deserializeBinaryFromReader);
       msg.setBid(value);
       break;
-    case 9:
+    case 10:
       var value = new proto.BidList;
       reader.readMessage(value,proto.BidList.deserializeBinaryFromReader);
       msg.setBidList(value);
       break;
-    case 10:
+    case 11:
       var value = new proto.TransferRequest;
       reader.readMessage(value,proto.TransferRequest.deserializeBinaryFromReader);
       msg.setTransferRequest(value);
       break;
-    case 11:
+    case 12:
       var value = new proto.Transfer;
       reader.readMessage(value,proto.Transfer.deserializeBinaryFromReader);
       msg.setTransfer(value);
       break;
-    case 12:
+    case 13:
       var value = new proto.ThrowawayRequest;
       reader.readMessage(value,proto.ThrowawayRequest.deserializeBinaryFromReader);
       msg.setThrowawayRequest(value);
       break;
-    case 13:
+    case 14:
       var value = new proto.TrumpUpdate;
       reader.readMessage(value,proto.TrumpUpdate.deserializeBinaryFromReader);
       msg.setTrumpUpdate(value);
       break;
-    case 14:
+    case 15:
       var value = new proto.PlayCardRequest;
       reader.readMessage(value,proto.PlayCardRequest.deserializeBinaryFromReader);
       msg.setPlayCardRequest(value);
       break;
-    case 15:
+    case 16:
       var value = new proto.UpdateTimeout;
       reader.readMessage(value,proto.UpdateTimeout.deserializeBinaryFromReader);
       msg.setUpdateTimeout(value);
       break;
-    case 16:
+    case 17:
       var value = new proto.PlayedCards;
       reader.readMessage(value,proto.PlayedCards.deserializeBinaryFromReader);
       msg.setPlayedCards(value);
       break;
-    case 17:
+    case 18:
       var value = new proto.Tricks;
       reader.readMessage(value,proto.Tricks.deserializeBinaryFromReader);
       msg.setTricks(value);
       break;
-    case 18:
+    case 19:
       var value = new proto.Scores;
       reader.readMessage(value,proto.Scores.deserializeBinaryFromReader);
       msg.setScores(value);
       break;
-    case 19:
+    case 20:
       var value = new proto.EndGame;
       reader.readMessage(value,proto.EndGame.deserializeBinaryFromReader);
       msg.setEndGame(value);
@@ -5604,10 +5609,17 @@ proto.Notification.prototype.serializeBinary = function() {
  */
 proto.Notification.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
+  f = message.getSequence();
+  if (f !== 0) {
+    writer.writeUint32(
+      1,
+      f
+    );
+  }
   f = message.getStatus();
   if (f != null) {
     writer.writeMessage(
-      1,
+      2,
       f,
       proto.StatusResponse.serializeBinaryToWriter
     );
@@ -5615,7 +5627,7 @@ proto.Notification.serializeBinaryToWriter = function(message, writer) {
   f = message.getJoinResponse();
   if (f != null) {
     writer.writeMessage(
-      2,
+      3,
       f,
       proto.JoinGameResponse.serializeBinaryToWriter
     );
@@ -5623,7 +5635,7 @@ proto.Notification.serializeBinaryToWriter = function(message, writer) {
   f = message.getSeatList();
   if (f != null) {
     writer.writeMessage(
-      3,
+      4,
       f,
       proto.SeatsList.serializeBinaryToWriter
     );
@@ -5631,7 +5643,7 @@ proto.Notification.serializeBinaryToWriter = function(message, writer) {
   f = message.getSeatUpdate();
   if (f != null) {
     writer.writeMessage(
-      4,
+      5,
       f,
       proto.SeatDetails.serializeBinaryToWriter
     );
@@ -5639,7 +5651,7 @@ proto.Notification.serializeBinaryToWriter = function(message, writer) {
   f = message.getStartGame();
   if (f != null) {
     writer.writeMessage(
-      5,
+      6,
       f,
       proto.StartGame.serializeBinaryToWriter
     );
@@ -5647,7 +5659,7 @@ proto.Notification.serializeBinaryToWriter = function(message, writer) {
   f = message.getHand();
   if (f != null) {
     writer.writeMessage(
-      6,
+      7,
       f,
       proto.Hand.serializeBinaryToWriter
     );
@@ -5655,7 +5667,7 @@ proto.Notification.serializeBinaryToWriter = function(message, writer) {
   f = message.getBidRequest();
   if (f != null) {
     writer.writeMessage(
-      7,
+      8,
       f,
       proto.BidRequest.serializeBinaryToWriter
     );
@@ -5663,7 +5675,7 @@ proto.Notification.serializeBinaryToWriter = function(message, writer) {
   f = message.getBid();
   if (f != null) {
     writer.writeMessage(
-      8,
+      9,
       f,
       proto.Bid.serializeBinaryToWriter
     );
@@ -5671,7 +5683,7 @@ proto.Notification.serializeBinaryToWriter = function(message, writer) {
   f = message.getBidList();
   if (f != null) {
     writer.writeMessage(
-      9,
+      10,
       f,
       proto.BidList.serializeBinaryToWriter
     );
@@ -5679,7 +5691,7 @@ proto.Notification.serializeBinaryToWriter = function(message, writer) {
   f = message.getTransferRequest();
   if (f != null) {
     writer.writeMessage(
-      10,
+      11,
       f,
       proto.TransferRequest.serializeBinaryToWriter
     );
@@ -5687,7 +5699,7 @@ proto.Notification.serializeBinaryToWriter = function(message, writer) {
   f = message.getTransfer();
   if (f != null) {
     writer.writeMessage(
-      11,
+      12,
       f,
       proto.Transfer.serializeBinaryToWriter
     );
@@ -5695,7 +5707,7 @@ proto.Notification.serializeBinaryToWriter = function(message, writer) {
   f = message.getThrowawayRequest();
   if (f != null) {
     writer.writeMessage(
-      12,
+      13,
       f,
       proto.ThrowawayRequest.serializeBinaryToWriter
     );
@@ -5703,7 +5715,7 @@ proto.Notification.serializeBinaryToWriter = function(message, writer) {
   f = message.getTrumpUpdate();
   if (f != null) {
     writer.writeMessage(
-      13,
+      14,
       f,
       proto.TrumpUpdate.serializeBinaryToWriter
     );
@@ -5711,7 +5723,7 @@ proto.Notification.serializeBinaryToWriter = function(message, writer) {
   f = message.getPlayCardRequest();
   if (f != null) {
     writer.writeMessage(
-      14,
+      15,
       f,
       proto.PlayCardRequest.serializeBinaryToWriter
     );
@@ -5719,7 +5731,7 @@ proto.Notification.serializeBinaryToWriter = function(message, writer) {
   f = message.getUpdateTimeout();
   if (f != null) {
     writer.writeMessage(
-      15,
+      16,
       f,
       proto.UpdateTimeout.serializeBinaryToWriter
     );
@@ -5727,7 +5739,7 @@ proto.Notification.serializeBinaryToWriter = function(message, writer) {
   f = message.getPlayedCards();
   if (f != null) {
     writer.writeMessage(
-      16,
+      17,
       f,
       proto.PlayedCards.serializeBinaryToWriter
     );
@@ -5735,7 +5747,7 @@ proto.Notification.serializeBinaryToWriter = function(message, writer) {
   f = message.getTricks();
   if (f != null) {
     writer.writeMessage(
-      17,
+      18,
       f,
       proto.Tricks.serializeBinaryToWriter
     );
@@ -5743,7 +5755,7 @@ proto.Notification.serializeBinaryToWriter = function(message, writer) {
   f = message.getScores();
   if (f != null) {
     writer.writeMessage(
-      18,
+      19,
       f,
       proto.Scores.serializeBinaryToWriter
     );
@@ -5751,7 +5763,7 @@ proto.Notification.serializeBinaryToWriter = function(message, writer) {
   f = message.getEndGame();
   if (f != null) {
     writer.writeMessage(
-      19,
+      20,
       f,
       proto.EndGame.serializeBinaryToWriter
     );
@@ -5760,12 +5772,30 @@ proto.Notification.serializeBinaryToWriter = function(message, writer) {
 
 
 /**
- * optional StatusResponse status = 1;
+ * optional uint32 sequence = 1;
+ * @return {number}
+ */
+proto.Notification.prototype.getSequence = function() {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 1, 0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.Notification} returns this
+ */
+proto.Notification.prototype.setSequence = function(value) {
+  return jspb.Message.setProto3IntField(this, 1, value);
+};
+
+
+/**
+ * optional StatusResponse status = 2;
  * @return {?proto.StatusResponse}
  */
 proto.Notification.prototype.getStatus = function() {
   return /** @type{?proto.StatusResponse} */ (
-    jspb.Message.getWrapperField(this, proto.StatusResponse, 1));
+    jspb.Message.getWrapperField(this, proto.StatusResponse, 2));
 };
 
 
@@ -5774,7 +5804,7 @@ proto.Notification.prototype.getStatus = function() {
  * @return {!proto.Notification} returns this
 */
 proto.Notification.prototype.setStatus = function(value) {
-  return jspb.Message.setOneofWrapperField(this, 1, proto.Notification.oneofGroups_[0], value);
+  return jspb.Message.setOneofWrapperField(this, 2, proto.Notification.oneofGroups_[0], value);
 };
 
 
@@ -5792,17 +5822,17 @@ proto.Notification.prototype.clearStatus = function() {
  * @return {boolean}
  */
 proto.Notification.prototype.hasStatus = function() {
-  return jspb.Message.getField(this, 1) != null;
+  return jspb.Message.getField(this, 2) != null;
 };
 
 
 /**
- * optional JoinGameResponse join_response = 2;
+ * optional JoinGameResponse join_response = 3;
  * @return {?proto.JoinGameResponse}
  */
 proto.Notification.prototype.getJoinResponse = function() {
   return /** @type{?proto.JoinGameResponse} */ (
-    jspb.Message.getWrapperField(this, proto.JoinGameResponse, 2));
+    jspb.Message.getWrapperField(this, proto.JoinGameResponse, 3));
 };
 
 
@@ -5811,7 +5841,7 @@ proto.Notification.prototype.getJoinResponse = function() {
  * @return {!proto.Notification} returns this
 */
 proto.Notification.prototype.setJoinResponse = function(value) {
-  return jspb.Message.setOneofWrapperField(this, 2, proto.Notification.oneofGroups_[0], value);
+  return jspb.Message.setOneofWrapperField(this, 3, proto.Notification.oneofGroups_[0], value);
 };
 
 
@@ -5829,17 +5859,17 @@ proto.Notification.prototype.clearJoinResponse = function() {
  * @return {boolean}
  */
 proto.Notification.prototype.hasJoinResponse = function() {
-  return jspb.Message.getField(this, 2) != null;
+  return jspb.Message.getField(this, 3) != null;
 };
 
 
 /**
- * optional SeatsList seat_list = 3;
+ * optional SeatsList seat_list = 4;
  * @return {?proto.SeatsList}
  */
 proto.Notification.prototype.getSeatList = function() {
   return /** @type{?proto.SeatsList} */ (
-    jspb.Message.getWrapperField(this, proto.SeatsList, 3));
+    jspb.Message.getWrapperField(this, proto.SeatsList, 4));
 };
 
 
@@ -5848,7 +5878,7 @@ proto.Notification.prototype.getSeatList = function() {
  * @return {!proto.Notification} returns this
 */
 proto.Notification.prototype.setSeatList = function(value) {
-  return jspb.Message.setOneofWrapperField(this, 3, proto.Notification.oneofGroups_[0], value);
+  return jspb.Message.setOneofWrapperField(this, 4, proto.Notification.oneofGroups_[0], value);
 };
 
 
@@ -5866,17 +5896,17 @@ proto.Notification.prototype.clearSeatList = function() {
  * @return {boolean}
  */
 proto.Notification.prototype.hasSeatList = function() {
-  return jspb.Message.getField(this, 3) != null;
+  return jspb.Message.getField(this, 4) != null;
 };
 
 
 /**
- * optional SeatDetails seat_update = 4;
+ * optional SeatDetails seat_update = 5;
  * @return {?proto.SeatDetails}
  */
 proto.Notification.prototype.getSeatUpdate = function() {
   return /** @type{?proto.SeatDetails} */ (
-    jspb.Message.getWrapperField(this, proto.SeatDetails, 4));
+    jspb.Message.getWrapperField(this, proto.SeatDetails, 5));
 };
 
 
@@ -5885,7 +5915,7 @@ proto.Notification.prototype.getSeatUpdate = function() {
  * @return {!proto.Notification} returns this
 */
 proto.Notification.prototype.setSeatUpdate = function(value) {
-  return jspb.Message.setOneofWrapperField(this, 4, proto.Notification.oneofGroups_[0], value);
+  return jspb.Message.setOneofWrapperField(this, 5, proto.Notification.oneofGroups_[0], value);
 };
 
 
@@ -5903,17 +5933,17 @@ proto.Notification.prototype.clearSeatUpdate = function() {
  * @return {boolean}
  */
 proto.Notification.prototype.hasSeatUpdate = function() {
-  return jspb.Message.getField(this, 4) != null;
+  return jspb.Message.getField(this, 5) != null;
 };
 
 
 /**
- * optional StartGame start_game = 5;
+ * optional StartGame start_game = 6;
  * @return {?proto.StartGame}
  */
 proto.Notification.prototype.getStartGame = function() {
   return /** @type{?proto.StartGame} */ (
-    jspb.Message.getWrapperField(this, proto.StartGame, 5));
+    jspb.Message.getWrapperField(this, proto.StartGame, 6));
 };
 
 
@@ -5922,7 +5952,7 @@ proto.Notification.prototype.getStartGame = function() {
  * @return {!proto.Notification} returns this
 */
 proto.Notification.prototype.setStartGame = function(value) {
-  return jspb.Message.setOneofWrapperField(this, 5, proto.Notification.oneofGroups_[0], value);
+  return jspb.Message.setOneofWrapperField(this, 6, proto.Notification.oneofGroups_[0], value);
 };
 
 
@@ -5940,17 +5970,17 @@ proto.Notification.prototype.clearStartGame = function() {
  * @return {boolean}
  */
 proto.Notification.prototype.hasStartGame = function() {
-  return jspb.Message.getField(this, 5) != null;
+  return jspb.Message.getField(this, 6) != null;
 };
 
 
 /**
- * optional Hand hand = 6;
+ * optional Hand hand = 7;
  * @return {?proto.Hand}
  */
 proto.Notification.prototype.getHand = function() {
   return /** @type{?proto.Hand} */ (
-    jspb.Message.getWrapperField(this, proto.Hand, 6));
+    jspb.Message.getWrapperField(this, proto.Hand, 7));
 };
 
 
@@ -5959,7 +5989,7 @@ proto.Notification.prototype.getHand = function() {
  * @return {!proto.Notification} returns this
 */
 proto.Notification.prototype.setHand = function(value) {
-  return jspb.Message.setOneofWrapperField(this, 6, proto.Notification.oneofGroups_[0], value);
+  return jspb.Message.setOneofWrapperField(this, 7, proto.Notification.oneofGroups_[0], value);
 };
 
 
@@ -5977,17 +6007,17 @@ proto.Notification.prototype.clearHand = function() {
  * @return {boolean}
  */
 proto.Notification.prototype.hasHand = function() {
-  return jspb.Message.getField(this, 6) != null;
+  return jspb.Message.getField(this, 7) != null;
 };
 
 
 /**
- * optional BidRequest bid_request = 7;
+ * optional BidRequest bid_request = 8;
  * @return {?proto.BidRequest}
  */
 proto.Notification.prototype.getBidRequest = function() {
   return /** @type{?proto.BidRequest} */ (
-    jspb.Message.getWrapperField(this, proto.BidRequest, 7));
+    jspb.Message.getWrapperField(this, proto.BidRequest, 8));
 };
 
 
@@ -5996,7 +6026,7 @@ proto.Notification.prototype.getBidRequest = function() {
  * @return {!proto.Notification} returns this
 */
 proto.Notification.prototype.setBidRequest = function(value) {
-  return jspb.Message.setOneofWrapperField(this, 7, proto.Notification.oneofGroups_[0], value);
+  return jspb.Message.setOneofWrapperField(this, 8, proto.Notification.oneofGroups_[0], value);
 };
 
 
@@ -6014,17 +6044,17 @@ proto.Notification.prototype.clearBidRequest = function() {
  * @return {boolean}
  */
 proto.Notification.prototype.hasBidRequest = function() {
-  return jspb.Message.getField(this, 7) != null;
+  return jspb.Message.getField(this, 8) != null;
 };
 
 
 /**
- * optional Bid bid = 8;
+ * optional Bid bid = 9;
  * @return {?proto.Bid}
  */
 proto.Notification.prototype.getBid = function() {
   return /** @type{?proto.Bid} */ (
-    jspb.Message.getWrapperField(this, proto.Bid, 8));
+    jspb.Message.getWrapperField(this, proto.Bid, 9));
 };
 
 
@@ -6033,7 +6063,7 @@ proto.Notification.prototype.getBid = function() {
  * @return {!proto.Notification} returns this
 */
 proto.Notification.prototype.setBid = function(value) {
-  return jspb.Message.setOneofWrapperField(this, 8, proto.Notification.oneofGroups_[0], value);
+  return jspb.Message.setOneofWrapperField(this, 9, proto.Notification.oneofGroups_[0], value);
 };
 
 
@@ -6051,17 +6081,17 @@ proto.Notification.prototype.clearBid = function() {
  * @return {boolean}
  */
 proto.Notification.prototype.hasBid = function() {
-  return jspb.Message.getField(this, 8) != null;
+  return jspb.Message.getField(this, 9) != null;
 };
 
 
 /**
- * optional BidList bid_list = 9;
+ * optional BidList bid_list = 10;
  * @return {?proto.BidList}
  */
 proto.Notification.prototype.getBidList = function() {
   return /** @type{?proto.BidList} */ (
-    jspb.Message.getWrapperField(this, proto.BidList, 9));
+    jspb.Message.getWrapperField(this, proto.BidList, 10));
 };
 
 
@@ -6070,7 +6100,7 @@ proto.Notification.prototype.getBidList = function() {
  * @return {!proto.Notification} returns this
 */
 proto.Notification.prototype.setBidList = function(value) {
-  return jspb.Message.setOneofWrapperField(this, 9, proto.Notification.oneofGroups_[0], value);
+  return jspb.Message.setOneofWrapperField(this, 10, proto.Notification.oneofGroups_[0], value);
 };
 
 
@@ -6088,17 +6118,17 @@ proto.Notification.prototype.clearBidList = function() {
  * @return {boolean}
  */
 proto.Notification.prototype.hasBidList = function() {
-  return jspb.Message.getField(this, 9) != null;
+  return jspb.Message.getField(this, 10) != null;
 };
 
 
 /**
- * optional TransferRequest transfer_request = 10;
+ * optional TransferRequest transfer_request = 11;
  * @return {?proto.TransferRequest}
  */
 proto.Notification.prototype.getTransferRequest = function() {
   return /** @type{?proto.TransferRequest} */ (
-    jspb.Message.getWrapperField(this, proto.TransferRequest, 10));
+    jspb.Message.getWrapperField(this, proto.TransferRequest, 11));
 };
 
 
@@ -6107,7 +6137,7 @@ proto.Notification.prototype.getTransferRequest = function() {
  * @return {!proto.Notification} returns this
 */
 proto.Notification.prototype.setTransferRequest = function(value) {
-  return jspb.Message.setOneofWrapperField(this, 10, proto.Notification.oneofGroups_[0], value);
+  return jspb.Message.setOneofWrapperField(this, 11, proto.Notification.oneofGroups_[0], value);
 };
 
 
@@ -6125,17 +6155,17 @@ proto.Notification.prototype.clearTransferRequest = function() {
  * @return {boolean}
  */
 proto.Notification.prototype.hasTransferRequest = function() {
-  return jspb.Message.getField(this, 10) != null;
+  return jspb.Message.getField(this, 11) != null;
 };
 
 
 /**
- * optional Transfer transfer = 11;
+ * optional Transfer transfer = 12;
  * @return {?proto.Transfer}
  */
 proto.Notification.prototype.getTransfer = function() {
   return /** @type{?proto.Transfer} */ (
-    jspb.Message.getWrapperField(this, proto.Transfer, 11));
+    jspb.Message.getWrapperField(this, proto.Transfer, 12));
 };
 
 
@@ -6144,7 +6174,7 @@ proto.Notification.prototype.getTransfer = function() {
  * @return {!proto.Notification} returns this
 */
 proto.Notification.prototype.setTransfer = function(value) {
-  return jspb.Message.setOneofWrapperField(this, 11, proto.Notification.oneofGroups_[0], value);
+  return jspb.Message.setOneofWrapperField(this, 12, proto.Notification.oneofGroups_[0], value);
 };
 
 
@@ -6162,17 +6192,17 @@ proto.Notification.prototype.clearTransfer = function() {
  * @return {boolean}
  */
 proto.Notification.prototype.hasTransfer = function() {
-  return jspb.Message.getField(this, 11) != null;
+  return jspb.Message.getField(this, 12) != null;
 };
 
 
 /**
- * optional ThrowawayRequest throwaway_request = 12;
+ * optional ThrowawayRequest throwaway_request = 13;
  * @return {?proto.ThrowawayRequest}
  */
 proto.Notification.prototype.getThrowawayRequest = function() {
   return /** @type{?proto.ThrowawayRequest} */ (
-    jspb.Message.getWrapperField(this, proto.ThrowawayRequest, 12));
+    jspb.Message.getWrapperField(this, proto.ThrowawayRequest, 13));
 };
 
 
@@ -6181,7 +6211,7 @@ proto.Notification.prototype.getThrowawayRequest = function() {
  * @return {!proto.Notification} returns this
 */
 proto.Notification.prototype.setThrowawayRequest = function(value) {
-  return jspb.Message.setOneofWrapperField(this, 12, proto.Notification.oneofGroups_[0], value);
+  return jspb.Message.setOneofWrapperField(this, 13, proto.Notification.oneofGroups_[0], value);
 };
 
 
@@ -6199,17 +6229,17 @@ proto.Notification.prototype.clearThrowawayRequest = function() {
  * @return {boolean}
  */
 proto.Notification.prototype.hasThrowawayRequest = function() {
-  return jspb.Message.getField(this, 12) != null;
+  return jspb.Message.getField(this, 13) != null;
 };
 
 
 /**
- * optional TrumpUpdate trump_update = 13;
+ * optional TrumpUpdate trump_update = 14;
  * @return {?proto.TrumpUpdate}
  */
 proto.Notification.prototype.getTrumpUpdate = function() {
   return /** @type{?proto.TrumpUpdate} */ (
-    jspb.Message.getWrapperField(this, proto.TrumpUpdate, 13));
+    jspb.Message.getWrapperField(this, proto.TrumpUpdate, 14));
 };
 
 
@@ -6218,7 +6248,7 @@ proto.Notification.prototype.getTrumpUpdate = function() {
  * @return {!proto.Notification} returns this
 */
 proto.Notification.prototype.setTrumpUpdate = function(value) {
-  return jspb.Message.setOneofWrapperField(this, 13, proto.Notification.oneofGroups_[0], value);
+  return jspb.Message.setOneofWrapperField(this, 14, proto.Notification.oneofGroups_[0], value);
 };
 
 
@@ -6236,17 +6266,17 @@ proto.Notification.prototype.clearTrumpUpdate = function() {
  * @return {boolean}
  */
 proto.Notification.prototype.hasTrumpUpdate = function() {
-  return jspb.Message.getField(this, 13) != null;
+  return jspb.Message.getField(this, 14) != null;
 };
 
 
 /**
- * optional PlayCardRequest play_card_request = 14;
+ * optional PlayCardRequest play_card_request = 15;
  * @return {?proto.PlayCardRequest}
  */
 proto.Notification.prototype.getPlayCardRequest = function() {
   return /** @type{?proto.PlayCardRequest} */ (
-    jspb.Message.getWrapperField(this, proto.PlayCardRequest, 14));
+    jspb.Message.getWrapperField(this, proto.PlayCardRequest, 15));
 };
 
 
@@ -6255,7 +6285,7 @@ proto.Notification.prototype.getPlayCardRequest = function() {
  * @return {!proto.Notification} returns this
 */
 proto.Notification.prototype.setPlayCardRequest = function(value) {
-  return jspb.Message.setOneofWrapperField(this, 14, proto.Notification.oneofGroups_[0], value);
+  return jspb.Message.setOneofWrapperField(this, 15, proto.Notification.oneofGroups_[0], value);
 };
 
 
@@ -6273,17 +6303,17 @@ proto.Notification.prototype.clearPlayCardRequest = function() {
  * @return {boolean}
  */
 proto.Notification.prototype.hasPlayCardRequest = function() {
-  return jspb.Message.getField(this, 14) != null;
+  return jspb.Message.getField(this, 15) != null;
 };
 
 
 /**
- * optional UpdateTimeout update_timeout = 15;
+ * optional UpdateTimeout update_timeout = 16;
  * @return {?proto.UpdateTimeout}
  */
 proto.Notification.prototype.getUpdateTimeout = function() {
   return /** @type{?proto.UpdateTimeout} */ (
-    jspb.Message.getWrapperField(this, proto.UpdateTimeout, 15));
+    jspb.Message.getWrapperField(this, proto.UpdateTimeout, 16));
 };
 
 
@@ -6292,7 +6322,7 @@ proto.Notification.prototype.getUpdateTimeout = function() {
  * @return {!proto.Notification} returns this
 */
 proto.Notification.prototype.setUpdateTimeout = function(value) {
-  return jspb.Message.setOneofWrapperField(this, 15, proto.Notification.oneofGroups_[0], value);
+  return jspb.Message.setOneofWrapperField(this, 16, proto.Notification.oneofGroups_[0], value);
 };
 
 
@@ -6310,17 +6340,17 @@ proto.Notification.prototype.clearUpdateTimeout = function() {
  * @return {boolean}
  */
 proto.Notification.prototype.hasUpdateTimeout = function() {
-  return jspb.Message.getField(this, 15) != null;
+  return jspb.Message.getField(this, 16) != null;
 };
 
 
 /**
- * optional PlayedCards played_cards = 16;
+ * optional PlayedCards played_cards = 17;
  * @return {?proto.PlayedCards}
  */
 proto.Notification.prototype.getPlayedCards = function() {
   return /** @type{?proto.PlayedCards} */ (
-    jspb.Message.getWrapperField(this, proto.PlayedCards, 16));
+    jspb.Message.getWrapperField(this, proto.PlayedCards, 17));
 };
 
 
@@ -6329,7 +6359,7 @@ proto.Notification.prototype.getPlayedCards = function() {
  * @return {!proto.Notification} returns this
 */
 proto.Notification.prototype.setPlayedCards = function(value) {
-  return jspb.Message.setOneofWrapperField(this, 16, proto.Notification.oneofGroups_[0], value);
+  return jspb.Message.setOneofWrapperField(this, 17, proto.Notification.oneofGroups_[0], value);
 };
 
 
@@ -6347,17 +6377,17 @@ proto.Notification.prototype.clearPlayedCards = function() {
  * @return {boolean}
  */
 proto.Notification.prototype.hasPlayedCards = function() {
-  return jspb.Message.getField(this, 16) != null;
+  return jspb.Message.getField(this, 17) != null;
 };
 
 
 /**
- * optional Tricks tricks = 17;
+ * optional Tricks tricks = 18;
  * @return {?proto.Tricks}
  */
 proto.Notification.prototype.getTricks = function() {
   return /** @type{?proto.Tricks} */ (
-    jspb.Message.getWrapperField(this, proto.Tricks, 17));
+    jspb.Message.getWrapperField(this, proto.Tricks, 18));
 };
 
 
@@ -6366,7 +6396,7 @@ proto.Notification.prototype.getTricks = function() {
  * @return {!proto.Notification} returns this
 */
 proto.Notification.prototype.setTricks = function(value) {
-  return jspb.Message.setOneofWrapperField(this, 17, proto.Notification.oneofGroups_[0], value);
+  return jspb.Message.setOneofWrapperField(this, 18, proto.Notification.oneofGroups_[0], value);
 };
 
 
@@ -6384,17 +6414,17 @@ proto.Notification.prototype.clearTricks = function() {
  * @return {boolean}
  */
 proto.Notification.prototype.hasTricks = function() {
-  return jspb.Message.getField(this, 17) != null;
+  return jspb.Message.getField(this, 18) != null;
 };
 
 
 /**
- * optional Scores scores = 18;
+ * optional Scores scores = 19;
  * @return {?proto.Scores}
  */
 proto.Notification.prototype.getScores = function() {
   return /** @type{?proto.Scores} */ (
-    jspb.Message.getWrapperField(this, proto.Scores, 18));
+    jspb.Message.getWrapperField(this, proto.Scores, 19));
 };
 
 
@@ -6403,7 +6433,7 @@ proto.Notification.prototype.getScores = function() {
  * @return {!proto.Notification} returns this
 */
 proto.Notification.prototype.setScores = function(value) {
-  return jspb.Message.setOneofWrapperField(this, 18, proto.Notification.oneofGroups_[0], value);
+  return jspb.Message.setOneofWrapperField(this, 19, proto.Notification.oneofGroups_[0], value);
 };
 
 
@@ -6421,17 +6451,17 @@ proto.Notification.prototype.clearScores = function() {
  * @return {boolean}
  */
 proto.Notification.prototype.hasScores = function() {
-  return jspb.Message.getField(this, 18) != null;
+  return jspb.Message.getField(this, 19) != null;
 };
 
 
 /**
- * optional EndGame end_game = 19;
+ * optional EndGame end_game = 20;
  * @return {?proto.EndGame}
  */
 proto.Notification.prototype.getEndGame = function() {
   return /** @type{?proto.EndGame} */ (
-    jspb.Message.getWrapperField(this, proto.EndGame, 19));
+    jspb.Message.getWrapperField(this, proto.EndGame, 20));
 };
 
 
@@ -6440,7 +6470,7 @@ proto.Notification.prototype.getEndGame = function() {
  * @return {!proto.Notification} returns this
 */
 proto.Notification.prototype.setEndGame = function(value) {
-  return jspb.Message.setOneofWrapperField(this, 19, proto.Notification.oneofGroups_[0], value);
+  return jspb.Message.setOneofWrapperField(this, 20, proto.Notification.oneofGroups_[0], value);
 };
 
 
@@ -6458,7 +6488,7 @@ proto.Notification.prototype.clearEndGame = function() {
  * @return {boolean}
  */
 proto.Notification.prototype.hasEndGame = function() {
-  return jspb.Message.getField(this, 19) != null;
+  return jspb.Message.getField(this, 20) != null;
 };
 
 
