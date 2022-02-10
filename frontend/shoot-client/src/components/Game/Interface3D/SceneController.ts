@@ -1,4 +1,4 @@
-import { SeatDetails, Hand, Bid as BidDetails, TrumpUpdate, Card } from '../../../proto/shoot_pb';
+import { SeatDetails, Hand, Bid as BidDetails, TrumpUpdate, PlayedCard, Card } from '../../../proto/shoot_pb';
 import { Seat } from "../Models/Seat";
 import { Bid } from "../Models/Bid";
 import { GameSettings } from "./GameSettings3D";
@@ -12,6 +12,7 @@ import { Seat3D } from './Seat3D';
 import { Card3D } from './Card3D';
 import { Scene, PointLight } from '@babylonjs/core';
 import { CardStack3D } from './CardStack3D';
+import { GameEvent3D } from './GameEvent3D';
 
 enum GameState {
     Unknown = -1,
@@ -43,8 +44,34 @@ class SceneController {
     static gameState: GameState = GameState.ChoosingSeat;
     static currentTrump: TrumpUpdate;
     static currentCard: Card3D;
+    static currentCardsInTrick: Card3D[] = [];
+    static eventQueue: Set<GameEvent3D> = new Set();
+    static nextEventNumber: number = 0;
+
+    static addNewEvent (newEvent: GameEvent3D) {
+        this.eventQueue.add(newEvent);
+        
+        this.processNextEvent();
+    }
+
+    static processNextEvent () {
+        let nextEvent : GameEvent3D | null = null;
+
+        for (let event of this.eventQueue) {
+            if (event.notification.getSequence() === this.nextEventNumber) nextEvent = event;
+        }
+
+        if (nextEvent) {
+            nextEvent.execute();
+
+            this.eventQueue.delete(nextEvent);
+
+            this.nextEventNumber++;
+        }
+    }
 
     static tricksListener () {
+        this.currentCardsInTrick = [];
     }
 
     static seatsListener (seatDetailsList: SeatDetails[]) {
@@ -71,7 +98,7 @@ class SceneController {
 
             if (!seat.empty) { // Someone is in the seat, so disable the take-seat button and update the name.
                 if (this.seatCubes[seat.index]) this.seatCubes[seat.index].hideAndDisable();
-                if (this.nameplates[seat.index]) this.nameplates[seat.index].updateName(seat.name);
+                if (this.nameplates[seat.index]) this.nameplates[seat.index].updateName(seat.index + ":" + seat.name);
                 if (seat.ready) {
                     if (this.readyCubes[seat.index]) this.readyCubes[seat.index].show();
                     if (this.unreadyCubes[seat.index]) this.unreadyCubes[seat.index].hide();
@@ -339,6 +366,47 @@ class SceneController {
             this.gameState = GameState.ObservingPlay;
         } else {
             console.log("Error Playing Card");
+        }
+    }
+
+    static playedCardsListener(cardsList: Array<PlayedCard>) {
+        let sourceCardLocation: number[] | null;
+        let destinationCardLocation: number[];
+        let playedCard: PlayedCard;
+        let order: number = -1;
+        let seat: number = -1;
+        let card: Card | undefined;
+        let card3D: Card3D | null;
+
+        console.log(cardsList);
+
+        for (let i: number = 0; i < cardsList.length; i++) {
+            playedCard = cardsList[i];
+
+            if (playedCard) {
+                order = playedCard.getOrder();
+                seat = playedCard.getSeat();
+                card = playedCard.getCard();
+            }
+
+             // Skip if this card has already been played in the UI
+             // Skip if it's our card, let it be handled by playCardResponseListener 
+            if (!this.currentCardsInTrick[order] && card && seat !== GameSettings.currentPlayer) {
+                sourceCardLocation = Card3D.findCardInHands(card);
+                // if (!sourceCardLocation) sourceCardLocation = Card3D.findCardInDeck(card);
+                destinationCardLocation = [seat, 0];
+
+                // find the actual card and swap it into the right spot before playing it
+                if (sourceCardLocation) Card3D.swapCards(sourceCardLocation, destinationCardLocation);
+
+                card3D = CardStack3D.fanStacks[seat].index[0];
+
+                if (card3D) {
+                    card3D.playCardAnimation(seat, this.scene);
+                 
+                    this.currentCardsInTrick[order] = card3D;
+                }
+            }
         }
     }
 

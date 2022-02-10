@@ -127,7 +127,7 @@ class CardStack3D {
         let targetDeckCard1Index: number;
         let targetDeckCard1: Card3D;
         let targetDeckCard2Index: number;
-        let targetDeckCard2: Card3D;
+        let targetDeckCard2: Card3D | null = null;
         let targetDeckCard3: Card3D;
 
         for (let i: number = 0; i < cardValues.length; i++) {
@@ -138,7 +138,7 @@ class CardStack3D {
             targetDeckCard2Index = targetDeckCard1Index + 24;
 
             targetDeckCard1 = this.deck.index[targetDeckCard1Index]!;
-            targetDeckCard2 = this.deck.index[targetDeckCard2Index]!;
+            if (GameSettings.cardCopies > 1) targetDeckCard2 = this.deck.index[targetDeckCard2Index]!;
 
             if (targetDeckCard1.equals(currentHandCard)) { // First place to look.
                 // Update deck position trackers.
@@ -149,7 +149,7 @@ class CardStack3D {
                 [this.deck.index[targetDeckCard1Index], this.deck.index[swapDestinationIndex]] =
                     [this.deck.index[swapDestinationIndex], this.deck.index[targetDeckCard1Index]];
             }
-            else if (targetDeckCard2.equals(currentHandCard)) { // Second place to look.
+            else if (targetDeckCard2 && targetDeckCard2.equals(currentHandCard)) { // Second place to look.
                 // Update deck position trackers.
                 this.deck.index[swapDestinationIndex]!.positionInDeck = targetDeckCard2Index;
                 targetDeckCard2.positionInDeck = swapDestinationIndex;

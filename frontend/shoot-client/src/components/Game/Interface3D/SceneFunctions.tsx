@@ -62,7 +62,7 @@ const buildDeck = (scene: Scene, manager: GUI3DManager, appState: IApp) => {
     let numRanks: number = 6;
     let numSuits: number = 4;
 
-    for (let k = 0; k < 2; k++) { // Assuming 2 copies of each card.
+    for (let k = 0; k < GameSettings.cardCopies; k++) { // Assuming 2 copies of each card.
         for (let i = 0; i < numRanks; i++) {
             for (let j = 0; j < numSuits; j++) {
                 card = new Card3D(scene, manager, i+2, j, appState); // Add 2 since we're not including 7s and 8s.
@@ -169,7 +169,7 @@ export const onSceneReady = (scene: Scene, gameState: IGame, appState: IApp) => 
     if (gameState) GameSettings.players = gameState.seats.size; // For now, just count number of seats
     GameSettings.initializeGame();
     CardStack3D.initializeCardStacks();
-    console.log(GameSettings.players);
+    // console.log(GameSettings.players);
 
     // Add interactive layer
     const manager3D = new GUI3DManager(scene);

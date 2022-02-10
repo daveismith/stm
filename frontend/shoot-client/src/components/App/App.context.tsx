@@ -168,7 +168,7 @@ export const AppProvider: React.FC = ({ children }) => {
             return value.getSuccess();
         }).catch((reason: any) => { 
             appState.eventEmitter.emit('createBidResponse', tricks, shootNum, trump, seat, false);
-            console.log('bid failed ' + reason);
+            console.log('bid failed: ' + (reason as grpcWeb.Error).message);
             return false;
         });
     };
@@ -188,7 +188,7 @@ export const AppProvider: React.FC = ({ children }) => {
             return value.getSuccess();
         }).catch((reason: any) => { 
             appState.eventEmitter.emit('playCardResponse', card, false);
-            console.log('play card failed ' + reason);
+            console.log('play card failed: ' + (reason as grpcWeb.Error).message);
             return false;
         });
     };

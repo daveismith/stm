@@ -1,5 +1,3 @@
-import { Trump } from '../../../proto/shoot_pb';
-
 export interface Bid {
     number: number;
     shootNum: number;
