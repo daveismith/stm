@@ -20,19 +20,26 @@ namespace ShootTheMoon.Network
             private SemaphoreSlim semaphore;
             private IServerStreamWriter<Notification> Stream { get; }
 
+            public bool Connected { get; set; }
+
             public RpcClient(IServerStreamWriter<Notification> stream, string name)
             {
                 sequence = 0;
                 Stream = stream;
                 Name = name;   
                 semaphore = new SemaphoreSlim(1, 1);
+                Connected = true;
             }
 
             public async Task WriteAsync(Notification message) {
                 await semaphore.WaitAsync();
                 try {
-                    message.Sequence = sequence++;
-                    await Stream.WriteAsync(message);
+                    if (Connected) {
+                        message.Sequence = sequence++;
+                        await Stream.WriteAsync(message);
+                    } else {
+                        Log.Debug("Dropping message as client is not connected");
+                    }
                 } finally {
                     semaphore.Release();
                 }
@@ -121,17 +128,18 @@ namespace ShootTheMoon.Network
                 await TrumpUpdate(game);
             }            
 
+            // Need to notify the client about the played cards before asking it to play any cards.
+            if ((info.Type & GameEventType.PlayedCards) == GameEventType.PlayedCards) {
+                // Send A Played Cards Event
+                await PlayedCardsUpdate(game);
+            }
+
             if ((info.Type & GameEventType.PlayCardRequest) == GameEventType.PlayCardRequest) {
                 // Send A Play Card Request To The Client Specified in info.Client
                 if (info.AdditionalData is Client) {
                     await PlayCardRequest(game, (Client)info.AdditionalData);
                 }
-            }
-
-            if ((info.Type & GameEventType.PlayedCards) == GameEventType.PlayedCards) {
-                // Send A Played Cards Event
-                await PlayedCardsUpdate(game);
-            }
+            }            
         }
 
         private static async Task SendNotification(RpcClient client, Notification notification) {
@@ -240,7 +248,8 @@ namespace ShootTheMoon.Network
             catch (TaskCanceledException)
             {
                 // Task Cancelled, Do Any Disconnection Stuff
-                Log.Debug("Client Disconnected, Task Cancelled " + client.Token);
+                client.Connected = false;
+                Log.Debug("{2}: Client Disconnected, Task Cancelled: Token: {0}, Name: {1} ", client.Token, client.Name, game.Name);
                 
                 // Handle Removing The Client From The Seat, and if needed replacing them with a bot
                 for(int i = 0; i < game.Players.Length; i++) {
@@ -273,7 +282,7 @@ namespace ShootTheMoon.Network
             }
 
             await Task.WhenAll(tasks);
-            Log.Debug("Broadcast complete for game " + game.Name);
+            Log.Debug("{0}: Broadcast complete", game.Name);
         }
 
         public async Task SeatListUpdate(Game.Game game) {
@@ -433,7 +442,7 @@ namespace ShootTheMoon.Network
             }
 
             await Task.WhenAll(tasks);
-            Log.Debug("Deal Notification complete for game " + game.Name);
+            Log.Debug("{0}: Deal Notification complete", game.Name);
         }
 
         public async Task RequestBid(Game.Game game, Client bidder) {
@@ -443,7 +452,7 @@ namespace ShootTheMoon.Network
                 Notification n = new Notification();
                 n.BidRequest = new BidRequest();
                 await SendNotification(rpcClient, n);
-                Log.Debug("Request Bid Notification complete for game " + game.Name);
+                Log.Debug("{0}: Request Bid Notification complete", game.Name);
             }
         }   
 
@@ -459,7 +468,7 @@ namespace ShootTheMoon.Network
                 n.PlayCardRequest.Timeout = 30000;  // Just Hard Code 30 seconds
 
                 await SendNotification(rpcClient, n);
-                Log.Debug("Play Card Request for game " + game.Name + " to player " + currentPlayer.Name);
+                Log.Debug("{0}: Play Card Request sent to player {1}", game.Name,  currentPlayer.Name);
             }
         }
         public async Task PlayedCardsUpdate(Game.Game game) {
@@ -485,7 +494,7 @@ namespace ShootTheMoon.Network
             n.PlayedCards = playedCards;
 
             await BroadcastNotification(n, game);
-            Log.Debug("Played Cards Notification complete for game " + game.Name);
+            Log.Debug("{0}: Played Cards Notification complete", game.Name);
         }     
 
         public async Task SendCurrentState(Game.Game game) {
@@ -627,7 +636,7 @@ namespace ShootTheMoon.Network
             bool result = false;
             try {
                 RpcClient client = await FindClient(game, clientToken);
-                Log.Debug("Received a bid of (tricks: {0}, suit: {1}, shoot: {2}) by {3}", request.Tricks, request.Trump, request.ShootNum, client.Name);
+                Log.Debug("{4}: Received a bid of (tricks: {0}, suit: {1}, shoot: {2}) by {3}", request.Tricks, request.Trump, request.ShootNum, client.Name, game.Name);
                 
                 Game.Trump trump = null;
                 foreach (KeyValuePair<Game.Trump, Proto.Trump> t in GameTrumpToProtoTrump) {
@@ -692,7 +701,7 @@ namespace ShootTheMoon.Network
             Boolean result = false;
             try {
                 RpcClient client = await FindClient(game, clientToken);
-                Log.Debug("Received a card of (suit: {0}, rank: {1}) from {2}", request.Suit, request.Rank, client.Name);
+                Log.Debug("{3}: Received a card of (suit: {0}, rank: {1}) from {2}", request.Suit, request.Rank, client.Name, game.Name);
                 
                 result = await game.PlayCard(GameSuitFromProto(request.Suit), GameRankFromProto(request.Rank), client);
             }

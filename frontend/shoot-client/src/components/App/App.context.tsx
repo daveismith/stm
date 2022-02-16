@@ -93,6 +93,11 @@ export const AppProvider: React.FC = ({ children }) => {
         console.log(newState);
         setState(newState);
 
+        newState.stream.on('error', function(err) {
+            console.log('stream error');
+            console.log(err);
+        });
+
         newState.stream.on('data', (response: Notification) => {
 
             if (response.hasJoinResponse()) {
@@ -106,6 +111,19 @@ export const AppProvider: React.FC = ({ children }) => {
                 setState(updateState);        
             }
         });
+
+        newState.stream.on('status', function(status) {
+            console.log('stream status');
+            console.log(status.code);
+            console.log(status.details);
+            console.log(status.metadata);
+        });
+
+
+        newState.stream.on('end', function() {
+        // stream end signal
+            console.log("stream end received");
+        });        
 
         console.log('joinGame ' + gameId);
         return newState.stream !== undefined;
