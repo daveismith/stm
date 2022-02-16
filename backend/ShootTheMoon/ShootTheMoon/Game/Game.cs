@@ -148,7 +148,7 @@ namespace ShootTheMoon.Game
             GameState previousState = State;
             State = newState;
 
-            Log.Debug("{0} => {1}", previousState, newState);
+            Log.Debug("{2}: {0} => {1}", previousState, newState, Name);
 
             if (State == GameState.DEALING) {
                 await EnterDealing(previousState);
@@ -430,7 +430,7 @@ namespace ShootTheMoon.Game
             }
 
             bool winner = playedCard.winsAgainst(HighCard, LeadCard.Card.Suit, CurrentTrump);
-            Log.Debug("{0} {1} {2} (lead: {3}, current trump: {4})", card, (winner ? "beats" : "is beaten by"), HighCard.Card, LeadCard.Card.Suit.LongName, CurrentTrump.Name);
+            Log.Debug("{5}: {0} {1} {2} (lead: {3}, current trump: {4})", card, (winner ? "beats" : "is beaten by"), (HighCard == null) ? "null" : HighCard.Card, LeadCard.Card.Suit.LongName, CurrentTrump.Name, Name);
 
             if (HighCard == null || winner) {
                 // Check If This Card Is Higher Than The High Card
