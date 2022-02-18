@@ -3,8 +3,6 @@ import { Card, SeatDetails, Bid as BidDetails, Hand, TrumpUpdate, PlayedCard } f
 import { SceneController } from "./SceneController";
 import { Bid } from "../../Game/Models/Bid";
 
-// const events = require('events');
-
 class EventEmitter3D extends EventEmitter {
     constructor() {
         super();

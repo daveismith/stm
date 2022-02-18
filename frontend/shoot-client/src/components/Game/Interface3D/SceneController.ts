@@ -45,33 +45,43 @@ class SceneController {
     static currentTrump: TrumpUpdate;
     static currentCard: Card3D;
     static currentCardsInTrick: Card3D[] = [];
-    static eventQueue: Set<GameEvent3D> = new Set();
+    static eventQueue: Map<number, GameEvent3D> = new Map();
     static nextEventNumber: number = 0;
 
     static addNewEvent (newEvent: GameEvent3D) {
-        this.eventQueue.add(newEvent);
+        let newEventSequence: number = newEvent.notification.getSequence();
+
+        // skip the new event if it seems to be a duplicate of one we've already processed.
+        if (newEventSequence >= this.nextEventNumber) {
+            this.eventQueue.set(newEventSequence, newEvent);
+            console.log("added event " + newEventSequence);
+        }
         
         this.processNextEvent();
     }
 
     static processNextEvent () {
-        let nextEvent : GameEvent3D | null = null;
-
-        for (let event of this.eventQueue) {
-            if (event.notification.getSequence() === this.nextEventNumber) nextEvent = event;
-        }
+        let nextEvent : GameEvent3D | undefined = this.eventQueue.get(this.nextEventNumber);
 
         if (nextEvent) {
+            console.log("processing event " + nextEvent.notification.getSequence());
+
             nextEvent.execute();
 
-            this.eventQueue.delete(nextEvent);
+            this.eventQueue.delete(nextEvent.notification.getSequence());
 
             this.nextEventNumber++;
+
+            this.processNextEvent();
         }
     }
 
     static tricksListener () {
         this.currentCardsInTrick = [];
+
+        setTimeout(() => {
+            Card3D.clearCards(this.scene);
+        }, 3000);
     }
 
     static seatsListener (seatDetailsList: SeatDetails[]) {
@@ -356,6 +366,8 @@ class SceneController {
     }
 
     static playCardResponseListener(playedCard: Card, success: boolean) {
+        // To do: check if playedCard is the same as this.currentCard?
+
         if (success) {
             let card: Card3D = this.currentCard;
 
@@ -371,7 +383,7 @@ class SceneController {
 
     static playedCardsListener(cardsList: Array<PlayedCard>) {
         let sourceCardLocation: number[] | null;
-        let destinationCardLocation: number[];
+        let destinationCardLocation: number[] | null = null;
         let playedCard: PlayedCard;
         let order: number = -1;
         let seat: number = -1;
@@ -393,13 +405,21 @@ class SceneController {
              // Skip if it's our card, let it be handled by playCardResponseListener 
             if (!this.currentCardsInTrick[order] && card && seat !== GameSettings.currentPlayer) {
                 sourceCardLocation = Card3D.findCardInHands(card);
-                // if (!sourceCardLocation) sourceCardLocation = Card3D.findCardInDeck(card);
-                destinationCardLocation = [seat, 0];
+                if (!sourceCardLocation) throw new Error("could not find source card to swap");
+
+                for (let j: number = 0; j < CardStack3D.fanStacks[seat].index.length; j++) {
+                    if (CardStack3D.fanStacks[seat].index[j]) {
+                        destinationCardLocation = [seat, j];
+                        break;
+                    }
+                }
+                if (!destinationCardLocation) throw new Error("could not find destination card to swap");
 
                 // find the actual card and swap it into the right spot before playing it
-                if (sourceCardLocation) Card3D.swapCards(sourceCardLocation, destinationCardLocation);
+                if (sourceCardLocation && destinationCardLocation) Card3D.swapCards(sourceCardLocation, destinationCardLocation);
+                else throw new Error("could not find cards to swap");
 
-                card3D = CardStack3D.fanStacks[seat].index[0];
+                card3D = CardStack3D.fanStacks[seat].index[destinationCardLocation[1]];
 
                 if (card3D) {
                     card3D.playCardAnimation(seat, this.scene);

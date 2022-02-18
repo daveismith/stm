@@ -31,7 +31,7 @@ import { IApp } from "../../App/App.context";
 
 class Card3D {
     cardStack: CardStack3D | null = null;
-    positionInDeck: number = -1;
+    positionInStack: number = -1;
     mesh: Mesh;
     static cardHeight = 0.007;
     static cardBaseRotation: Quaternion = Quaternion.RotationYawPitchRoll(-Math.PI / 2, 0, 0);
@@ -57,7 +57,7 @@ class Card3D {
         });
         this.mesh.position = CardStack3D.deck.position.clone();
         this.mesh.position.y += CardStack3D.deck.cardsInStack * CardStack3D.cardStackSpacing;
-        this.mesh.rotationQuaternion = Card3D.cardBaseRotation;
+        this.mesh.rotationQuaternion = Card3D.cardBaseRotation.clone();
     
         const cardMaterial = new StandardMaterial("cardMaterial", scene);
         cardMaterial.diffuseTexture = new Texture(cardTextures, scene);
@@ -70,6 +70,7 @@ class Card3D {
     
         const cardButton = new MeshButton3D(this.mesh, "cardButton");
         cardButton.onPointerDownObservable.add(() => {
+            console.log("skip card play attempt: not our turn");
             if (SceneController.gameState === GameState.ChoosingPlay)
                 this.playCard();
         //     // if (this.mesh.position.z === CardStack3D.deck.position.z)
@@ -583,6 +584,7 @@ class Card3D {
 
     playCard () {
         SceneController.currentCard = this;
+        console.log("attempting to play card: " + this.card.getRank() + this.card.getSuit());
         if (this.appState.playCard) this.appState.playCard(this.card);
     }
 
@@ -676,6 +678,18 @@ class Card3D {
         }
     }
 
+    static clearCards (scene: Scene) {
+        for (var i = 0; i < GameSettings.players; i++) {
+            for (let card of CardStack3D.playMatStacks[i].index) {
+                if (card) {
+                    CardStack3D.trashStack.addToStack(card);
+                    card.mesh.position = CardStack3D.trashStack.position.clone();
+                    card.mesh.rotationQuaternion = Card3D.cardBaseRotation.clone();
+                }
+            }
+        }
+    }
+
     static findCardInHands (targetCard: Card)
     {
         let cardStack: CardStack3D;
@@ -686,7 +700,8 @@ class Card3D {
 
             if (i !== GameSettings.currentPlayer) // Skip searching our own hand.
 
-                for (let j: number = 0; j < cardStack.cardsInStack; j++) {
+                for (let j: number = 0; j < cardStack.index.length; j++) {
+                    console.log("checking source card " + j);
                     potentialMatch = cardStack.index[j];
 
                     if (potentialMatch && potentialMatch.equals(targetCard)) {
@@ -702,7 +717,7 @@ class Card3D {
         let cardStack: CardStack3D = CardStack3D.deck;
         let potentialMatch: Card3D | null;
 
-        for (let i: number = 0; i < cardStack.cardsInStack; i++) {
+        for (let i: number = 0; i < cardStack.index.length; i++) {
             potentialMatch = cardStack.index[i];
             console.log('potential match ' + potentialMatch);
 
@@ -715,6 +730,10 @@ class Card3D {
     }
 
     static swapCards (sourceCardLocation: number[], destinationCardLocation: number[]) {
+        // if the card is already in the correct spot, do nothing
+        if (sourceCardLocation[0] === destinationCardLocation[0] && sourceCardLocation[1] === destinationCardLocation[1])
+            return;
+
         let sourcePlayer: number;
         let sourceIndexInStack: number;
         let sourceCard: Card3D | null;
@@ -722,7 +741,6 @@ class Card3D {
         let sourceQuaternion: Quaternion | null = null;
         let sourceParent: Nullable<Node> = null;
         let sourceCardStack: CardStack3D | null = null;
-        let sourcePositionInDeck: number = -1;
 
         let destinationPlayer: number;
         let destinationIndexInStack: number;
@@ -731,54 +749,47 @@ class Card3D {
         let destinationQuaternion: Quaternion | null = null;
         let destinationParent: Nullable<Node> = null;
         let destinationCardStack: CardStack3D | null = null;
-        let destinationPositionInDeck: number = -1;
 
         sourcePlayer = sourceCardLocation[0];
         sourceIndexInStack = sourceCardLocation[1];
-        if (sourcePlayer === -1)
-            sourceCardStack = CardStack3D.deck;
-        else
-            sourceCardStack = CardStack3D.fanStacks[sourcePlayer];
+        sourceCardStack = CardStack3D.fanStacks[sourcePlayer];
 
         sourceCard = sourceCardStack.index[sourceIndexInStack];
         if (sourceCard) {
             sourcePosition = sourceCard.mesh.position;
             sourceQuaternion = sourceCard.mesh.rotationQuaternion;
             sourceParent = sourceCard.mesh.parent;
-            sourcePositionInDeck = sourceCard.positionInDeck;
         }
+        else throw new Error('error swapping cards: problem with sourceCard');
 
         destinationPlayer = destinationCardLocation[0];
         destinationIndexInStack = destinationCardLocation[1];
-        if (destinationPlayer === -1)
-            destinationCardStack = CardStack3D.deck;
-        else
-            destinationCardStack = CardStack3D.fanStacks[destinationPlayer];
+        destinationCardStack = CardStack3D.fanStacks[destinationPlayer];
 
         destinationCard = destinationCardStack.index[destinationIndexInStack];
         if (destinationCard) {
             destinationPosition = destinationCard.mesh.position;
             destinationQuaternion = destinationCard.mesh.rotationQuaternion;
             destinationParent = destinationCard.mesh.parent;
-            destinationPositionInDeck = destinationCard.positionInDeck;
         }
+        else throw new Error('error swapping cards: problem with destinationCard');
 
         if (sourceCard && destinationCard) {
             sourceCard.mesh.position = destinationPosition;
             sourceCard.mesh.rotationQuaternion = destinationQuaternion;
             sourceCard.mesh.parent = destinationParent;
             sourceCard.cardStack = destinationCardStack;
-            sourceCard.positionInDeck = destinationPositionInDeck;
+            sourceCard.positionInStack = destinationIndexInStack;
             sourceCardStack.index[sourceIndexInStack] = destinationCard;
 
             destinationCard.mesh.position = sourcePosition;
             destinationCard.mesh.rotationQuaternion = sourceQuaternion;
             destinationCard.mesh.parent = sourceParent;
             destinationCard.cardStack = sourceCardStack;
-            destinationCard.positionInDeck = sourcePositionInDeck;
+            destinationCard.positionInStack = sourceIndexInStack;
             destinationCardStack.index[destinationIndexInStack] = sourceCard;
         }
-        else throw new Error('error swapping cards');
+        else throw new Error('error swapping cards: problem with swap');
     }
 }
 

@@ -31,11 +31,14 @@ namespace ShootTheMoon.Network
                 Connected = true;
             }
 
+            public uint getNextSequence() {
+                return this.sequence++;
+            }
+
             public async Task WriteAsync(Notification message) {
                 await semaphore.WaitAsync();
                 try {
                     if (Connected) {
-                        message.Sequence = sequence++;
                         await Stream.WriteAsync(message);
                     } else {
                         Log.Debug("Dropping message as client is not connected");
@@ -147,9 +150,12 @@ namespace ShootTheMoon.Network
             const int MAX_RETRIES = 10;
             int retriesAttempted = 0;
 
+            notification.Sequence = client.getNextSequence();
+
             while (!sent)
             {
                 try {
+                    Log.Debug("{0}-{1}-{2}:{3}", client.Name, notification.Sequence, retriesAttempted, notification.ToString());
                     await client.WriteAsync(notification);
                     sent = true;
                 }
