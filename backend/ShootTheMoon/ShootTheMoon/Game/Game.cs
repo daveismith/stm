@@ -109,16 +109,16 @@ namespace ShootTheMoon.Game
 
         }
 
-        public virtual void OnNext(Client client) {
+        public async virtual void OnNext(Client client) {
 
             GameState startState = State;
-            Task.Run(Tick);
+            await Task.Run(Tick);
             if (startState == State) {
                 // If the Tick causes a change in the state, then the update isn't needed.
                 if (Players.Contains(client)) {
-                    Task.Run(() => PublishEvent(new GameEvent(GameEventType.ClientUpdate | GameEventType.SeatListUpdate, this)));
+                    await Task.Run(() => PublishEvent(new GameEvent(GameEventType.ClientUpdate | GameEventType.SeatListUpdate, this)));
                 } else {
-                    Task.Run(() => PublishEvent(new GameEvent(GameEventType.ClientUpdate, this)));
+                    await Task.Run(() => PublishEvent(new GameEvent(GameEventType.ClientUpdate, this)));
                 }
             }
 
@@ -284,14 +284,14 @@ namespace ShootTheMoon.Game
             ResetHand();
         }
 
-        public Task AddClient(Client client) {
+        public async Task AddClient(Client client) {
             if (Clients.Contains(client))
-                return Task.CompletedTask; // Already Exists
+                return; // Already Exists
 
             Clients = Clients.Add(client);
-            client.Subscribe(this);
+            await client.Subscribe(this);
 
-            return Task.CompletedTask;
+            return;
         }
 
         public async Task RemoveClient(Client client) {

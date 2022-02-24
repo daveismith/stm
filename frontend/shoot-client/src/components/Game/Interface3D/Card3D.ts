@@ -585,7 +585,10 @@ class Card3D {
     playCard () {
         SceneController.currentCard = this;
         console.log("attempting to play card: " + this.card.getRank() + this.card.getSuit());
-        if (this.appState.playCard) this.appState.playCard(this.card);
+        if (this.appState.playCard) {
+            this.appState.playCard(this.card);
+            SceneController.awaitingServerResponse = true;
+        }
     }
 
     playCardAnimation (player: number, scene: Scene) {
@@ -616,7 +619,8 @@ class Card3D {
     }
 
     equals (comparator: Card) {
-        return this.card.getRank() === comparator.getRank() && this.card.getSuit() === comparator.getSuit();
+        return (this.card.getRank() ?? 0) === (comparator.getRank() ?? 0)
+            && (this.card.getSuit() ?? 0) === (comparator.getSuit() ?? 0);
     }
 
     pickUpCard (player: number, scene: Scene) {

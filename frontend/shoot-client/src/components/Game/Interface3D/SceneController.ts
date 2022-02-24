@@ -47,6 +47,7 @@ class SceneController {
     static currentCardsInTrick: Card3D[] = [];
     static eventQueue: Map<number, GameEvent3D> = new Map();
     static nextEventNumber: number = 0;
+    static awaitingServerResponse: boolean = false;
 
     static addNewEvent (newEvent: GameEvent3D) {
         let newEventSequence: number = newEvent.notification.getSequence();
@@ -61,8 +62,13 @@ class SceneController {
     }
 
     static processNextEvent () {
-        let nextEvent : GameEvent3D | undefined = this.eventQueue.get(this.nextEventNumber);
+        let nextEvent : GameEvent3D | undefined;
 
+        // don't process any events while we're waiting for a response
+        if (this.awaitingServerResponse) setTimeout(() => { this.processNextEvent(); }, 100);
+        else nextEvent = this.eventQueue.get(this.nextEventNumber);
+
+        // if we're ready and there's an event available, process it
         if (nextEvent) {
             console.log("processing event " + nextEvent.notification.getSequence());
 
@@ -150,6 +156,8 @@ class SceneController {
 
             this.gameState = GameState.SeatedNotReady;
         }
+
+        this.awaitingServerResponse = false;
     }
 
     // Server response to our ready-status request.
@@ -177,6 +185,8 @@ class SceneController {
                 }
             }
         }
+
+        this.awaitingServerResponse = false;
     }
 
     static startGameListener () {
@@ -292,6 +302,8 @@ class SceneController {
         }
 
         this.gameState = GameState.ObservingBids;
+
+        this.awaitingServerResponse = false;
     }
 
     static bidsListener (bidDetailsList: BidDetails[]) {
@@ -379,6 +391,8 @@ class SceneController {
         } else {
             console.log("Error Playing Card");
         }
+
+        this.awaitingServerResponse = false;
     }
 
     static playedCardsListener(cardsList: Array<PlayedCard>) {
@@ -404,6 +418,7 @@ class SceneController {
              // Skip if this card has already been played in the UI
              // Skip if it's our card, let it be handled by playCardResponseListener 
             if (!this.currentCardsInTrick[order] && card && seat !== GameSettings.currentPlayer) {
+                console.log("searching for " + card.getRank() + card.getSuit());
                 sourceCardLocation = Card3D.findCardInHands(card);
                 if (!sourceCardLocation) throw new Error("could not find source card to swap");
 

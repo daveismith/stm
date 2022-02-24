@@ -26,13 +26,13 @@ namespace ShootTheMoon.Network
             {
                 sequence = 0;
                 Stream = stream;
-                Name = name;   
+                _name = name;   
                 semaphore = new SemaphoreSlim(1, 1);
                 Connected = true;
             }
 
-            public uint getNextSequence() {
-                return this.sequence++;
+            public Task<uint> getNextSequence() {
+                return Task.FromResult(this.sequence++);
             }
 
             public async Task WriteAsync(Notification message) {
@@ -43,6 +43,8 @@ namespace ShootTheMoon.Network
                     } else {
                         Log.Debug("Dropping message as client is not connected");
                     }
+                } catch {
+                    Log.Debug("Write failed.  Releasing semaphore");
                 } finally {
                     semaphore.Release();
                 }
@@ -77,24 +79,11 @@ namespace ShootTheMoon.Network
 
         public virtual async void OnNext(GameEvent info)
         {
-
-            Console.Out.Write("Game Event: {0}", info);
-
             Game.Game game = info.Game;
 
             // Process Client Update
             if ((info.Type & GameEventType.ClientUpdate) == GameEventType.ClientUpdate) {
                 // Update List Of Clients
-            }
-
-            // Progress Score Update
-            if ((info.Type & GameEventType.ScoreUpdate) == GameEventType.ScoreUpdate) {
-                await ScoreUpdate(game);
-            }
-
-            // Progress Tricks Update
-            if ((info.Type & GameEventType.TricksUpdate) == GameEventType.TricksUpdate) {
-                await TricksUpdate(game);
             }
 
             // Process A Seat List Update
@@ -143,6 +132,16 @@ namespace ShootTheMoon.Network
                     await PlayCardRequest(game, (Client)info.AdditionalData);
                 }
             }            
+
+            // Progress Tricks Update
+            if ((info.Type & GameEventType.TricksUpdate) == GameEventType.TricksUpdate) {
+                await TricksUpdate(game);
+            }
+
+            // Progress Score Update
+            if ((info.Type & GameEventType.ScoreUpdate) == GameEventType.ScoreUpdate) {
+                await ScoreUpdate(game);
+            }
         }
 
         private static async Task SendNotification(RpcClient client, Notification notification) {
@@ -150,7 +149,7 @@ namespace ShootTheMoon.Network
             const int MAX_RETRIES = 10;
             int retriesAttempted = 0;
 
-            notification.Sequence = client.getNextSequence();
+            notification.Sequence = await client.getNextSequence();
 
             while (!sent)
             {
@@ -164,6 +163,7 @@ namespace ShootTheMoon.Network
                     if (retriesAttempted > MAX_RETRIES) return;
                     retriesAttempted++;
                     await Task.Delay(100);
+                    Log.Debug("{0}-{1}-{2}: Send failed.  Retrying.", client.Name, notification.Sequence, retriesAttempted);
                 }
             }
         }
@@ -283,12 +283,11 @@ namespace ShootTheMoon.Network
                 if (c is RpcClient)
                 {
                     RpcClient rpcClient = (RpcClient)c;
-                    tasks.Add(SendNotification(rpcClient, notification));
+                    tasks.Add(SendNotification(rpcClient, notification.Clone()));
                 }
             }
 
             await Task.WhenAll(tasks);
-            Log.Debug("{0}: Broadcast complete", game.Name);
         }
 
         public async Task SeatListUpdate(Game.Game game) {
@@ -606,7 +605,7 @@ namespace ShootTheMoon.Network
 
             try {
                 RpcClient client = await FindClient(game, clientToken);
-                client.Ready = request.Ready;
+                await client.SetReady(request.Ready);
             }
             catch (KeyNotFoundException) {
                 r.Success = false;
