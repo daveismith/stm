@@ -60,6 +60,8 @@ class SeatCube {
             SceneController.gameState = GameState.WaitingForSeatConfirmation;
             if (appState.takeSeat) appState.takeSeat(player);
 
+            SceneController.awaitingServerResponse = true;
+
             // GameSettings.currentPlayer = player;
             // camera.target = GameSettings.cameraTargets[player];
             // camera.alpha = -1 * baseRotation(player).y + Math.PI;

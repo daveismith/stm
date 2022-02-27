@@ -7,6 +7,8 @@ import { Card } from "./Models/Card";
 import { Seat } from "./Models/Seat";
 import { Bid } from "./Models/Bid";
 import { EventEmitter3D } from "./Interface3D/EventEmitter3D";
+import { SceneController } from "./Interface3D/SceneController";
+import { GameEvent3D } from "./Interface3D/GameEvent3D";
 
 export interface IGame {
     playerName?: string;
@@ -78,6 +80,9 @@ export const GameProvider: React.FC = ({ children }) => {
             joinGame(id, state.playerName);
         } else if (!registered) {
             appState.stream.on('data', (notification: Notification) => {
+                console.log("rx notification sequence: " + notification.getSequence());
+                SceneController.addNewEvent(new GameEvent3D(notification, state.eventEmitter));
+
                 if (notification.hasScores()) {
                     console.log('score update');
                     // Handle A Score Update
@@ -91,7 +96,6 @@ export const GameProvider: React.FC = ({ children }) => {
                     setState(produce(draft => {
                         draft.tricks[0] = notification.getTricks()?.getTeam1() as number;
                         draft.tricks[1] = notification.getTricks()?.getTeam2() as number;
-                        state.eventEmitter.emit("tricks");
                     }));
                 } else if (notification.hasSeatList()) {
                     console.log('seats list');
@@ -110,22 +114,13 @@ export const GameProvider: React.FC = ({ children }) => {
                             };
                             draft.seats.set(seat.index, seat);
                         }
-                        state.eventEmitter.emit("seats", seatDetailsList);
                     }));
                 } else if (notification.hasStartGame()) {
                     console.log('start game');
-                    // const obj: object = notification.toObject();
-                    // console.log(obj);
-                    state.eventEmitter.emit('startGame');
                 } else if (notification.hasBidRequest()) {
                     console.log('bid request');
-                    // const obj: object = notification.toObject();
-                    // console.log(obj);
-                    state.eventEmitter.emit("bidRequest");
                 } else if (notification.hasBidList()) {
                     console.log('bid list');
-                    // const obj: object = notification.toObject();
-                    // console.log(obj);
                     setState(produce(draft => {
                         const bidDetailsList: BidDetails[] = notification.getBidList()?.getBidsList() as BidDetails[];
                         
@@ -134,18 +129,14 @@ export const GameProvider: React.FC = ({ children }) => {
                             const bid: Bid = {
                                 number: bidDetails.getTricks(),
                                 shootNum: bidDetails.getShootNum(),
-                                trump: bidDetails.getTrump(),
+                                trump: Bid.fromProtoTrump(bidDetails.getTrump()),
                                 seat: bidDetails.getSeat(),
                             };
                             draft.bids.set(bid.seat, bid);
                         }
-                    state.eventEmitter.emit("bids", bidDetailsList);
                 }));
                 } else if (notification.hasHand()) {
                     console.log('received hand');
-                    // const obj: object = notification.toObject();
-                    // console.log(obj);
-                    state.eventEmitter.emit("hand", notification.getHand());
                 } else if (notification.hasTransferRequest()) {
                     console.log('transfer request');
                 } else if (notification.hasTransfer()) {
@@ -154,10 +145,8 @@ export const GameProvider: React.FC = ({ children }) => {
                     console.log('throwaway request');
                 } else if (notification.hasTrumpUpdate()) {
                     console.log('trump update');
-                    state.eventEmitter.emit("trumpUpdate", notification.getTrumpUpdate());
                 } else if (notification.hasPlayCardRequest()) {
                     console.log('play card request');
-                    state.eventEmitter.emit("cardRequest");
                 } else if(notification.hasUpdateTimeout()) {
                     console.log('update timeout');
                 } else if (notification.hasPlayedCards()) {

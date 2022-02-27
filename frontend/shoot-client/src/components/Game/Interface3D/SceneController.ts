@@ -1,4 +1,4 @@
-import { SeatDetails, Hand, Bid as BidDetails, TrumpUpdate } from '../../../proto/shoot_pb';
+import { SeatDetails, Hand, Bid as BidDetails, TrumpUpdate, PlayedCard, Card } from '../../../proto/shoot_pb';
 import { Seat } from "../Models/Seat";
 import { Bid } from "../Models/Bid";
 import { GameSettings } from "./GameSettings3D";
@@ -12,6 +12,7 @@ import { Seat3D } from './Seat3D';
 import { Card3D } from './Card3D';
 import { Scene, PointLight } from '@babylonjs/core';
 import { CardStack3D } from './CardStack3D';
+import { GameEvent3D } from './GameEvent3D';
 
 enum GameState {
     Unknown = -1,
@@ -43,8 +44,50 @@ class SceneController {
     static gameState: GameState = GameState.ChoosingSeat;
     static currentTrump: TrumpUpdate;
     static currentCard: Card3D;
+    static currentCardsInTrick: Card3D[] = [];
+    static eventQueue: Map<number, GameEvent3D> = new Map();
+    static nextEventNumber: number = 0;
+    static awaitingServerResponse: boolean = false;
+
+    static addNewEvent (newEvent: GameEvent3D) {
+        let newEventSequence: number = newEvent.notification.getSequence();
+
+        // skip the new event if it seems to be a duplicate of one we've already processed.
+        if (newEventSequence >= this.nextEventNumber) {
+            this.eventQueue.set(newEventSequence, newEvent);
+            console.log("added event " + newEventSequence);
+        }
+        
+        this.processNextEvent();
+    }
+
+    static processNextEvent () {
+        let nextEvent : GameEvent3D | undefined;
+
+        // don't process any events while we're waiting for a response
+        if (this.awaitingServerResponse) setTimeout(() => { this.processNextEvent(); }, 100);
+        else nextEvent = this.eventQueue.get(this.nextEventNumber);
+
+        // if we're ready and there's an event available, process it
+        if (nextEvent) {
+            console.log("processing event " + nextEvent.notification.getSequence());
+
+            nextEvent.execute();
+
+            this.eventQueue.delete(nextEvent.notification.getSequence());
+
+            this.nextEventNumber++;
+
+            this.processNextEvent();
+        }
+    }
 
     static tricksListener () {
+        this.currentCardsInTrick = [];
+
+        setTimeout(() => {
+            Card3D.clearCards(this.scene);
+        }, 3000);
     }
 
     static seatsListener (seatDetailsList: SeatDetails[]) {
@@ -71,7 +114,7 @@ class SceneController {
 
             if (!seat.empty) { // Someone is in the seat, so disable the take-seat button and update the name.
                 if (this.seatCubes[seat.index]) this.seatCubes[seat.index].hideAndDisable();
-                if (this.nameplates[seat.index]) this.nameplates[seat.index].updateName(seat.name);
+                if (this.nameplates[seat.index]) this.nameplates[seat.index].updateName(seat.index + ":" + seat.name);
                 if (seat.ready) {
                     if (this.readyCubes[seat.index]) this.readyCubes[seat.index].show();
                     if (this.unreadyCubes[seat.index]) this.unreadyCubes[seat.index].hide();
@@ -113,6 +156,8 @@ class SceneController {
 
             this.gameState = GameState.SeatedNotReady;
         }
+
+        this.awaitingServerResponse = false;
     }
 
     // Server response to our ready-status request.
@@ -140,6 +185,8 @@ class SceneController {
                 }
             }
         }
+
+        this.awaitingServerResponse = false;
     }
 
     static startGameListener () {
@@ -255,6 +302,8 @@ class SceneController {
         }
 
         this.gameState = GameState.ObservingBids;
+
+        this.awaitingServerResponse = false;
     }
 
     static bidsListener (bidDetailsList: BidDetails[]) {
@@ -298,7 +347,10 @@ class SceneController {
         let seat: number = trumpUpdate.getSeat();
         let nameplate: Nameplate = this.nameplates[seat];
 
-        if (nameplate) nameplate.updateName(nameplate.name + ": " + trumpUpdate.getTricks() + Bid.trumpString(trumpUpdate.getTrump()));
+        if (nameplate) {
+            let trump: Bid.Trump = Bid.fromProtoTrump(trumpUpdate.getTrump());
+            nameplate.updateName(nameplate.name + ": " + trumpUpdate.getTricks() + Bid.trumpString(trump));
+        }
 
         for (let seat of this.seats) {
             for (let bidSuitCube of this.bidSuitCubes[seat.index]) {
@@ -325,14 +377,72 @@ class SceneController {
         this.gameState = GameState.ChoosingPlay;
     }
 
-    static playCardResponseListener() {
-        let card: Card3D = this.currentCard;
+    static playCardResponseListener(playedCard: Card, success: boolean) {
+        // To do: check if playedCard is the same as this.currentCard?
 
-        card.playCardAnimation(GameSettings.currentPlayer, this.scene);
+        if (success) {
+            let card: Card3D = this.currentCard;
 
-        for (let card of this.hand) card.toggleGlow(false);
+            card.playCardAnimation(GameSettings.currentPlayer, this.scene);
 
-        this.gameState = GameState.ObservingPlay;
+            for (let card of this.hand) card.toggleGlow(false);
+
+            this.gameState = GameState.ObservingPlay;
+        } else {
+            console.log("Error Playing Card");
+        }
+
+        this.awaitingServerResponse = false;
+    }
+
+    static playedCardsListener(cardsList: Array<PlayedCard>) {
+        let sourceCardLocation: number[] | null;
+        let destinationCardLocation: number[] | null = null;
+        let playedCard: PlayedCard;
+        let order: number = -1;
+        let seat: number = -1;
+        let card: Card | undefined;
+        let card3D: Card3D | null;
+
+        console.log(cardsList);
+
+        for (let i: number = 0; i < cardsList.length; i++) {
+            playedCard = cardsList[i];
+
+            if (playedCard) {
+                order = playedCard.getOrder();
+                seat = playedCard.getSeat();
+                card = playedCard.getCard();
+            }
+
+             // Skip if this card has already been played in the UI
+             // Skip if it's our card, let it be handled by playCardResponseListener 
+            if (!this.currentCardsInTrick[order] && card && seat !== GameSettings.currentPlayer) {
+                console.log("searching for " + card.getRank() + card.getSuit());
+                sourceCardLocation = Card3D.findCardInHands(card);
+                if (!sourceCardLocation) throw new Error("could not find source card to swap");
+
+                for (let j: number = 0; j < CardStack3D.fanStacks[seat].index.length; j++) {
+                    if (CardStack3D.fanStacks[seat].index[j]) {
+                        destinationCardLocation = [seat, j];
+                        break;
+                    }
+                }
+                if (!destinationCardLocation) throw new Error("could not find destination card to swap");
+
+                // find the actual card and swap it into the right spot before playing it
+                if (sourceCardLocation && destinationCardLocation) Card3D.swapCards(sourceCardLocation, destinationCardLocation);
+                else throw new Error("could not find cards to swap");
+
+                card3D = CardStack3D.fanStacks[seat].index[destinationCardLocation[1]];
+
+                if (card3D) {
+                    card3D.playCardAnimation(seat, this.scene);
+                 
+                    this.currentCardsInTrick[order] = card3D;
+                }
+            }
+        }
     }
 
     static moveCameraToSeat(seatNumber: number) {

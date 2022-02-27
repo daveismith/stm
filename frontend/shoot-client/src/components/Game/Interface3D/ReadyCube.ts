@@ -132,7 +132,10 @@ class ReadyCube {
         this.button.onPointerDownObservable.add(() => {
             SceneController.gameState = GameState.WaitingForReadyConfirmation;
                 
-            if (this.appState.setSeatReadyStatus) this.appState.setSeatReadyStatus(!this.readyValue);
+            if (this.appState.setSeatReadyStatus) {
+                this.appState.setSeatReadyStatus(!this.readyValue);
+                SceneController.awaitingServerResponse = true;
+            }
         });
     }
 
@@ -164,7 +167,10 @@ class ReadyCube {
             if (tricks >= 0) {
                 SceneController.gameState = GameState.WaitingForBidConfirmation;
                     
-                if (this.appState.createBid) this.appState.createBid(tricks, shootNumber, suit, GameSettings.currentPlayer);
+                if (this.appState.createBid) {
+                    this.appState.createBid(tricks, shootNumber, suit, GameSettings.currentPlayer);
+                    SceneController.awaitingServerResponse = true;
+                }
             }
     });
     }

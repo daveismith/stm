@@ -10,7 +10,7 @@ namespace ShootTheMoon.Game
         public static readonly Dictionary<string, GameSettings> GamePresets = new Dictionary<string, GameSettings>
         {
             #if DEBUG
-            { "TWOPLAYER", new GameSettings {NumPlayersPerTeam = 1, NumDuplicateCards = 2, ScoreNeededToWin = 51} },
+            { "TWOPLAYER", new GameSettings {NumPlayersPerTeam = 1, NumDuplicateCards = 1, ScoreNeededToWin = 51} },
             #endif
             { "FOURPLAYER", new GameSettings {NumPlayersPerTeam = 2, NumDuplicateCards = 1, ScoreNeededToWin = 51} },
             { "SIXPLAYER", new GameSettings {NumPlayersPerTeam = 3, NumDuplicateCards = 2, ScoreNeededToWin = 51} },
@@ -21,9 +21,14 @@ namespace ShootTheMoon.Game
         public int NumDuplicateCards { get; set; }
         public int ScoreNeededToWin { get; set; }
 
+        public int TricksPerHand { get { return getDeckSize() / (NumPlayersPerTeam * 2); } }
+
+        public int LeechLimit { get { return ScoreNeededToWin - (int)Math.Ceiling(TricksPerHand / 2.0); } }
+
         public int getDeckSize()
         {
             return Suit.Suits.Count * Rank.Ranks.Count * NumDuplicateCards;
         }
+
     }
 }

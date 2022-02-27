@@ -15,6 +15,7 @@ class CardStack3D {
     static playMatStacks: CardStack3D[] = [];
     static handStacks: CardStack3D[] = [];
     static fanStacks: CardStack3D[] = [];
+    static trashStack: CardStack3D;
 
     static initializeCardStacks () {
         //Radius ratio of position to deal cards to
@@ -35,6 +36,9 @@ class CardStack3D {
         CardStack3D.deck.position = new Vector3(1.5, GameSettings.tableHeight + 0.01, 1.5);
         CardStack3D.deck.pivot = new TransformNode("deckStack");
         CardStack3D.deck.pivot.position = CardStack3D.deck.position;
+
+        CardStack3D.trashStack = new CardStack3D();
+        CardStack3D.trashStack.position = new Vector3(0, 0, 0);
 
         // let test = MeshBuilder.CreateBox("test", {
         //     width: (1.4 * 3) / 4,
@@ -102,19 +106,32 @@ class CardStack3D {
             fanStackAxis = new Vector3(1, 0, 0);
             fanStackAngle = -1/6 * Math.PI;
             CardStack3D.fanStacks[i].pivot?.rotate(fanStackAxis, fanStackAngle);
-            }
+        }
     };
 
     removeFromStack (card: Card3D) {
-        if (card.positionInDeck >= 0) this.index[card.positionInDeck] = null;
-        card.positionInDeck = -1;
+        if (card.positionInStack >= 0) this.index[card.positionInStack] = null;
+        card.positionInStack = -1;
         this.cardsInStack--;
     }
 
     addToStack (card: Card3D) {
+        let firstEmpty: number = -1;
+        // find the first empty slot
+        for (let i: number = 0; i < this.index.length; i++)
+            if (!this.index[i]) {
+                firstEmpty = i;
+                break;
+            }
+        // if no empty slots, add one at the end
+        if (firstEmpty === -1) firstEmpty = this.cardsInStack;
+
+        // remove from old stack
         if (card.cardStack !== null) card.cardStack.removeFromStack(card);
-        this.index[this.cardsInStack] = card;
-        card.positionInDeck = this.cardsInStack;
+
+        // add to this stack
+        this.index[firstEmpty] = card;
+        card.positionInStack = firstEmpty;
         card.cardStack = this;
         this.cardsInStack++;
     }
@@ -127,7 +144,7 @@ class CardStack3D {
         let targetDeckCard1Index: number;
         let targetDeckCard1: Card3D;
         let targetDeckCard2Index: number;
-        let targetDeckCard2: Card3D;
+        let targetDeckCard2: Card3D | null = null;
         let targetDeckCard3: Card3D;
 
         for (let i: number = 0; i < cardValues.length; i++) {
@@ -138,21 +155,21 @@ class CardStack3D {
             targetDeckCard2Index = targetDeckCard1Index + 24;
 
             targetDeckCard1 = this.deck.index[targetDeckCard1Index]!;
-            targetDeckCard2 = this.deck.index[targetDeckCard2Index]!;
+            if (GameSettings.cardCopies > 1) targetDeckCard2 = this.deck.index[targetDeckCard2Index]!;
 
             if (targetDeckCard1.equals(currentHandCard)) { // First place to look.
                 // Update deck position trackers.
-                this.deck.index[swapDestinationIndex]!.positionInDeck = targetDeckCard1Index;
-                targetDeckCard1.positionInDeck = swapDestinationIndex;
+                this.deck.index[swapDestinationIndex]!.positionInStack = targetDeckCard1Index;
+                targetDeckCard1.positionInStack = swapDestinationIndex;
 
                 // Swap cards.
                 [this.deck.index[targetDeckCard1Index], this.deck.index[swapDestinationIndex]] =
                     [this.deck.index[swapDestinationIndex], this.deck.index[targetDeckCard1Index]];
             }
-            else if (targetDeckCard2.equals(currentHandCard)) { // Second place to look.
+            else if (targetDeckCard2 && targetDeckCard2.equals(currentHandCard)) { // Second place to look.
                 // Update deck position trackers.
-                this.deck.index[swapDestinationIndex]!.positionInDeck = targetDeckCard2Index;
-                targetDeckCard2.positionInDeck = swapDestinationIndex;
+                this.deck.index[swapDestinationIndex]!.positionInStack = targetDeckCard2Index;
+                targetDeckCard2.positionInStack = swapDestinationIndex;
 
                 // Swap cards.
                 [this.deck.index[targetDeckCard2Index], this.deck.index[swapDestinationIndex]] =
@@ -166,8 +183,8 @@ class CardStack3D {
                     targetDeckCard3 = this.deck.index[j]!;
                     if (targetDeckCard3.equals(currentHandCard)) {
                         // Update deck position trackers.
-                        this.deck.index[swapDestinationIndex]!.positionInDeck = j;
-                        targetDeckCard3.positionInDeck = swapDestinationIndex;
+                        this.deck.index[swapDestinationIndex]!.positionInStack = j;
+                        targetDeckCard3.positionInStack = swapDestinationIndex;
 
                         // Swap cards.
                         [this.deck.index[j], this.deck.index[swapDestinationIndex]] =

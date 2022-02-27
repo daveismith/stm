@@ -10,7 +10,8 @@ class GameSettings {
     static tableHeight = 9;
     static players: number;
     static deck: Mesh[] = [];
-    static deckSize = 48;
+    static deckSize: number = 48;
+    static cardCopies: number = 1;
     static handRadius = new Vector3(2, 0, 1);
     static currentPlayer: number;
     static currentDealer: number;
@@ -36,6 +37,10 @@ class GameSettings {
                 cameraTargetRatio *
                 Math.cos((2 / GameSettings.players) * Math.PI * i)
             );
+        }
+
+        if (GameSettings.players === 2) {
+            GameSettings.deckSize = 24;
         }
     };
 }

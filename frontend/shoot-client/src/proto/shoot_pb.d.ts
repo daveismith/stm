@@ -649,6 +649,9 @@ export namespace LeaveGameRequest {
 }
 
 export class Notification extends jspb.Message {
+  getSequence(): number;
+  setSequence(value: number): Notification;
+
   getStatus(): StatusResponse | undefined;
   setStatus(value?: StatusResponse): Notification;
   hasStatus(): boolean;
@@ -756,6 +759,7 @@ export class Notification extends jspb.Message {
 
 export namespace Notification {
   export type AsObject = {
+    sequence: number,
     status?: StatusResponse.AsObject,
     joinResponse?: JoinGameResponse.AsObject,
     seatList?: SeatsList.AsObject,
@@ -779,25 +783,25 @@ export namespace Notification {
 
   export enum NotificationCase { 
     NOTIFICATION_NOT_SET = 0,
-    STATUS = 1,
-    JOIN_RESPONSE = 2,
-    SEAT_LIST = 3,
-    SEAT_UPDATE = 4,
-    START_GAME = 5,
-    HAND = 6,
-    BID_REQUEST = 7,
-    BID = 8,
-    BID_LIST = 9,
-    TRANSFER_REQUEST = 10,
-    TRANSFER = 11,
-    THROWAWAY_REQUEST = 12,
-    TRUMP_UPDATE = 13,
-    PLAY_CARD_REQUEST = 14,
-    UPDATE_TIMEOUT = 15,
-    PLAYED_CARDS = 16,
-    TRICKS = 17,
-    SCORES = 18,
-    END_GAME = 19,
+    STATUS = 2,
+    JOIN_RESPONSE = 3,
+    SEAT_LIST = 4,
+    SEAT_UPDATE = 5,
+    START_GAME = 6,
+    HAND = 7,
+    BID_REQUEST = 8,
+    BID = 9,
+    BID_LIST = 10,
+    TRANSFER_REQUEST = 11,
+    TRANSFER = 12,
+    THROWAWAY_REQUEST = 13,
+    TRUMP_UPDATE = 14,
+    PLAY_CARD_REQUEST = 15,
+    UPDATE_TIMEOUT = 16,
+    PLAYED_CARDS = 17,
+    TRICKS = 18,
+    SCORES = 19,
+    END_GAME = 20,
   }
 }
 
@@ -806,6 +810,6 @@ export enum Trump {
   HEARTS = 1,
   DIAMONDS = 2,
   CLUBS = 3,
-  HIGH = 4,
-  LOW = 5,
+  LOW = 4,
+  HIGH = 5,
 }

@@ -3,6 +3,7 @@ using Moq;
 using System;
 using ShootTheMoon;
 using ShootTheMoon.Game;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ShootTheMoonTest.Game
@@ -72,16 +73,19 @@ namespace ShootTheMoonTest.Game
             observer.Verify(x => x.OnNext(It.Is<GameEvent>(p => p.Type == GameEventType.SeatListUpdate && p.Game == game)), Times.Once);
             
 
-            c.Ready = true;
+            await c.SetReady(true);
+            Thread.Sleep(10); // This is needed to allow time for the update to be generated.
             observer.Verify(x => x.OnNext(It.Is<GameEvent>(p => p.Type == (GameEventType.ClientUpdate | GameEventType.SeatListUpdate) && p.Game == game)), Times.Once);
 
-            c.Ready = false;
+            await c.SetReady(false);
+            Thread.Sleep(10); // This is needed to allow time for the update to be generated.
             observer.Verify(x => x.OnNext(It.Is<GameEvent>(p => p.Type == (GameEventType.ClientUpdate | GameEventType.SeatListUpdate) && p.Game == game)), Times.Exactly(2));            
 
             for (int index = 1; index < game.NumPlayers; index++) {
                 Client client = new Client();
-                client.Ready = true;
+                await c.SetReady(true);
                 await game.AddClient(client);
+                Thread.Sleep(10); // This is needed to allow time for the update to be generated.
                 observer.Verify(x => x.OnNext(It.Is<GameEvent>(p => p.Type == GameEventType.ClientUpdate && p.Game == game)), Times.Exactly(1 + index));
                 Assert.AreEqual(index+1, game.Clients.Count);
 
@@ -89,8 +93,8 @@ namespace ShootTheMoonTest.Game
                 observer.Verify(x => x.OnNext(It.Is<GameEvent>(p => p.Type == GameEventType.SeatListUpdate && p.Game == game)), Times.Exactly(index+1));
             }
 
-            c.Ready = true;
-
+            await c.SetReady(true);
+            Thread.Sleep(10); // This is needed to allow time for the update to be generated.
             observer.Verify(x => x.OnNext(It.Is<GameEvent>(p => p.Type == (GameEventType.ClientUpdate | GameEventType.SeatListUpdate |  GameEventType.StartGame | GameEventType.DealCards) && p.Game == game)), Times.Once);
 
             foreach (var player in game.Players) {
