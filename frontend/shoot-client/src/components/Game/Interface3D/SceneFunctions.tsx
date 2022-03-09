@@ -66,7 +66,6 @@ const buildDeck = (scene: Scene, manager: GUI3DManager, appState: IApp) => {
         for (let i = 0; i < numRanks; i++) {
             for (let j = 0; j < numSuits; j++) {
                 card = new Card3D(scene, manager, i+2, j, appState); // Add 2 since we're not including 7s and 8s.
-                CardStack3D.deck.addToStack(card);
             }
         }
     }

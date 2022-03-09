@@ -43,11 +43,12 @@ class SceneController {
     static currentBid: Bid;
     static gameState: GameState = GameState.ChoosingSeat;
     static currentTrump: TrumpUpdate;
-    static currentCard: Card3D;
+    static currentCard: Card3D | null;
     static currentCardsInTrick: Card3D[] = [];
     static eventQueue: Map<number, GameEvent3D> = new Map();
     static nextEventNumber: number = 0;
     static awaitingServerResponse: boolean = false;
+    static awaitingAnimation: boolean = false;
 
     static addNewEvent (newEvent: GameEvent3D) {
         let newEventSequence: number = newEvent.notification.getSequence();
@@ -65,7 +66,7 @@ class SceneController {
         let nextEvent : GameEvent3D | undefined;
 
         // don't process any events while we're waiting for a response
-        if (this.awaitingServerResponse) setTimeout(() => { this.processNextEvent(); }, 100);
+        if (this.awaitingServerResponse || this.awaitingAnimation) setTimeout(() => { this.processNextEvent(); }, 100);
         else nextEvent = this.eventQueue.get(this.nextEventNumber);
 
         // if we're ready and there's an event available, process it
@@ -85,8 +86,10 @@ class SceneController {
     static tricksListener () {
         this.currentCardsInTrick = [];
 
+        this.awaitingAnimation = true;
         setTimeout(() => {
-            Card3D.clearCards(this.scene);
+            Card3D.clearCards();
+            this.awaitingAnimation = false;
         }, 3000);
     }
 
@@ -212,13 +215,25 @@ class SceneController {
     }
 
     static handListener (hand: Hand) {
+        this.hand = [];
+        this.currentCard = null;
+        this.currentCardsInTrick = [];
+
         CardStack3D.arrangeDeck(hand.getHandList());
 
         arrangeCardsInDeck(this.scene, CardStack3D.deck);
 
-        setTimeout(() => { Card3D.dealCards(this.scene); }, 1000);
+        this.awaitingAnimation = true;
+        setTimeout(() => {
+            Card3D.dealCards(this.scene);
+            // don't reset awaitingAnimation because we want to go straight to picking up cards.
+        }, 1000);
 
-        setTimeout(() => { this.pickUpListener(); }, 7500);
+        this.awaitingAnimation = true;
+        setTimeout(() => {
+            this.pickUpListener();
+            this.awaitingAnimation = false;
+        }, 7500);
     }
 
     static pickUpListener () {
@@ -381,9 +396,9 @@ class SceneController {
         // To do: check if playedCard is the same as this.currentCard?
 
         if (success) {
-            let card: Card3D = this.currentCard;
+            let card: Card3D | null = this.currentCard;
 
-            card.playCardAnimation(GameSettings.currentPlayer, this.scene);
+            card && card.playCardAnimation(GameSettings.currentPlayer, this.scene);
 
             for (let card of this.hand) card.toggleGlow(false);
 
@@ -419,6 +434,7 @@ class SceneController {
              // Skip if it's our card, let it be handled by playCardResponseListener 
             if (!this.currentCardsInTrick[order] && card && seat !== GameSettings.currentPlayer) {
                 console.log("searching for " + card.getRank() + card.getSuit());
+                console.log(CardStack3D.fanStacks[seat].index);
                 sourceCardLocation = Card3D.findCardInHands(card);
                 if (!sourceCardLocation) throw new Error("could not find source card to swap");
 

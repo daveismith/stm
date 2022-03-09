@@ -55,10 +55,8 @@ class Card3D {
             depth: (1 * 3) / 4,
             faceUV: faceUV
         });
-        this.mesh.position = CardStack3D.deck.position.clone();
-        this.mesh.position.y += CardStack3D.deck.cardsInStack * CardStack3D.cardStackSpacing;
-        this.mesh.rotationQuaternion = Card3D.cardBaseRotation.clone();
-    
+        this.addToDeck();
+
         const cardMaterial = new StandardMaterial("cardMaterial", scene);
         cardMaterial.diffuseTexture = new Texture(cardTextures, scene);
         // cardMaterial.bumpTexture = new Texture(cardNormalTexture, scene);
@@ -86,6 +84,13 @@ class Card3D {
         });
     
         manager.addControl(cardButton);
+    }
+
+    addToDeck () {
+        CardStack3D.deck.addToStack(this);
+        this.mesh.position = CardStack3D.deck.position.clone();
+        this.mesh.position.y += CardStack3D.deck.cardsInStack * CardStack3D.cardStackSpacing;
+        this.mesh.rotationQuaternion = Card3D.cardBaseRotation.clone();
     }
 
     toggleGlow (glow: boolean) {
@@ -682,7 +687,7 @@ class Card3D {
         }
     }
 
-    static clearCards (scene: Scene) {
+    static clearCards () {
         for (var i = 0; i < GameSettings.players; i++) {
             for (let card of CardStack3D.playMatStacks[i].index) {
                 if (card) {
