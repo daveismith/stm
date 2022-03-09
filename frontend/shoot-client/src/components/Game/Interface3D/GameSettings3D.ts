@@ -11,7 +11,7 @@ class GameSettings {
     static players: number;
     static deck: Mesh[] = [];
     static deckSize: number = 48;
-    static cardCopies: number = 1;
+    static cardCopies: number = 2;
     static handRadius = new Vector3(2, 0, 1);
     static currentPlayer: number;
     static currentDealer: number;
@@ -41,6 +41,7 @@ class GameSettings {
 
         if (GameSettings.players === 2) {
             GameSettings.deckSize = 24;
+            GameSettings.cardCopies = 1;
         }
     };
 }
