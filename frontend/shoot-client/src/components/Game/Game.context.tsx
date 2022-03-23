@@ -13,6 +13,7 @@ import { GameEvent3D } from "./Interface3D/GameEvent3D";
 export interface IGame {
     playerName?: string;
     numPlayers: number;
+    started: boolean;
     sceneView: boolean;
     score: number[];
     tricks: number[];
@@ -48,9 +49,10 @@ const bid2: Bid = {
     seat: 1,
 };
 
-const initialState: IGame = {
+const dirtyInitialState: IGame = {
     playerName: undefined,
     numPlayers: 6,
+    started: false,
     sceneView: false,
     score: [27, 9],
     tricks: [3, 2],
@@ -63,13 +65,29 @@ const initialState: IGame = {
     eventEmitter: new EventEmitter3D()
 };
 
+const cleanInitialState: IGame = {
+    playerName: undefined,
+    numPlayers: 6,
+    started: false,
+    sceneView: false,
+    score: [0, 0],
+    tricks: [0, 0],
+    hand: [],
+    seats: new Map(),
+    playedCards: new Map(),
+    bids: new Map(),
+    bidTricksSelected: null,
+    bidTrumpSelected: null,
+    eventEmitter: new EventEmitter3D()
+};
+
 let registered: boolean = false;
 
-export const GameContext: React.Context<GameContextType> = createContext<GameContextType>([{ ...initialState }]);
+export const GameContext: React.Context<GameContextType> = createContext<GameContextType>([{ ...cleanInitialState }]);
 
 export const GameProvider: React.FC = ({ children }) => {
     const [ appState ] = useApp();
-    const [ state, setState ] = useState(initialState);
+    const [ state, setState ] = useState(cleanInitialState);
     const { id } = useParams<ParamTypes>();
 
     const { joinGame } = appState;
@@ -117,6 +135,9 @@ export const GameProvider: React.FC = ({ children }) => {
                     }));
                 } else if (notification.hasStartGame()) {
                     console.log('start game');
+                    setState(produce(draft => {
+                        draft.started = true;
+                    }));                    
                 } else if (notification.hasBidRequest()) {
                     console.log('bid request');
                 } else if (notification.hasBidList()) {

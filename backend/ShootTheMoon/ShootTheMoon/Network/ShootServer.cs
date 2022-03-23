@@ -110,6 +110,13 @@ namespace ShootTheMoon.Network
                 }
             }
 
+            if ((info.Type & GameEventType.TransferRequest) == GameEventType.TransferRequest) {
+                // Request A Transfer From The List Of Clients Specified in the AdditionalInfo
+                if (info.AdditionalData is List<Client>) {
+                    //TODO: Actually Dispatch
+                }
+            }
+
             if ((info.Type & GameEventType.BidUpdate) == GameEventType.BidUpdate) {
                 // Send A Bit List Update To All Players
                 await BidListUpdate(game);
@@ -131,7 +138,7 @@ namespace ShootTheMoon.Network
                 if (info.AdditionalData is Client) {
                     await PlayCardRequest(game, (Client)info.AdditionalData);
                 }
-            }            
+            }
 
             // Progress Tricks Update
             if ((info.Type & GameEventType.TricksUpdate) == GameEventType.TricksUpdate) {
