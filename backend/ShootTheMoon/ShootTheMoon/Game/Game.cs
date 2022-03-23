@@ -11,6 +11,7 @@ namespace ShootTheMoon.Game
         AWAITING_PLAYERS,
         DEALING,
         AWAITING_BIDS,
+        AWAITING_TRANSFER,
         NEW_TRICK,
         PLAYING_HAND, 
         TRICK_COMPLETE,
@@ -154,6 +155,8 @@ namespace ShootTheMoon.Game
                 await EnterDealing(previousState);
             } else if (State == GameState.AWAITING_BIDS) {
                 await EnterAwaitingBids(previousState);
+            } else if (State == GameState.AWAITING_TRANSFER) {
+                await EnterAwaitingTransfer(previousState);
             } else if (State == GameState.NEW_TRICK) {
                 await EnterNewTrick(previousState);
             } else if (State == GameState.PLAYING_HAND) {
@@ -193,6 +196,35 @@ namespace ShootTheMoon.Game
 
             GameEvent ge = new GameEvent(GameEventType.BidUpdate | GameEventType.RequestBid, this, CurrentPlayer);
             await PublishEvent(ge);
+        }
+
+        protected async Task EnterAwaitingTransfer(GameState previousState) {
+            GameEvent ge = new GameEvent( GameEventType.BidUpdate | GameEventType.TrumpUpdate, this);
+            await PublishEvent(ge);
+
+            if (previousState == GameState.AWAITING_BIDS) {
+                // Request From The 
+                List<Client> transferFrom = new List<Client>();
+                            
+                int currentPlayerIndex = -1;
+                for (int index = 0; index < NumPlayers; index++) {
+                    int player = index % NumPlayers;
+                    if (Players[player] == CurrentPlayer) {
+                        currentPlayerIndex = player;
+                        break;
+                    }
+                }
+
+                if (currentPlayerIndex >= 0) {
+                    for (int index = currentPlayerIndex + 2; index < currentPlayerIndex + NumPlayers; index += 2) {
+                        transferFrom.Add(Players[index]);
+                    }
+                }
+            
+                // Need To Pass Which Seat It's Coming From and Which Seat It's Going To
+                GameEvent transferEvent = new GameEvent( GameEventType.TransferRequest, this, transferFrom);
+                await PublishEvent(transferEvent);
+            }
         }
 
         protected async Task EnterNewTrick(GameState previousState) {
@@ -380,17 +412,18 @@ namespace ShootTheMoon.Game
             //TODO: Work On Actually Handling The Bidding
             if (nextPlayer == int.MinValue) {
                 // We're Done Bidding
+                CurrentPlayer = Players[CurrentBid.Seat];
+                CurrentTrump = CurrentBid.Trump;
+
                 if (CurrentBid.isShoot()) {
                     // Handle A Shoot Bid
                     Log.Debug("Game {0} received a Shoot Bid with {1} shoots", Name, CurrentBid.ShootNumber);
+                    await EnterState(GameState.AWAITING_TRANSFER);
                 } else {
                     // Handle A Normal Bid
                     Log.Debug("Game {0} received a normal bid with {1} {2}", Name, CurrentBid.Number, CurrentBid.ShootNumber);
+                    await EnterState(GameState.NEW_TRICK);
                 }
-                Log.Debug("Before Set Current Player");
-                CurrentPlayer = Players[CurrentBid.Seat];
-                CurrentTrump = CurrentBid.Trump;
-                await EnterState(GameState.NEW_TRICK);
             } else {
                 // Trigger Next Bid
                 CurrentPlayer = Players[nextPlayer];

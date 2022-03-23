@@ -1,5 +1,6 @@
 import React from "react";
-import { Grid } from "@material-ui/core";
+import { Button, Grid } from "@material-ui/core";
+import { useApp } from "../../App/App.context";
 import PlayingCard from "../../Common/PlayingCard";
 import TextBubble from "../../Common/TextBubble"
 import BidTricksSelector  from "./BidTricksSelector";
@@ -7,6 +8,7 @@ import BidTrumpSelector  from "./BidTrumpSelector";
 import { Card } from "../Models/Card";
 import { Seat } from "../Models/Seat";
 import { Bid } from "../Models/Bid";
+import { useGame } from "../Game.context";
 
 interface IGameBoardProps {
     hand: Card[];
@@ -18,6 +20,11 @@ interface IGameBoardProps {
 }
 
 const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
+    const [ appState ] = useApp();
+    const [ gameState ] = useGame();
+
+    const { currentSeat } = appState;
+
     const { hand, seats, playedCards, bids, bidTricksSelected, bidTrumpSelected } = props;
 
     const orderedSeats = Array.from(seats.values()).sort((s1,s2) => s1.index - s2.index);
@@ -49,6 +56,7 @@ const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
                 >
                     {playedCard(seat.index)}
                     <TextBubble size="small" text={seat.name.length === 0 ? "Empty" : seat.name} color="green" disabled={seat.empty}></TextBubble>
+                    { (seat.index === currentSeat) ? 'My Seat' : null}
                     {bid(seat.index)}
                 </Grid>
                 ))}

@@ -6,10 +6,12 @@ import SceneComponent from "./Interface3D/SceneComponent";
 import GameBoard from "./GameBoard/GameBoard";
 import NameDialog from "./GameBoard/NameDialog"
 import "./Game.css";
+import SelectSeat from "../SelectSeat/SelectSeat";
 
 const Game: React.FC = () => {
 
     const [ gameState ] = useGame();
+    const { started } = gameState;
 
     const getView = () => {
         if (gameState.sceneView) {
@@ -21,14 +23,18 @@ const Game: React.FC = () => {
                         id="my-canvas" 
                     />;
         }
-        return <GameBoard
-            hand={gameState.hand}
-            seats={gameState.seats}
-            playedCards={gameState.playedCards}
-            bids={gameState.bids}
-            bidTricksSelected={gameState.bidTricksSelected}
-            bidTrumpSelected={gameState.bidTrumpSelected}
-        />;
+        if (!started) {
+            return <SelectSeat  />
+        } else {
+            return <GameBoard
+                hand={gameState.hand}
+                seats={gameState.seats}
+                playedCards={gameState.playedCards}
+                bids={gameState.bids}
+                bidTricksSelected={gameState.bidTricksSelected}
+                bidTrumpSelected={gameState.bidTrumpSelected}
+            />;
+        }
     }
 
     const getContent = () => {

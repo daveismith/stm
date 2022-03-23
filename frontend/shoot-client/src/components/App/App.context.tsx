@@ -32,6 +32,7 @@ export interface IApp {
     metadata: grpcWeb.Metadata,
     joined: boolean,
     registered: boolean,
+    currentSeat?: number,
     eventEmitter: EventEmitter3D
 }
 
@@ -140,6 +141,12 @@ export const AppProvider: React.FC = ({ children }) => {
         request.setSeat(seat);
 
         connection.takeSeat(request, appState.metadata).then((value: StatusResponse) => {
+
+            // Push Selected State Into The Seat
+            let newState = {...appState};
+            newState.currentSeat = seat;
+            setState(newState);
+
             appState.eventEmitter.emit('takeSeatRequestResponse', seat, value.getSuccess());
             return value.getSuccess();
         }).catch((reason: any) => {
