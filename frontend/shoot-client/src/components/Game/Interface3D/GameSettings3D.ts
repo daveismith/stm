@@ -22,9 +22,11 @@ class GameSettings {
     static cameraTargets: Vector3[] = [];
     // static cameraDefaultTarget: Vector3 = new Vector3(0, GameSettings.tableHeight, -1/2 * GameSettings.tableRadius);
 
-    static initializeGame () {
+    static initializeGame (numPlayers: number) {
         //Radius ratio of camera target to table radius (from centre of table)
         const cameraTargetRatio = 1 / 3;
+
+        this.players = numPlayers;
 
         //Populate all camera targets
         for (var i = 0; i < GameSettings.players; i++) {

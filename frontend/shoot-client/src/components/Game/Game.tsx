@@ -7,6 +7,8 @@ import GameBoard from "./GameBoard/GameBoard";
 import NameDialog from "./GameBoard/NameDialog"
 import "./Game.css";
 import SelectSeat from "../SelectSeat/SelectSeat";
+import { GameSettings } from "../Game/Interface3D/GameSettings3D";
+import { SceneController } from "./Interface3D/SceneController";
 
 const Game: React.FC = () => {
 
@@ -14,7 +16,10 @@ const Game: React.FC = () => {
     const { started } = gameState;
 
     const getView = () => {
+        GameSettings.initializeGame(gameState.numPlayers);
+
         if (gameState.sceneView) {
+            SceneController.clientIn3DMode = true;
             return <SceneComponent 
                         className="scene" 
                         antialias 
@@ -22,6 +27,8 @@ const Game: React.FC = () => {
                         onRender={onRender} 
                         id="my-canvas" 
                     />;
+        } else {
+            SceneController.clientIn3DMode = false;
         }
         if (!started) {
             return <SelectSeat  />

@@ -58,14 +58,13 @@ const baseRotationQuaternion = (seat: number) => {
 
 //Create a deck of cards at the deck position
 const buildDeck = (scene: Scene, manager: GUI3DManager, appState: IApp) => {
-    let card: Card3D;
     let numRanks: number = 6;
     let numSuits: number = 4;
 
     for (let k = 0; k < GameSettings.cardCopies; k++) { // Assuming 2 copies of each card.
         for (let i = 0; i < numRanks; i++) {
             for (let j = 0; j < numSuits; j++) {
-                card = new Card3D(scene, manager, i+2, j, appState); // Add 2 since we're not including 7s and 8s.
+                new Card3D(scene, manager, i+2, j, appState); // Add 2 since we're not including 7s and 8s.
             }
         }
     }
@@ -160,13 +159,14 @@ const arrangeCardsInDeck = (scene: Scene, deck: CardStack3D) => {
 }
 
 export const onSceneReady = (scene: Scene, gameState: IGame, appState: IApp) => {
+    // SceneController.clientIn3DMode = true;
     const engine = scene.getEngine();
     const canvas = engine.getRenderingCanvas();
     // if (canvas !== null) canvas.addEventListener("resize", function(){ engine.resize(); })
 
     // if (gameState) GameSettings.players = gameState.numPlayers; // This is how it should work
-    if (gameState) GameSettings.players = gameState.seats.size; // For now, just count number of seats
-    GameSettings.initializeGame();
+    // if (gameState) GameSettings.players = gameState.seats.size; // For now, just count number of seats
+    // GameSettings.initializeGame();
     CardStack3D.initializeCardStacks();
     // console.log(GameSettings.players);
 
