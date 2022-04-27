@@ -47,7 +47,7 @@ class GameEvent3D {
                 break;
             }
             case Notification.NotificationCase.TRICKS: {
-                this.eventEmitter.emit("tricks");
+                this.eventEmitter.emit("tricks", this.notification.getTricks());
                 break;
             }
             case Notification.NotificationCase.TRUMP_UPDATE: {

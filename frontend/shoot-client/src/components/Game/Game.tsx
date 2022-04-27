@@ -16,10 +16,9 @@ const Game: React.FC = () => {
     const { started } = gameState;
 
     const getView = () => {
-        GameSettings.initializeGame(gameState.numPlayers);
-
         if (gameState.sceneView) {
             SceneController.clientIn3DMode = true;
+            GameSettings.initializeGame(gameState.seats.size);
             return <SceneComponent 
                         className="scene" 
                         antialias 

@@ -1,4 +1,4 @@
-import { Notification, SeatDetails, Hand, Bid as BidDetails, TrumpUpdate, PlayedCard, Card } from '../../../proto/shoot_pb';
+import { Notification, SeatDetails, Hand, Bid as BidDetails, TrumpUpdate, PlayedCard, Card, Tricks } from '../../../proto/shoot_pb';
 import { Seat } from "../Models/Seat";
 import { Bid } from "../Models/Bid";
 import { GameSettings } from "./GameSettings3D";
@@ -72,6 +72,7 @@ class SceneController {
         this.gameStateEventTypeMap[GameState.WaitingForSeatConfirmation] = [];
         this.gameStateEventTypeMap[GameState.WaitingForSeatConfirmation][Notification.NotificationCase.SEAT_LIST] = 1;
         this.gameStateEventTypeMap[GameState.WaitingForSeatConfirmation][Notification.NotificationCase.SEAT_UPDATE] = 1;
+        this.gameStateEventTypeMap[GameState.WaitingForSeatConfirmation][Notification.NotificationCase.JOIN_RESPONSE] = 1;
 
         this.gameStateEventTypeMap[GameState.SeatedNotReady] = [];
         this.gameStateEventTypeMap[GameState.SeatedNotReady][Notification.NotificationCase.SEAT_LIST] = 1;
@@ -79,10 +80,12 @@ class SceneController {
         this.gameStateEventTypeMap[GameState.SeatedNotReady][Notification.NotificationCase.START_GAME] = 1;
         this.gameStateEventTypeMap[GameState.SeatedNotReady][Notification.NotificationCase.TRICKS] = 1;
         this.gameStateEventTypeMap[GameState.SeatedNotReady][Notification.NotificationCase.SCORES] = 1;
+        this.gameStateEventTypeMap[GameState.SeatedNotReady][Notification.NotificationCase.JOIN_RESPONSE] = 1;
 
         this.gameStateEventTypeMap[GameState.WaitingForReadyConfirmation] = [];
         this.gameStateEventTypeMap[GameState.WaitingForReadyConfirmation][Notification.NotificationCase.SEAT_LIST] = 1;
         this.gameStateEventTypeMap[GameState.WaitingForReadyConfirmation][Notification.NotificationCase.SEAT_UPDATE] = 1;
+        this.gameStateEventTypeMap[GameState.WaitingForReadyConfirmation][Notification.NotificationCase.JOIN_RESPONSE] = 1;
         
         this.gameStateEventTypeMap[GameState.SeatedReady] = [];
         this.gameStateEventTypeMap[GameState.SeatedReady][Notification.NotificationCase.SEAT_LIST] = 1;
@@ -90,6 +93,7 @@ class SceneController {
         this.gameStateEventTypeMap[GameState.SeatedReady][Notification.NotificationCase.START_GAME] = 1;
         this.gameStateEventTypeMap[GameState.SeatedReady][Notification.NotificationCase.TRICKS] = 1;
         this.gameStateEventTypeMap[GameState.SeatedReady][Notification.NotificationCase.SCORES] = 1;
+        this.gameStateEventTypeMap[GameState.SeatedReady][Notification.NotificationCase.JOIN_RESPONSE] = 1;
 
         this.gameStateEventTypeMap[GameState.WaitingForHand] = [];
         this.gameStateEventTypeMap[GameState.WaitingForHand][Notification.NotificationCase.HAND] = 1;
@@ -126,14 +130,14 @@ class SceneController {
     static addNewEvent (newEvent: GameEvent3D) {
         let newEventSequence: number = newEvent.notification.getSequence();
 
-        if (!this.clientIn3DMode) return; // to do: remove this when graphics and state are properly separated.
-
         // skip the new event if it seems to be a duplicate of one we've already processed.
         if (newEventSequence >= this.nextEventNumber) {
             this.eventQueue.set(newEventSequence, newEvent);
             console.log("added event " + newEventSequence);
         }
         
+        if (!this.clientIn3DMode) return; // don't process any new events if we're not in 3D mode.
+
         this.processNextEvent();
     }
 
@@ -152,6 +156,8 @@ class SceneController {
 
                 nextEvent.execute();
 
+                if (!this.clientIn3DMode) return; // don't process any new events if we're not in 3D mode.
+
                 this.processNextEvent();
             }
             else { // get next regular event
@@ -169,6 +175,8 @@ class SceneController {
                     this.eventQueue.delete(nextEvent.notification.getSequence());
 
                     this.nextEventNumber++;
+
+                    if (!this.clientIn3DMode) return; // don't process any new events if we're not in 3D mode.
 
                     this.processNextEvent();
                 }
@@ -215,22 +223,28 @@ class SceneController {
 
         valid = this.gameStateEventTypeMap[this.gameState][eventType];
 
-        console.log("validating event " + event.notification.getSequence() + ":" + valid);
+        console.log("validating event " + event.notification.getSequence() + ":" + this.gameState + ":" + valid);
 
         return valid === 1;
     }
 
-    static tricksListener () {
+    static tricksListener (tricks: Tricks) {
+        let team1Tricks = tricks.getTeam1();
+        let team2Tricks = tricks.getTeam2();
+
         this.currentCardsInTrick = [];
 
         this.awaitingAnimation = true;
         setTimeout(() => {
-            if (this.clientIn3DMode) Card3D.clearCards();
+            Card3D.clearCards();
             this.awaitingAnimation = false;
         }, 3000);
 
-        if (this.hand.length > 0) this.gameState = GameState.WaitingToPlay;
-        else this.gameState = GameState.WaitingForHand;
+        if (team1Tricks + team2Tricks > 0) this.gameState = GameState.WaitingToPlay;
+        else if (this.gameState >= 10) {
+            this.currentBid = null;
+            this.gameState = GameState.WaitingForHand;
+        }
     }
 
     static seatsListener (seatDetailsList: SeatDetails[]) {
@@ -359,23 +373,24 @@ class SceneController {
         this.currentCard = null;
         this.currentCardsInTrick = [];
 
-        if (this.clientIn3DMode) CardStack3D.arrangeDeck(hand.getHandList());
+        CardStack3D.arrangeDeck(hand.getHandList());
 
-        if (this.clientIn3DMode) arrangeCardsInDeck(this.scene, CardStack3D.deck);
+        arrangeCardsInDeck(this.scene, CardStack3D.deck);
 
         this.awaitingAnimation = true;
         setTimeout(() => {
-            if (this.clientIn3DMode) Card3D.dealCards(this.scene);
+            Card3D.dealCards(this.scene);
             // don't reset awaitingAnimation because we want to go straight to picking up cards.
         }, 1000);
 
         this.awaitingAnimation = true;
         setTimeout(() => {
-            if (this.clientIn3DMode) this.pickUpListener();
+            this.pickUpListener();
             this.awaitingAnimation = false;
+
+            this.gameState = GameState.WaitingToBid;
         }, 7500);
 
-        this.gameState = GameState.WaitingToBid;
     }
 
     static pickUpListener () {

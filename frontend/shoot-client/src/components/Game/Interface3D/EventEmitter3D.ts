@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events';
-import { Card, SeatDetails, Bid as BidDetails, Hand, TrumpUpdate, PlayedCard } from '../../../proto/shoot_pb';
+import { Card, SeatDetails, Bid as BidDetails, Hand, TrumpUpdate, PlayedCard, Tricks } from '../../../proto/shoot_pb';
 import { SceneController } from "./SceneController";
 import { Bid } from "../../Game/Models/Bid";
 
@@ -7,8 +7,8 @@ class EventEmitter3D extends EventEmitter {
     constructor() {
         super();
 
-        this.on('tricks', function() {
-            SceneController.tricksListener();
+        this.on('tricks', function(tricks: Tricks) {
+            SceneController.tricksListener(tricks);
         });
 
         this.on('seats', function(seatDetailsList: SeatDetails[]) {
