@@ -329,9 +329,13 @@ namespace ShootTheMoon.Network
         }
 
         public async Task TricksUpdate(Game.Game game) {
+            int tricksPlayed = game.Tricks[0] + game.Tricks[1];
+            int tricksRemaining = game.GameSettings.TricksPerHand - tricksPlayed;
+
             Tricks tricks = new Tricks();
             tricks.Team1 = (uint)game.Tricks[0];
             tricks.Team2 = (uint)game.Tricks[1];
+            tricks.TricksRemainingInHand = (uint)tricksRemaining;
 
             Notification n = new Notification();
             n.Tricks = tricks;
@@ -659,7 +663,7 @@ namespace ShootTheMoon.Network
                 }
                 
                 bool pass = (request.ShootNum == 0) && (request.Tricks == 0);
-                await game.MakeBid(request.Tricks, trump, request.ShootNum, pass, client);
+                result = await game.MakeBid(request.Tricks, trump, request.ShootNum, pass, client);
             }
             catch (KeyNotFoundException) {
                 r.Success = false;

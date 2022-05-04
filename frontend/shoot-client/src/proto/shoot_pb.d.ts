@@ -579,6 +579,9 @@ export class Tricks extends jspb.Message {
   getTeam2(): number;
   setTeam2(value: number): Tricks;
 
+  getTricksRemainingInHand(): number;
+  setTricksRemainingInHand(value: number): Tricks;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Tricks.AsObject;
   static toObject(includeInstance: boolean, msg: Tricks): Tricks.AsObject;
@@ -591,6 +594,7 @@ export namespace Tricks {
   export type AsObject = {
     team1: number,
     team2: number,
+    tricksRemainingInHand: number,
   }
 }
 
