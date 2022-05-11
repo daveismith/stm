@@ -57,24 +57,24 @@ const baseRotationQuaternion = (seat: number) => {
 }
 
 //Create a deck of cards at the deck position
-const buildDeck = (scene: Scene, manager: GUI3DManager, appState: IApp) => {
+const buildDeck = (scene: Scene, manager: GUI3DManager, gameState: IGame) => {
     let numRanks: number = 6;
     let numSuits: number = 4;
 
     for (let k = 0; k < GameSettings.cardCopies; k++) { // Assuming 2 copies of each card.
         for (let i = 0; i < numRanks; i++) {
             for (let j = 0; j < numSuits; j++) {
-                new Card3D(scene, manager, i+2, j, appState); // Add 2 since we're not including 7s and 8s.
+                new Card3D(scene, manager, i+2, j, gameState); // Add 2 since we're not including 7s and 8s.
             }
         }
     }
 };
 
-const buildSeatCubes = (scene: Scene, manager: GUI3DManager, appState: IApp) => {
+const buildSeatCubes = (scene: Scene, manager: GUI3DManager, gameState: IGame) => {
     let seatCubes: SeatCube[] = [];
 
     for (var i = 0; i < GameSettings.players; i++) {
-        seatCubes[i] = new SeatCube(scene, manager, i, appState);
+        seatCubes[i] = new SeatCube(scene, manager, i, gameState);
     }
 
     SceneController.seatCubes = seatCubes;
@@ -124,13 +124,13 @@ const buildNameplates = (manager2D: AdvancedDynamicTexture) => {
     SceneController.nameplates = nameplates;
 }
 
-const buildReadyCubes = (scene: Scene, manager: GUI3DManager, appState: IApp) => {
+const buildReadyCubes = (scene: Scene, manager: GUI3DManager, gameState: IGame) => {
     let unreadyCubes: ReadyCube[] = [];
     let readyCubes: ReadyCube[] = [];
 
     for (var i = 0; i < GameSettings.players; i++) {
-        unreadyCubes[i] = new ReadyCube(scene, manager, i, false, appState);
-        readyCubes[i] = new ReadyCube(scene, manager, i, true, appState);
+        unreadyCubes[i] = new ReadyCube(scene, manager, i, false, gameState);
+        readyCubes[i] = new ReadyCube(scene, manager, i, true, gameState);
         readyCubes[i].disable();
     }
 
@@ -208,11 +208,11 @@ export const onSceneReady = (scene: Scene, gameState: IGame, appState: IApp) => 
     SceneLoader.Append(sceneAssets, "", scene, function (scene) { });
 
     SceneController.scene = scene;
-    buildSeatCubes(scene, manager3D, appState);
+    buildSeatCubes(scene, manager3D, gameState);
     buildBidCubes(scene, manager3D);
-    buildDeck(scene, manager3D, appState);
+    buildDeck(scene, manager3D, gameState);
     buildNameplates(manager2D);
-    buildReadyCubes(scene, manager3D, appState);
+    buildReadyCubes(scene, manager3D, gameState);
     // buildTurnLight(scene);
 
     // SSAO code from https://playground.babylonjs.com/#N96NXC

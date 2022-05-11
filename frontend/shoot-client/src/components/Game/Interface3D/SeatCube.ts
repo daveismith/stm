@@ -18,7 +18,7 @@ import { GameSettings } from "./GameSettings3D";
 import { SceneController, GameState } from "./SceneController";
 
 import iconTextures from "./resources/images/icons.png";
-import { IApp } from "../../App/App.context";
+import { IGame } from "../../Game/Game.context";
 
 class SeatCube {
     seatCubeRatio = 7/8;
@@ -29,7 +29,7 @@ class SeatCube {
     button: MeshButton3D;
     pivotStartingPosition: Vector3;
 
-    constructor (scene: Scene, manager: GUI3DManager, player: number, appState: IApp) {
+    constructor (scene: Scene, manager: GUI3DManager, player: number, gameState: IGame) {
         var faceUV = new Array(6);
         this.player = player;
         this.pivot = new TransformNode("seatCubePivot", scene);
@@ -58,7 +58,7 @@ class SeatCube {
         this.button = new MeshButton3D(this.mesh, "seatCubeButton");
         this.button.onPointerDownObservable.add(() => {
             SceneController.gameState = GameState.WaitingForSeatConfirmation;
-            if (appState.takeSeat) appState.takeSeat(player);
+            if (gameState.takeSeat) gameState.takeSeat(player);
 
             SceneController.awaitingServerResponse = true;
 

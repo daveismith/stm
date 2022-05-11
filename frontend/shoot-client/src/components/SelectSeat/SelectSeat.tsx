@@ -1,9 +1,7 @@
-import React, { useEffect } from "react";
-import { useHistory } from "react-router-dom";
+import React from "react";
 import styled from 'styled-components';
 import { Button, Card, FormControlLabel, Grid, Switch, Typography } from "@material-ui/core";
 import { makeStyles } from '@material-ui/core/styles';
-import { useApp } from "../App/App.context";
 import "./SelectSeat.css";
 import { useGame } from "../Game/Game.context";
 
@@ -25,8 +23,8 @@ const useStyles = makeStyles({
 });
 
 const Ready: React.FC<{seat: Seat}> = ({seat}) => {
-    const [ appState ] = useApp();
-    const { currentSeat, setSeatReadyStatus } = appState;
+    const [ gameState ] = useGame();
+    const { currentSeat, setSeatReadyStatus } = gameState;
 
     const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setSeatReadyStatus(event.target.checked);
@@ -46,8 +44,8 @@ const Ready: React.FC<{seat: Seat}> = ({seat}) => {
 
 const SeatEntry: React.FC<{seat: Seat}> = ({seat}) => {
     const classes = useStyles();
-    const [ appState ] = useApp();
-    const { takeSeat }  = appState;
+    const [ gameState ] = useGame();
+    const { takeSeat }  = gameState;
 
     let colour: string = seat.index % 2 === 0 ? "green" : "blue";
 
@@ -71,9 +69,7 @@ const SeatEntry: React.FC<{seat: Seat}> = ({seat}) => {
 
 const SelectSeat: React.FC = () => {
     const classes = useStyles();
-    const [ appState ] = useApp();
     const [ gameState ] = useGame();
-    const { takeSeat }  = appState;
     const { seats } = gameState;
     
     const orderedSeats: Array<Seat> = Array.from(seats.values()).sort((s1,s2) => (s1 as Seat).index - (s2 as Seat).index) as Array<Seat>;

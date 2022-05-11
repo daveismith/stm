@@ -1,14 +1,16 @@
 import React from "react";
 import { useGame } from "../Game.context";
 import ButtonGroupSelector, { IButtonGroupItem } from "../../Common/ButtonGroupSelector";
+import { Bid } from "../Models/Bid";
 
 interface IBidTricksSelector {
+    highBid: Bid | null;
     bidTricksSelected: string | null;
 }
 
 const BidTricksSelector: React.FC<IBidTricksSelector> = (props: IBidTricksSelector) => {
 
-    const { bidTricksSelected } = props;
+    const { highBid, bidTricksSelected } = props;
     const [ gameState, setGameState ] = useGame();
 
     const onClick = (selectedValue: string) => {
@@ -17,9 +19,9 @@ const BidTricksSelector: React.FC<IBidTricksSelector> = (props: IBidTricksSelect
 
     const getItems = () => {
         const items : IButtonGroupItem[] = [
-            {value: "1", disabled: true}, 
-            {value: "2", disabled: true}, 
-            {value: "3", disabled: true},
+            {value: "1", disabled: false}, 
+            {value: "2", disabled: false}, 
+            {value: "3", disabled: false},
             {value: "4", disabled: false},
             {value: "5", disabled: false},
             {value: "6", disabled: false},
@@ -29,6 +31,8 @@ const BidTricksSelector: React.FC<IBidTricksSelector> = (props: IBidTricksSelect
         ];
         return items;
     }
+
+    console.log('highBid: ' + highBid);
 
     return (  
         <ButtonGroupSelector 

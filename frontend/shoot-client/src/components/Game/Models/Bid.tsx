@@ -35,6 +35,25 @@ export namespace Bid {
         }
     }
 
+    export function stringToTrump(str: string): Bid.Trump | null {
+        switch (str) {
+            case "♠️":
+                return Bid.Trump.SPADES;
+            case "♣️":
+                return Bid.Trump.CLUBS;
+            case "♥️":
+                return Bid.Trump.HEARTS;
+            case "♦️":
+                return Bid.Trump.DIAMONDS;
+            case "⬇︎":
+                return Bid.Trump.LOW;
+            case "⬆︎": 
+                return Bid.Trump.HIGH;
+            default:
+                return null;
+        }
+    }
+
     export function fromProtoTrump(trump: Trump): Bid.Trump {
         switch (trump) {
             case Trump.SPADES:

@@ -36,7 +36,9 @@ const Game: React.FC = () => {
                 hand={gameState.hand}
                 seats={gameState.seats}
                 playedCards={gameState.playedCards}
+                highBid={gameState.highBid}
                 bids={gameState.bids}
+                currentBidder={gameState.currentBidder}
                 bidTricksSelected={gameState.bidTricksSelected}
                 bidTrumpSelected={gameState.bidTrumpSelected}
             />;
