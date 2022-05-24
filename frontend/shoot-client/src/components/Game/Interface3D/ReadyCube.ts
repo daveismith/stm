@@ -18,7 +18,7 @@ import { GameSettings } from "./GameSettings3D";
 import { GameState, SceneController } from "./SceneController";
 
 import readyTextures from "./resources/images/ready.png";
-import { IApp } from "../../App/App.context";
+import { IGame } from "../../Game/Game.context";
 import { BidSuitCube } from "./BidSuitCube";
 import { BidNumberCube } from "./BidNumberCube";
 import { Bid } from "../Models/Bid";
@@ -32,15 +32,15 @@ class ReadyCube {
     button: MeshButton3D;
     readyValue: boolean;
     faceUV = new Array(6);
-    appState: IApp;
+    gameState: IGame;
     cubeStartingPosition: Vector3;
     pivotStartingPosition: Vector3;
     startGameModeActive: boolean = false;
     confirmBidModeActive: boolean = false;
 
 
-    constructor (scene: Scene, manager: GUI3DManager, player: number, readyStatus: boolean, appState: IApp) {
-        this.appState = appState;
+    constructor (scene: Scene, manager: GUI3DManager, player: number, readyStatus: boolean, gameState: IGame) {
+        this.gameState = gameState;
         this.player = player;
         this.pivot = new TransformNode("readyCubePivot", scene);
         this.pivotStartingPosition = new Vector3(0, GameSettings.tableHeight, 0);
@@ -132,8 +132,8 @@ class ReadyCube {
         this.button.onPointerDownObservable.add(() => {
             SceneController.gameState = GameState.WaitingForReadyConfirmation;
                 
-            if (this.appState.setSeatReadyStatus) {
-                this.appState.setSeatReadyStatus(!this.readyValue);
+            if (this.gameState.setSeatReadyStatus) {
+                this.gameState.setSeatReadyStatus(!this.readyValue);
                 SceneController.awaitingServerResponse = true;
             }
         });
@@ -167,8 +167,8 @@ class ReadyCube {
             if (tricks >= 0) {
                 SceneController.gameState = GameState.WaitingForBidConfirmation;
                     
-                if (this.appState.createBid) {
-                    this.appState.createBid(tricks, shootNumber, suit, GameSettings.currentPlayer);
+                if (this.gameState.createBid) {
+                    this.gameState.createBid(tricks, shootNumber, suit, GameSettings.currentPlayer);
                     SceneController.awaitingServerResponse = true;
                 }
             }

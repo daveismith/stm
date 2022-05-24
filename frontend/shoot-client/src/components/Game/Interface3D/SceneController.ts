@@ -447,6 +447,7 @@ class SceneController {
     }
 
     static bidResponseListener (tricks: number, shootNum: number, trump: Bid.Trump, seat: number) {
+        if (!this.clientIn3DMode) return;
         if (this.gameState >= 100) return;
 
         let player: number = GameSettings.currentPlayer;

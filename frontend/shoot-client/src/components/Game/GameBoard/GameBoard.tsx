@@ -1,31 +1,30 @@
 import React from "react";
-import { Button, Grid } from "@material-ui/core";
+import { Grid } from "@material-ui/core";
 import { useApp } from "../../App/App.context";
 import PlayingCard from "../../Common/PlayingCard";
 import TextBubble from "../../Common/TextBubble"
-import BidTricksSelector  from "./BidTricksSelector";
-import BidTrumpSelector  from "./BidTrumpSelector";
 import { Card } from "../Models/Card";
 import { Seat } from "../Models/Seat";
 import { Bid } from "../Models/Bid";
-import { useGame } from "../Game.context";
+import Bidding from "./Bidding";
 
 interface IGameBoardProps {
     hand: Card[];
     seats: Map<number, Seat>;
     playedCards: Map<number, Card>;
+    highBid: Bid | null;
     bids: Map<number, Bid>;
+    currentBidder: boolean;
     bidTricksSelected: string | null;
     bidTrumpSelected: string | null;
 }
 
 const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
     const [ appState ] = useApp();
-    const [ gameState ] = useGame();
-
+    
     const { currentSeat } = appState;
 
-    const { hand, seats, playedCards, bids, bidTricksSelected, bidTrumpSelected } = props;
+    const { hand, seats, playedCards, currentBidder, highBid, bids, bidTricksSelected, bidTrumpSelected  } = props;
 
     const orderedSeats = Array.from(seats.values()).sort((s1,s2) => s1.index - s2.index);
 
@@ -47,12 +46,13 @@ const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
                 justify="center"
                 alignItems="center"
             >
-                {orderedSeats.map(seat => (
+                {orderedSeats.map((seat, index) => (
                 <Grid
                     item
                     direction="column"
                     justify="center"
                     alignItems="center"
+                    key={index}
                 >
                     {playedCard(seat.index)}
                     <TextBubble size="small" text={seat.name.length === 0 ? "Empty" : seat.name} color="green" disabled={seat.empty}></TextBubble>
@@ -61,12 +61,8 @@ const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
                 </Grid>
                 ))}
             </Grid>
-            <Grid
-                container
-                direction="row"
-                justify="center"
-                alignItems="center"
-            >
+            <Bidding highBid={highBid} bids={bids} bidTricksSelected={bidTricksSelected} bidTrumpSelected={bidTrumpSelected} currentBidder={currentBidder} />
+            <div style={{bottom: 0, left: 0, right: '25%', position: 'absolute', display: 'flex', justifyContent: 'center', marginBottom: '2em', marginTop: '2em'}}>
                 {
                     hand.map((card, index) => (
                         <PlayingCard
@@ -75,7 +71,14 @@ const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
                         />)
                     )
                 }
-            </Grid>
+            </div>
+        </div>
+    );
+};
+
+export default GameBoard;
+
+/*
             <Grid
                 container
                 direction="row"
@@ -92,8 +95,4 @@ const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
             >
                 <BidTrumpSelector bidTrumpSelected = {bidTrumpSelected}/>
             </Grid>
-        </div>
-    );
-};
-
-export default GameBoard;
+            */
