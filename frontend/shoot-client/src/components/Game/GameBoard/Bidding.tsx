@@ -1,6 +1,6 @@
 import React from "react";
 import { Button, Grid } from "@material-ui/core";
-import { useApp } from "../../App/App.context";
+import { useGame } from "../Game.context";
 import BidTricksSelector  from "./BidTricksSelector";
 import BidTrumpSelector  from "./BidTrumpSelector";
 import { Bid } from "../Models/Bid";
@@ -12,15 +12,14 @@ interface IBiddingProps {
     bids: Map<number, Bid>;
     bidTricksSelected: string | null;
     bidTrumpSelected: string | null;
-    currentBidder: boolean;
 }
 
 const Bidding: React.FC<IBiddingProps> = (props: IBiddingProps) => {
     const classes = useStyles();
-    const [ appState ] = useApp();
-    const { createBid, currentSeat } = appState;
+    const [ gameState ] = useGame();
+    const { createBid, currentSeat, currentBidder } = gameState;
 
-    const { highBid, bids, bidTricksSelected, bidTrumpSelected, currentBidder } = props;
+    const { highBid, bids, bidTricksSelected, bidTrumpSelected } = props;
 
     const bid = (index: number) => {
         const bid = bids.get(index);
@@ -48,6 +47,8 @@ const Bidding: React.FC<IBiddingProps> = (props: IBiddingProps) => {
             console.log("Error With OnClick");
         }
     }
+
+    console.log('currentBidder: ' + currentBidder);
 
     if (currentBidder) {
         return (

@@ -61,7 +61,7 @@ const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
                 </Grid>
                 ))}
             </Grid>
-            <Bidding highBid={highBid} bids={bids} bidTricksSelected={bidTricksSelected} bidTrumpSelected={bidTrumpSelected} currentBidder={currentBidder} />
+            <Bidding highBid={highBid} bids={bids} bidTricksSelected={bidTricksSelected} bidTrumpSelected={bidTrumpSelected} />
             <div style={{bottom: 0, left: 0, right: '25%', position: 'absolute', display: 'flex', justifyContent: 'center', marginBottom: '2em', marginTop: '2em'}}>
                 {
                     hand.map((card, index) => (

@@ -164,6 +164,10 @@ export const GameProvider: React.FC = ({ children }) => {
                             };
                             draft.bids.set(bid.seat, bid);
 
+                            if (bidDetails.getSeat() == draft.currentSeat) {
+                                draft.currentBidder = false;
+                            }
+
                             if (highBid == null ||  highBid.number < bid.number || highBid.shootNum < bid.shootNum) {
                                 highBid = bid;
                             }
@@ -256,6 +260,9 @@ export const GameProvider: React.FC = ({ children }) => {
                 await appState.connection.createBid(request, appState.metadata).then((value: StatusResponse) => {
                     eventEmitter.emit('createBidResponse', tricks, shootNum, trump, seat, value.getSuccess());
                     console.log('bid response: ' + value.getSuccess());
+                    setState(produce(draft => {
+                        draft.currentBidder = false;
+                    }));
                     return value.getSuccess();
                 }).catch((reason: any) => { 
                     eventEmitter.emit('createBidResponse', tricks, shootNum, trump, seat, false);
