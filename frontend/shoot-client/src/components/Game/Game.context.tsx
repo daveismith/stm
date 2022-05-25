@@ -127,6 +127,7 @@ export const GameProvider: React.FC = ({ children }) => {
                         const seatDetailsList: SeatDetails[] = notification.getSeatList()?.getSeatsList() as SeatDetails[];
                         
                         draft.seats = new Map();
+                        draft.numPlayers = 0;
                         for (let seatDetails of seatDetailsList) {
                             const seat: Seat = {
                                 index: seatDetails.getSeat(),
@@ -136,6 +137,7 @@ export const GameProvider: React.FC = ({ children }) => {
                                 ready: seatDetails.getReady(),
                             };
                             draft.seats.set(seat.index, seat);
+                            draft.numPlayers++;
                         }
                     }));
                 } else if (notification.hasStartGame()) {
