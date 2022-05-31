@@ -229,8 +229,8 @@ class SceneController {
     }
 
     static tricksListener (tricks: Tricks) {
-        let team1Tricks = tricks.getTeam1();
-        let team2Tricks = tricks.getTeam2();
+        let tricksRemainingInHand = tricks.getTricksRemainingInHand() ?? 0;
+        console.log("tricks remaining: " + tricksRemainingInHand);
 
         this.currentCardsInTrick = [];
 
@@ -240,7 +240,8 @@ class SceneController {
             this.awaitingAnimation = false;
         }, 3000);
 
-        if (team1Tricks + team2Tricks > 0) this.gameState = GameState.WaitingToPlay;
+        if (this.gameState >= 10 && tricksRemainingInHand > 0)
+            this.gameState = GameState.WaitingToPlay;
         else if (this.gameState >= 10) {
             this.currentBid = null;
             this.gameState = GameState.WaitingForHand;
@@ -291,6 +292,8 @@ class SceneController {
     // Server response to our take-seat request.
     static seatRequestResponseListener (seatNumber: number, success: boolean) {
         if (success) {
+            console.log('take seat request successful: seat ' + seatNumber);
+
             // Assign seat number to the client player.
             GameSettings.currentPlayer = seatNumber;
 
@@ -312,6 +315,8 @@ class SceneController {
             this.unreadyCubes[seatNumber].enable();
 
             this.gameState = GameState.SeatedNotReady;
+        } else {
+            console.log('take seat request failed');
         }
 
         this.awaitingServerResponse = false;
@@ -450,6 +455,8 @@ class SceneController {
         if (!this.clientIn3DMode) return;
         if (this.gameState >= 100) return;
 
+        if (!this.clientIn3DMode) return;
+
         let player: number = GameSettings.currentPlayer;
 
         // Show bid as ready
@@ -552,6 +559,8 @@ class SceneController {
 
     static playCardResponseListener(playedCard: Card, success: boolean) {
         // To do: check if playedCard is the same as this.currentCard?
+
+        if (!this.clientIn3DMode) return;
 
         if (success) {
             let card: Card3D | null = this.currentCard;

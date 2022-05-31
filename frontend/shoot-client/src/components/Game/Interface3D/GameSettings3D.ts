@@ -20,30 +20,37 @@ class GameSettings {
     static cameraBeta: number = Math.PI / 3;
     static cameraRadius: number = 8;
     static cameraTargets: Vector3[] = [];
+    static isInitialized: boolean = false;
     // static cameraDefaultTarget: Vector3 = new Vector3(0, GameSettings.tableHeight, -1/2 * GameSettings.tableRadius);
 
     static initializeGame (numPlayers: number) {
-        //Radius ratio of camera target to table radius (from centre of table)
-        const cameraTargetRatio = 1 / 3;
+        if (!GameSettings.isInitialized) {
+            //Radius ratio of camera target to table radius (from centre of table)
+            const cameraTargetRatio = 1 / 3;
 
-        this.players = numPlayers;
+            this.players = numPlayers;
 
-        //Populate all camera targets
-        for (var i = 0; i < GameSettings.players; i++) {
-            GameSettings.cameraTargets[i] = new Vector3(
-                GameSettings.tableRadius *
-                cameraTargetRatio *
-                Math.sin((2 / GameSettings.players) * Math.PI * i),
-                GameSettings.tableHeight + 1/2,
-                GameSettings.tableRadius *
-                cameraTargetRatio *
-                Math.cos((2 / GameSettings.players) * Math.PI * i)
-            );
-        }
+            console.log("initializing game for 3D with " + this.players + " players");
 
-        if (GameSettings.players === 2) {
-            GameSettings.deckSize = 24;
-            GameSettings.cardCopies = 1;
+            //Populate all camera targets
+            for (var i = 0; i < GameSettings.players; i++) {
+                GameSettings.cameraTargets[i] = new Vector3(
+                    GameSettings.tableRadius *
+                    cameraTargetRatio *
+                    Math.sin((2 / GameSettings.players) * Math.PI * i),
+                    GameSettings.tableHeight + 1/2,
+                    GameSettings.tableRadius *
+                    cameraTargetRatio *
+                    Math.cos((2 / GameSettings.players) * Math.PI * i)
+                );
+            }
+
+            if (GameSettings.players === 2) {
+                GameSettings.deckSize = 24;
+                GameSettings.cardCopies = 1;
+            }
+
+            GameSettings.isInitialized = true;
         }
     };
 }

@@ -17,8 +17,8 @@ import { Card } from "./Models/Card";
 import { Seat } from "./Models/Seat";
 import { Bid } from "./Models/Bid";
 import { EventEmitter3D } from "./Interface3D/EventEmitter3D";
-//import { EventEmitter3D } from "./Interface3D/EventEmitter3D";
-
+import { SceneController } from "./Interface3D/SceneController";
+import { GameEvent3D } from "./Interface3D/GameEvent3D";
 
 export interface IGame {
     playerName?: string;
@@ -85,6 +85,17 @@ export const cardFromProto = (card: ProtoCard): Card => {
     return {suit: suit as Card.Suit, rank: rank as Card.Rank};
 }
 
+export const cardToProto = (card: Card): ProtoCard => {
+    const suit: Card.Suit = card.suit as Card.Suit;
+    const rank: Card.Rank = card.rank as Card.Rank;
+
+    const protoCard: ProtoCard = new ProtoCard();
+    protoCard.setSuit(suit);
+    protoCard.setRank(rank);
+
+    return protoCard;
+}
+
 export const GameProvider: React.FC = ({ children }) => {
     const [ appState ] = useApp();
     const [ state, setState ] = useState(cleanInitialState);
@@ -103,7 +114,7 @@ export const GameProvider: React.FC = ({ children }) => {
         } else if (!registered) {
             appState.stream.on('data', (notification: Notification) => {
                 console.log("rx notification sequence: " + notification.getSequence());
-                //SceneController.addNewEvent(new GameEvent3D(notification, state.eventEmitter));
+                SceneController.addNewEvent(new GameEvent3D(notification, state.eventEmitter));
 
                 if (notification.hasScores()) {
                     console.log('score update');
@@ -166,7 +177,7 @@ export const GameProvider: React.FC = ({ children }) => {
                             };
                             draft.bids.set(bid.seat, bid);
 
-                            if (bidDetails.getSeat() == draft.currentSeat) {
+                            if (bidDetails.getSeat() === draft.currentSeat) {
                                 draft.currentBidder = false;
                             }
 
@@ -280,7 +291,7 @@ export const GameProvider: React.FC = ({ children }) => {
 
                 console.log('play card');
 
-                const request: Card = card;
+                const request: ProtoCard = cardToProto(card);
 
                 appState.connection.playCard(request, appState.metadata).then((value: StatusResponse) => {
                     eventEmitter.emit('playCardResponse', card, value.getSuccess());

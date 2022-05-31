@@ -23,7 +23,8 @@ const Game: React.FC = () => {
                         className="scene" 
                         antialias 
                         onSceneReady={onSceneReady} 
-                        onRender={onRender} 
+                        onRender={onRender}
+                        gameState={gameState}
                         id="my-canvas" 
                     />;
         } else {

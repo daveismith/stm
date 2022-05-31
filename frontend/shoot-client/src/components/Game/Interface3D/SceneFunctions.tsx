@@ -31,7 +31,6 @@ import { ReadyCube } from "./ReadyCube";
 import sceneAssets from "./resources/stm.glb";
 
 import { IGame } from "../Game.context";
-import { IApp } from "../../App/App.context";
 import { SceneController } from "./SceneController";
 import { Nameplate } from "./Nameplate";
 
@@ -158,12 +157,13 @@ const arrangeCardsInDeck = (scene: Scene, deck: CardStack3D) => {
     }
 }
 
-export const onSceneReady = (scene: Scene, gameState: IGame, appState: IApp) => {
+export const onSceneReady = (scene: Scene, gameState: IGame) => {
     // SceneController.clientIn3DMode = true;
     const engine = scene.getEngine();
     const canvas = engine.getRenderingCanvas();
     // if (canvas !== null) canvas.addEventListener("resize", function(){ engine.resize(); })
 
+    console.log("onSceneReady shows " + gameState.seats.size + " players");
     // if (gameState) GameSettings.players = gameState.numPlayers; // This is how it should work
     // if (gameState) GameSettings.players = gameState.seats.size; // For now, just count number of seats
     // GameSettings.initializeGame();

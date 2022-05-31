@@ -64,7 +64,7 @@ export const AppProvider: React.FC = ({ children }) => {
             return false;
         }
 
-        console.log('join game ' + name);
+        console.log('join game: player ' + name + ', id ' + gameId);
 
         const request: JoinGameRequest = new JoinGameRequest();
         request.setName(name);
@@ -74,6 +74,7 @@ export const AppProvider: React.FC = ({ children }) => {
         newState.connection = connection;
         newState.stream = connection.joinGame(request, appState.metadata);
         newState.joined = (newState.stream !== undefined);
+        console.log('got stream: ' + newState.joined);
         console.log('newState');
         console.log(newState);
         setState(newState);

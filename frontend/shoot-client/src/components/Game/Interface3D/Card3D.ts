@@ -41,8 +41,8 @@ class Card3D {
     constructor(scene: Scene, manager: GUI3DManager, rank: number, suit: number, gameState: IGame) {
         this.gameState = gameState;
         this.card = new ProtoCard();
-        this.card.setRank(rank);
-        this.card.setSuit(suit);
+        this.card.setRank(rank ?? 0);
+        this.card.setSuit(suit ?? 0);
 
         var faceUV = new Array(6);
 
@@ -710,8 +710,8 @@ class Card3D {
             if (i !== GameSettings.currentPlayer) // Skip searching our own hand.
 
                 for (let j: number = 0; j < cardStack.index.length; j++) {
-                    console.log("checking source card " + j);
                     potentialMatch = cardStack.index[j];
+                    console.log("checking source card " + j + ": " +  + potentialMatch?.card.getRank() + potentialMatch?.card.getSuit());
 
                     if (potentialMatch && potentialMatch.equals(targetCard)) {
                         return [i, j];

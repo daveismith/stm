@@ -19,6 +19,7 @@ namespace ShootTheMoon.Network
             private UInt32 sequence;
             private SemaphoreSlim semaphore;
             private IServerStreamWriter<Notification> Stream { get; }
+            private Object sequenceLock;
 
             public bool Connected { get; set; }
 
@@ -31,8 +32,8 @@ namespace ShootTheMoon.Network
                 Connected = true;
             }
 
-            public Task<uint> getNextSequence() {
-                return Task.FromResult(this.sequence++);
+            public uint getNextSequence() {
+                lock(sequenceLock) {return this.sequence++;}
             }
 
             public async Task WriteAsync(Notification message) {
@@ -156,7 +157,7 @@ namespace ShootTheMoon.Network
             const int MAX_RETRIES = 10;
             int retriesAttempted = 0;
 
-            notification.Sequence = await client.getNextSequence();
+            notification.Sequence = client.getNextSequence();
 
             while (!sent)
             {
