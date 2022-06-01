@@ -36,6 +36,8 @@ const Game: React.FC = () => {
             return <GameBoard
                 hand={gameState.hand}
                 seats={gameState.seats}
+                mySeat={gameState.mySeat}
+                currentSeat={gameState.currentSeat}
                 playedCards={gameState.playedCards}
                 highBid={gameState.highBid}
                 bids={gameState.bids}

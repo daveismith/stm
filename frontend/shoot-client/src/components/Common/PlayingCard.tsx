@@ -5,6 +5,7 @@ import { Card } from "../Game/Models/Card";
 
 interface IPlayingCardProps {
     card: Card,
+    onClick?: React.MouseEventHandler<HTMLDivElement>
 }
 
 
@@ -32,7 +33,7 @@ const PlayingCard: React.FC<IPlayingCardProps> = (props: IPlayingCardProps) => {
 
 
     return (  
-        <StyledDiv>
+        <StyledDiv onClick={props.onClick}>
             <CardView>
                 <RankDiv style={{color: `${color}`}}>
                     {Card.rankString(props.card.rank)}

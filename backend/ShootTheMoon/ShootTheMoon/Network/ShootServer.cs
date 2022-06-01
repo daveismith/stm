@@ -19,7 +19,7 @@ namespace ShootTheMoon.Network
             private UInt32 sequence;
             private SemaphoreSlim semaphore;
             private IServerStreamWriter<Notification> Stream { get; }
-            private Object sequenceLock;
+            private Object sequenceLock = new Object();
 
             public bool Connected { get; set; }
 
@@ -248,6 +248,7 @@ namespace ShootTheMoon.Network
             // Send A Join Game Response
             JoinGameResponse jgr = new JoinGameResponse();
             jgr.Token = client.Token;
+            jgr.Seats = (uint)game.NumPlayers;
             n.JoinResponse = jgr;
             await SendNotification(client, n);
 
@@ -474,20 +475,16 @@ namespace ShootTheMoon.Network
         }   
 
         public async Task PlayCardRequest(Game.Game game, Client currentPlayer) {
-            if (currentPlayer is RpcClient) {
-                RpcClient rpcClient = (RpcClient)currentPlayer;
+            Notification n = new Notification();
+            n.PlayCardRequest = new PlayCardRequest();
 
-                Notification n = new Notification();
-                n.PlayCardRequest = new PlayCardRequest();
+            // Figure Out How To Indicate The Seat
+            n.PlayCardRequest.Seat = game.FindSeat(currentPlayer);
+            n.PlayCardRequest.Timeout = 30000;  // Just Hard Code 30 seconds
 
-                // Figure Out How To Indicate The Seat
-                n.PlayCardRequest.Seat = game.FindSeat(currentPlayer);
-                n.PlayCardRequest.Timeout = 30000;  // Just Hard Code 30 seconds
-
-                await SendNotification(rpcClient, n);
-                Log.Debug("{0}: Play Card Request sent to player {1}", game.Name,  currentPlayer.Name);
-            }
+            await BroadcastNotification(n, game);
         }
+
         public async Task PlayedCardsUpdate(Game.Game game) {
             PlayedCards playedCards = new PlayedCards();
             playedCards.Cards.Clear();

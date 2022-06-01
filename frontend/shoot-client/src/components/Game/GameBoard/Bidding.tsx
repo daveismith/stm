@@ -17,7 +17,7 @@ interface IBiddingProps {
 const Bidding: React.FC<IBiddingProps> = (props: IBiddingProps) => {
     const classes = useStyles();
     const [ gameState ] = useGame();
-    const { createBid, currentSeat, currentBidder } = gameState;
+    const { createBid, mySeat, currentBidder, winningBid } = gameState;
 
     const { highBid, bids, bidTricksSelected, bidTrumpSelected } = props;
 
@@ -26,9 +26,16 @@ const Bidding: React.FC<IBiddingProps> = (props: IBiddingProps) => {
         return bid ? <div>{bid.number} {Bid.trumpString(bid.trump)}</div> : <div>No Bid</div>;
     }
 
-    const submit_enabled = bidTricksSelected != null && bidTrumpSelected != null;
+    const submit_pass = bidTricksSelected == null && bidTrumpSelected == null;
+    const submit_enabled = (bidTricksSelected != null && bidTrumpSelected != null) || submit_pass;
+    
 
     const onClick = () => {
+        if (submit_pass) {
+            createBid(0, 0, Bid.Trump.LOW, mySeat)
+            return;
+        }
+
         let tricks = 0;
         let shootNum = 0;
 
@@ -41,14 +48,12 @@ const Bidding: React.FC<IBiddingProps> = (props: IBiddingProps) => {
 
         let trump = Bid.stringToTrump(bidTrumpSelected || "");
 
-        if (trump !== null && currentSeat !== null) {
-            createBid(tricks, shootNum, trump, currentSeat);
+        if (trump !== null && mySeat !== null) {
+            createBid(tricks, shootNum, trump, mySeat);
         } else {
             console.log("Error With OnClick");
         }
     }
-
-    console.log('currentBidder: ' + currentBidder);
 
     if (currentBidder) {
         return (
@@ -77,15 +82,17 @@ const Bidding: React.FC<IBiddingProps> = (props: IBiddingProps) => {
                             disabled={!submit_enabled}
                             variant={submit_enabled ? "outlined" : "text"}
                             onClick={() => onClick()}
-                        >Place Bid</Button>                    
+                        >{ submit_pass ? 'Pass' : 'Place Bid' }</Button>
                 </Grid>
                 <Grid>
                     {bid}
                 </Grid>
             </>
         );
-    } else {
+    } else if (winningBid === null) {
         return (<div>Not Bidding</div>)
+    } else {
+        return (<div></div>)
     }
 };
 

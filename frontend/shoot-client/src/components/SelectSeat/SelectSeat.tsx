@@ -24,13 +24,13 @@ const useStyles = makeStyles({
 
 const Ready: React.FC<{seat: Seat}> = ({seat}) => {
     const [ gameState ] = useGame();
-    const { currentSeat, setSeatReadyStatus } = gameState;
+    const { mySeat, setSeatReadyStatus } = gameState;
 
     const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setSeatReadyStatus(event.target.checked);
     };
 
-    if (seat.index !== currentSeat) {
+    if (seat.index !== mySeat) {
         return (
             <Typography>{seat.ready ? "Ready" : "Not Ready"}</Typography>
         )

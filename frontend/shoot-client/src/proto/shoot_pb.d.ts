@@ -184,6 +184,9 @@ export class JoinGameResponse extends jspb.Message {
   getToken(): string;
   setToken(value: string): JoinGameResponse;
 
+  getSeats(): number;
+  setSeats(value: number): JoinGameResponse;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): JoinGameResponse.AsObject;
   static toObject(includeInstance: boolean, msg: JoinGameResponse): JoinGameResponse.AsObject;
@@ -195,6 +198,7 @@ export class JoinGameResponse extends jspb.Message {
 export namespace JoinGameResponse {
   export type AsObject = {
     token: string,
+    seats: number,
   }
 }
 

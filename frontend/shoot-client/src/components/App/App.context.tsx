@@ -12,6 +12,7 @@ export interface IApp {
     connection?: ShootServerClient
     token?: string,
     gameId?: string,
+    numPlayers?: number,
     stream?: grpcWeb.ClientReadableStream<Notification>,
     createGame?(seats: number): void,
     joinGame?(gameId: string, name: string): boolean,
@@ -85,7 +86,6 @@ export const AppProvider: React.FC = ({ children }) => {
         });
 
         newState.stream.on('data', (response: Notification) => {
-
             if (response.hasJoinResponse()) {
                 console.log('got join response');
                 let updateState = {...newState};
@@ -94,7 +94,8 @@ export const AppProvider: React.FC = ({ children }) => {
                 updateState.metadata['x-game-token'] = updateState.token;
                 updateState.gameId = gameId;
                 updateState.metadata['x-game-id'] = gameId;
-                setState(updateState);        
+                updateState.numPlayers = response.getJoinResponse()?.getSeats() as number;
+                setState(updateState);
             }
         });
 

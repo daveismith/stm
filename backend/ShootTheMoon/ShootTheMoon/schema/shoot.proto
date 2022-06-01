@@ -73,6 +73,7 @@ message JoinGameRequest {
 
 message JoinGameResponse {
 	string token = 1;
+	uint32 seats = 2;
 }
 
 message SetReadyStatusRequest {

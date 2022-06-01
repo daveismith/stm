@@ -11,7 +11,8 @@ import { Notification,
     TakeSeatRequest, 
     StatusResponse,
     SetReadyStatusRequest,
-    Trump
+    Trump,
+    TrumpUpdate
 } from '../../proto/shoot_pb';
 import { Card } from "./Models/Card";
 import { Seat } from "./Models/Seat";
@@ -22,17 +23,18 @@ import { GameEvent3D } from "./Interface3D/GameEvent3D";
 
 export interface IGame {
     playerName?: string;
-    numPlayers: number;
     started: boolean;
     sceneView: boolean;
     score: number[];
     tricks: number[];
     hand: Card[];
     seats: Map<number, Seat>;
+    mySeat?: number;
     currentSeat?: number;
     playedCards: Map<number, Card>;
     currentBidder: boolean;
     highBid: Bid | null;
+    winningBid: Bid | null;
     bids: Map<number, Bid>;
     bidTricksSelected: string | null;
     bidTrumpSelected: string | null;
@@ -52,17 +54,18 @@ export type GameContextType = (IGame | ((param: any) => void))[];
 
 const cleanInitialState: IGame = {
     playerName: undefined,
-    numPlayers: 6,
     started: false,
     sceneView: false,
     score: [0, 0],
     tricks: [0, 0],
     hand: [],
     seats: new Map(),
+    mySeat: -1,
     currentSeat: -1,
     playedCards: new Map(),
     currentBidder: false,
     highBid: null,
+    winningBid: null,
     bids: new Map(),
     bidTricksSelected: null,
     bidTrumpSelected: null,
@@ -138,7 +141,6 @@ export const GameProvider: React.FC = ({ children }) => {
                         const seatDetailsList: SeatDetails[] = notification.getSeatList()?.getSeatsList() as SeatDetails[];
                         
                         draft.seats = new Map();
-                        draft.numPlayers = 0;
                         for (let seatDetails of seatDetailsList) {
                             const seat: Seat = {
                                 index: seatDetails.getSeat(),
@@ -148,7 +150,6 @@ export const GameProvider: React.FC = ({ children }) => {
                                 ready: seatDetails.getReady(),
                             };
                             draft.seats.set(seat.index, seat);
-                            draft.numPlayers++;
                         }
                     }));
                 } else if (notification.hasStartGame()) {
@@ -177,7 +178,7 @@ export const GameProvider: React.FC = ({ children }) => {
                             };
                             draft.bids.set(bid.seat, bid);
 
-                            if (bidDetails.getSeat() === draft.currentSeat) {
+                            if (bidDetails.getSeat() === draft.mySeat) {
                                 draft.currentBidder = false;
                             }
 
@@ -203,8 +204,24 @@ export const GameProvider: React.FC = ({ children }) => {
                     console.log('throwaway request');
                 } else if (notification.hasTrumpUpdate()) {
                     console.log('trump update');
+                    setState(produce(draft => {
+                        const trump: TrumpUpdate = notification.getTrumpUpdate()!;
+
+                        draft.bids = new Map();
+                        draft.highBid = null;
+                        draft.winningBid = {
+                            number: trump.getTricks(),
+                            shootNum: trump.getShootNum(),
+                            trump: Bid.fromProtoTrump(trump.getTrump()),
+                            seat: trump.getSeat(),
+                        };
+
+                    }));
                 } else if (notification.hasPlayCardRequest()) {
                     console.log('play card request');
+                    setState(produce(draft => {
+                        draft.currentSeat = notification.getPlayCardRequest()?.getSeat();
+                    }));
                 } else if(notification.hasUpdateTimeout()) {
                     console.log('update timeout');
                 } else if (notification.hasPlayedCards()) {
@@ -228,7 +245,7 @@ export const GameProvider: React.FC = ({ children }) => {
         
                 appState.connection.takeSeat(request, appState.metadata).then((value: StatusResponse) => {
                     // Push Selected State Into The Seat
-                    setState(produce(draft => { draft.currentSeat = seat; }));
+                    setState(produce(draft => { draft.mySeat = seat; }));
         
                     // Emit for 3D
                     eventEmitter.emit('takeSeatRequestResponse', seat, value.getSuccess());
