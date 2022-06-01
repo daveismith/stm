@@ -26,7 +26,7 @@ class GameEvent3D {
                 break;
             }
             case Notification.NotificationCase.PLAY_CARD_REQUEST: {
-                this.eventEmitter.emit("cardRequest");
+                this.eventEmitter.emit("cardRequest", this.notification.getPlayCardRequest());
                 break;
             }
             case Notification.NotificationCase.PLAYED_CARDS: {

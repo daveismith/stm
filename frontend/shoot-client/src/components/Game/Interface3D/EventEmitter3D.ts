@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events';
-import { Card, SeatDetails, Bid as BidDetails, Hand, TrumpUpdate, PlayedCard, Tricks } from '../../../proto/shoot_pb';
+import { Card, SeatDetails, Bid as BidDetails, Hand, TrumpUpdate, PlayCardRequest, PlayedCard, Tricks } from '../../../proto/shoot_pb';
 import { SceneController } from "./SceneController";
 import { Bid } from "../../Game/Models/Bid";
 
@@ -48,8 +48,8 @@ class EventEmitter3D extends EventEmitter {
             SceneController.trumpUpdateListener(trumpUpdate);
         });
 
-        this.on('cardRequest', function() {
-            SceneController.cardRequestListener();
+        this.on('cardRequest', function(playCardRequest: PlayCardRequest) {
+            SceneController.cardRequestListener(playCardRequest);
         });
 
         this.on('playCardResponse', function(card: Card, success: boolean) {

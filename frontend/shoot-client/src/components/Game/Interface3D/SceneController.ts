@@ -1,4 +1,4 @@
-import { Notification, SeatDetails, Hand, Bid as BidDetails, TrumpUpdate, PlayedCard, Card, Tricks } from '../../../proto/shoot_pb';
+import { Notification, SeatDetails, Hand, Bid as BidDetails, TrumpUpdate, PlayCardRequest, PlayedCard, Card, Tricks } from '../../../proto/shoot_pb';
 import { Seat } from "../Models/Seat";
 import { Bid } from "../Models/Bid";
 import { GameSettings } from "./GameSettings3D";
@@ -552,9 +552,13 @@ class SceneController {
         if (this.gameState < 100) this.gameState = GameState.WaitingToPlay;
     }
 
-    static cardRequestListener() {
-        for (let card of this.hand) card.toggleGlow(true);
-        this.gameState = GameState.ChoosingPlay;
+    static cardRequestListener(playCardRequest: PlayCardRequest) {
+        let seat: number = playCardRequest.getSeat();
+
+        if (seat === GameSettings.currentPlayer) {
+            for (let card of this.hand) card.toggleGlow(true);
+            this.gameState = GameState.ChoosingPlay;
+        }
     }
 
     static playCardResponseListener(playedCard: Card, success: boolean) {
