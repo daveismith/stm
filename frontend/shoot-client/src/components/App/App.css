@@ -5,3 +5,8 @@ html, body, #root, .App {
 .App {
   text-align: center;
 }
+
+@keyframes cardZoom {
+  from { zoom: 1.0 }
+  to { zoom: 1.2 }
+}

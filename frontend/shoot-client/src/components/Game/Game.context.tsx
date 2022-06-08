@@ -12,7 +12,8 @@ import { Notification,
     StatusResponse,
     SetReadyStatusRequest,
     Trump,
-    TrumpUpdate
+    TrumpUpdate,
+    PlayedCard
 } from '../../proto/shoot_pb';
 import { Card } from "./Models/Card";
 import { Seat } from "./Models/Seat";
@@ -43,7 +44,7 @@ export interface IGame {
     takeSeat?(seat: number): void;
     setSeatReadyStatus?(ready: boolean): void;
     createBid?(tricks: number, shootNum: number, trump: Bid.Trump, seat: number): void;
-    playCard?(card: Card): void;
+    playCard?(card: Card, index?: number): void;
 }
 
 interface ParamTypes{ 
@@ -167,6 +168,8 @@ export const GameProvider: React.FC = ({ children }) => {
                     setState(produce(draft => {
                         const bidDetailsList: BidDetails[] = notification.getBidList()?.getBidsList() as BidDetails[];
                         
+                        draft.playedCards.clear();
+
                         let highBid = null;
                         draft.bids = new Map();
                         for (let bidDetails of bidDetailsList) {
@@ -226,6 +229,18 @@ export const GameProvider: React.FC = ({ children }) => {
                     console.log('update timeout');
                 } else if (notification.hasPlayedCards()) {
                     console.log('played cards');
+                    setState(produce(draft => {
+                        draft.playedCards = new Map();
+
+                        const handCards: PlayedCard[] = notification.getPlayedCards()?.getCardsList()!;
+                        console.log(handCards);
+                        for (let card of handCards) {
+                            const seat: number = card.getSeat();
+                            const pc: Card = cardFromProto(card.getCard()!); 
+                            draft.playedCards.set(seat, pc);
+                            console.log('seat: ' + seat + ', rank: ' + pc.rank + ', suit: ' + pc.suit);
+                        }
+                    }));
                 } else {
                         console.log('game data');
                         // const obj: object = notification.toObject();
@@ -292,6 +307,8 @@ export const GameProvider: React.FC = ({ children }) => {
                     console.log('bid response: ' + value.getSuccess());
                     setState(produce(draft => {
                         draft.currentBidder = false;
+                        draft.bidTricksSelected = null;
+                        draft.bidTrumpSelected = null;
                     }));
                     return value.getSuccess();
                 }).catch((reason: any) => { 
@@ -301,18 +318,25 @@ export const GameProvider: React.FC = ({ children }) => {
                 });
             };
 
-            const playCard = (card: Card) => {
+            const playCard = (card: Card, index: number) => {
                 if (!appState.joined) {
                     return false;
                 }
 
-                console.log('play card');
+                console.log('play card, index: ' + index);
 
-                const request: ProtoCard = cardToProto(card);
+                const request: ProtoCard = cardToProto(card);            
 
                 appState.connection.playCard(request, appState.metadata).then((value: StatusResponse) => {
                     eventEmitter.emit('playCardResponse', card, value.getSuccess());
                     console.log('play card result: ' + value.getSuccess());
+                    if (value.getSuccess()) {
+                        setState(produce(draft => {
+                            if (index !== undefined) {
+                                draft.hand.splice(index, 1);
+                            }
+                        }));
+                    }
                     return value.getSuccess();
                 }).catch((reason: any) => { 
                     eventEmitter.emit('playCardResponse', card, false);

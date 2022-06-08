@@ -167,6 +167,9 @@ namespace ShootTheMoon.Game
                 await EnterTrickComplete();
             } else if (State == GameState.HAND_COMPLETE) {
                 await EnterHandComplete();
+            } else if (State == GameState.GAME_COMPLETE) {
+                GameEvent ge = new GameEvent( GameEventType.TricksUpdate | GameEventType.ScoreUpdate, this);
+                await PublishEvent(ge);
             }
 
         }
@@ -180,7 +183,7 @@ namespace ShootTheMoon.Game
 
             ResetHand();
             await Deal();
-            eventType |= GameEventType.DealCards;
+            eventType |= GameEventType.DealCards | GameEventType.TricksUpdate | GameEventType.ScoreUpdate;
 
             await PublishEvent(new GameEvent(eventType, this));
             await EnterState(GameState.AWAITING_BIDS);

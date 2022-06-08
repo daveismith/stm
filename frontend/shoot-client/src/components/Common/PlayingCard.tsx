@@ -5,14 +5,20 @@ import { Card } from "../Game/Models/Card";
 
 interface IPlayingCardProps {
     card: Card,
-    onClick?: React.MouseEventHandler<HTMLDivElement>
+    clickable?: boolean,
+    onClick?: (card: Card) => void
 }
 
 
 const StyledDiv = styled.div`
 border-radius: 12px;
-margin: 10px;
+margin: 15px 10px;
 width: 55px;
+&:hover {
+    margin: 10px 10px;
+    width: 66px;
+    zoom: 1.2;
+}
 `;
 
 const RankDiv = styled.div`
@@ -31,9 +37,14 @@ const PlayingCard: React.FC<IPlayingCardProps> = (props: IPlayingCardProps) => {
     const suit = props.card.suit;
     const color = (suit === Card.Suit.DIAMONDS || suit === Card.Suit.HEARTS) ? "red" : "black";
 
+    const onClick = () => {
+        if (props.onClick !== undefined) {
+            props.onClick(props.card);
+        }
+    }
 
     return (  
-        <StyledDiv onClick={props.onClick}>
+        <StyledDiv onClick={onClick}>
             <CardView>
                 <RankDiv style={{color: `${color}`}}>
                     {Card.rankString(props.card.rank)}

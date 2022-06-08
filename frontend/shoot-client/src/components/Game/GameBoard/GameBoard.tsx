@@ -24,7 +24,7 @@ interface IGameBoardProps {
 const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
     const [ gameState ] = useGame();
     
-    const {  } = gameState;
+    const { playCard } = gameState;
 
     const { hand, seats, mySeat, currentSeat, playedCards, currentBidder, highBid, bids, bidTricksSelected, bidTrumpSelected  } = props;
 
@@ -40,8 +40,8 @@ const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
         return bid && <div>{bid.number} {Bid.trumpString(bid.trump)}</div>;
     }
 
-    const onCardClick = () => {
-        console.log("card clicked");
+    const onCardClick = (card: Card, index: number) => {
+        playCard(card, index);
     }
 
     return (
@@ -62,7 +62,7 @@ const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
                 >
                     {playedCard(seat.index)}
                     { (seat.index === currentSeat) ? '✮' : null}
-                    <TextBubble size="small" text={seat.name.length === 0 ? "Empty" : seat.name} color="green" disabled={seat.empty}></TextBubble>
+                    <TextBubble size="small" text={seat.name.length === 0 ? "Empty" : seat.name} color={seat.index % 2 == 0 ? "green" : "blue"} disabled={seat.empty}></TextBubble>
                     { (seat.index === mySeat) ? 'My Seat' : null}
                     {bid(seat.index)}
                 </Grid>
@@ -75,7 +75,7 @@ const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
                         <PlayingCard
                             key={"playing_card_" + index} 
                             card={card} 
-                            onClick={() => onCardClick()}
+                            onClick={() => onCardClick(card, index)}
                         />)
                     )
                 }
