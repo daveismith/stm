@@ -9,36 +9,42 @@ namespace ShootTheMoon.Game
         public int NumDuplicateCards { get; set; }
         public IList<Card> Cards { get; set; }
         private static Random random = new Random();
+        private readonly object __lockObj = new object();
         
         public Deck(int numDuplicateCards = 1, bool shuffle = true)
         {
             NumDuplicateCards = numDuplicateCards;
-            Cards = new List<Card>();
 
-            for (int i = 0; i < numDuplicateCards; i++)
-            {
-                foreach (var suit in Suit.Suits)
+            lock(__lockObj) {
+                Cards = new List<Card>();
+
+                for (int i = 0; i < numDuplicateCards; i++)
                 {
-                    foreach (var rank in Rank.Ranks)
+                    foreach (var suit in Suit.Suits)
                     {
-                        Cards.Add(new Card(suit, rank));
+                        foreach (var rank in Rank.Ranks)
+                        {
+                            Cards.Add(new Card(suit, rank));
+                        }
                     }
                 }
             }
-
+            
             if (shuffle) Task.Run(Shuffle);
         }
 
         public Task Shuffle()
         {
-            int n = Cards.Count;
-            while(n > 1)
-            {
-                n--;
-                int k = random.Next(n + 1);
-                Card c = Cards[k];
-                Cards[k] = Cards[n];
-                Cards[n] = c;
+            lock(__lockObj) {
+                int n = Cards.Count;
+                while(n > 1)
+                {
+                    n--;
+                    int k = random.Next(n + 1);
+                    Card c = Cards[k];
+                    Cards[k] = Cards[n];
+                    Cards[n] = c;
+                }
             }
 
             return Task.CompletedTask;
@@ -46,22 +52,26 @@ namespace ShootTheMoon.Game
 
         public Card Draw()
         {
-            if (Cards.Count > 0)
-            {
-                Card card = Cards[0];
-                Cards.RemoveAt(0);
-                return card;
+            lock(__lockObj) {
+                if (Cards.Count > 0)
+                {
+                    Card card = Cards[0];
+                    Cards.RemoveAt(0);
+                    return card;
+                }
+                return null; 
             }
-            return null; 
         }
 
         public Card Peek()
         {
-            if (Cards.Count > 0)
-            {
-                return Cards[0];
+            lock(__lockObj) {
+                if (Cards.Count > 0)
+                {
+                    return Cards[0];
+                }
+                return null;
             }
-            return null;
         }
     }
 }

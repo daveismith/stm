@@ -184,6 +184,9 @@ export class JoinGameResponse extends jspb.Message {
   getToken(): string;
   setToken(value: string): JoinGameResponse;
 
+  getSeats(): number;
+  setSeats(value: number): JoinGameResponse;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): JoinGameResponse.AsObject;
   static toObject(includeInstance: boolean, msg: JoinGameResponse): JoinGameResponse.AsObject;
@@ -195,6 +198,7 @@ export class JoinGameResponse extends jspb.Message {
 export namespace JoinGameResponse {
   export type AsObject = {
     token: string,
+    seats: number,
   }
 }
 
@@ -579,6 +583,9 @@ export class Tricks extends jspb.Message {
   getTeam2(): number;
   setTeam2(value: number): Tricks;
 
+  getTricksRemainingInHand(): number;
+  setTricksRemainingInHand(value: number): Tricks;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Tricks.AsObject;
   static toObject(includeInstance: boolean, msg: Tricks): Tricks.AsObject;
@@ -591,6 +598,7 @@ export namespace Tricks {
   export type AsObject = {
     team1: number,
     team2: number,
+    tricksRemainingInHand: number,
   }
 }
 

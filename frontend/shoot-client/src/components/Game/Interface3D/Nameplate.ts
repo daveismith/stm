@@ -12,6 +12,7 @@ class Nameplate {
     textBlock: TextBlock = new TextBlock();
     player: number;
     name: string;
+    defaultName: string;
     static emptySeatLabel: string = "Waiting for Player";
 
     constructor (manager2D: AdvancedDynamicTexture, player: number) {
@@ -30,6 +31,7 @@ class Nameplate {
         else
             this.name = Nameplate.emptySeatLabel;
         this.textBlock.text = this.name;
+        this.defaultName = this.name;
         this.plate.addControl(this.textBlock);
 
         this.plate.linkWithMesh(SceneController.seatCubes[player].mesh);
@@ -37,13 +39,18 @@ class Nameplate {
 
     }
 
-    updateName (name: string) {
+    updateName (name: string, setDefault: boolean) {
         this.name = name;
         this.textBlock.text = name;
+        if (setDefault) this.defaultName = name;
     }
 
     disable () {
         this.plate.isVisible = false;
+    }
+
+    resetToDefault () {
+        this.updateName(this.defaultName, false);
     }
 }
 

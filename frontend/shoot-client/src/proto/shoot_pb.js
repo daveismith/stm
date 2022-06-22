@@ -1915,7 +1915,8 @@ proto.JoinGameResponse.prototype.toObject = function(opt_includeInstance) {
  */
 proto.JoinGameResponse.toObject = function(includeInstance, msg) {
   var f, obj = {
-    token: jspb.Message.getFieldWithDefault(msg, 1, "")
+    token: jspb.Message.getFieldWithDefault(msg, 1, ""),
+    seats: jspb.Message.getFieldWithDefault(msg, 2, 0)
   };
 
   if (includeInstance) {
@@ -1956,6 +1957,10 @@ proto.JoinGameResponse.deserializeBinaryFromReader = function(msg, reader) {
       var value = /** @type {string} */ (reader.readString());
       msg.setToken(value);
       break;
+    case 2:
+      var value = /** @type {number} */ (reader.readUint32());
+      msg.setSeats(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -1992,6 +1997,13 @@ proto.JoinGameResponse.serializeBinaryToWriter = function(message, writer) {
       f
     );
   }
+  f = message.getSeats();
+  if (f !== 0) {
+    writer.writeUint32(
+      2,
+      f
+    );
+  }
 };
 
 
@@ -2010,6 +2022,24 @@ proto.JoinGameResponse.prototype.getToken = function() {
  */
 proto.JoinGameResponse.prototype.setToken = function(value) {
   return jspb.Message.setProto3StringField(this, 1, value);
+};
+
+
+/**
+ * optional uint32 seats = 2;
+ * @return {number}
+ */
+proto.JoinGameResponse.prototype.getSeats = function() {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 2, 0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.JoinGameResponse} returns this
+ */
+proto.JoinGameResponse.prototype.setSeats = function(value) {
+  return jspb.Message.setProto3IntField(this, 2, value);
 };
 
 
@@ -4832,7 +4862,8 @@ proto.Tricks.prototype.toObject = function(opt_includeInstance) {
 proto.Tricks.toObject = function(includeInstance, msg) {
   var f, obj = {
     team1: jspb.Message.getFieldWithDefault(msg, 1, 0),
-    team2: jspb.Message.getFieldWithDefault(msg, 2, 0)
+    team2: jspb.Message.getFieldWithDefault(msg, 2, 0),
+    tricksRemainingInHand: jspb.Message.getFieldWithDefault(msg, 3, 0)
   };
 
   if (includeInstance) {
@@ -4877,6 +4908,10 @@ proto.Tricks.deserializeBinaryFromReader = function(msg, reader) {
       var value = /** @type {number} */ (reader.readUint32());
       msg.setTeam2(value);
       break;
+    case 3:
+      var value = /** @type {number} */ (reader.readUint32());
+      msg.setTricksRemainingInHand(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -4920,6 +4955,13 @@ proto.Tricks.serializeBinaryToWriter = function(message, writer) {
       f
     );
   }
+  f = message.getTricksRemainingInHand();
+  if (f !== 0) {
+    writer.writeUint32(
+      3,
+      f
+    );
+  }
 };
 
 
@@ -4956,6 +4998,24 @@ proto.Tricks.prototype.getTeam2 = function() {
  */
 proto.Tricks.prototype.setTeam2 = function(value) {
   return jspb.Message.setProto3IntField(this, 2, value);
+};
+
+
+/**
+ * optional uint32 tricks_remaining_in_hand = 3;
+ * @return {number}
+ */
+proto.Tricks.prototype.getTricksRemainingInHand = function() {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 3, 0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.Tricks} returns this
+ */
+proto.Tricks.prototype.setTricksRemainingInHand = function(value) {
+  return jspb.Message.setProto3IntField(this, 3, value);
 };
 
 

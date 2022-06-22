@@ -1,14 +1,11 @@
 import { Engine, Scene } from "@babylonjs/core";
 import React, { useEffect, useRef } from "react";
-import { useGame } from "../Game.context";
-import { useApp } from "../../App/App.context";
+// import { useApp } from "../../App/App.context";
 
 const SceneComponent = (props) => {
   const reactCanvas = useRef(null);
 
-  const [ gameState ] = useGame();
-
-  const [ appState ] = useApp();
+  // const [ appState ] = useApp();
 
 const {
     antialias,
@@ -17,6 +14,7 @@ const {
     sceneOptions,
     onRender,
     onSceneReady,
+    gameState,
     ...rest
   } = props;
 
@@ -30,10 +28,10 @@ const {
       );
       const scene = new Scene(engine, sceneOptions);
       if (scene.isReady()) {
-        props.onSceneReady(scene, gameState, appState);
+        props.onSceneReady(scene, gameState);
       } else {
         scene.onReadyObservable.addOnce((scene) =>
-          props.onSceneReady(scene, gameState, appState)
+          props.onSceneReady(scene, gameState)
         );
       }
       engine.runRenderLoop(() => {

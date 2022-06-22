@@ -26,7 +26,7 @@ class GameEvent3D {
                 break;
             }
             case Notification.NotificationCase.PLAY_CARD_REQUEST: {
-                this.eventEmitter.emit("cardRequest");
+                this.eventEmitter.emit("cardRequest", this.notification.getPlayCardRequest());
                 break;
             }
             case Notification.NotificationCase.PLAYED_CARDS: {
@@ -47,7 +47,7 @@ class GameEvent3D {
                 break;
             }
             case Notification.NotificationCase.TRICKS: {
-                this.eventEmitter.emit("tricks");
+                this.eventEmitter.emit("tricks", this.notification.getTricks());
                 break;
             }
             case Notification.NotificationCase.TRUMP_UPDATE: {

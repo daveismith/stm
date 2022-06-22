@@ -6,29 +6,46 @@ import SceneComponent from "./Interface3D/SceneComponent";
 import GameBoard from "./GameBoard/GameBoard";
 import NameDialog from "./GameBoard/NameDialog"
 import "./Game.css";
+import SelectSeat from "../SelectSeat/SelectSeat";
+import { GameSettings } from "../Game/Interface3D/GameSettings3D";
+import { SceneController } from "./Interface3D/SceneController";
 
 const Game: React.FC = () => {
 
     const [ gameState ] = useGame();
+    const { started } = gameState;
 
     const getView = () => {
         if (gameState.sceneView) {
+            SceneController.clientIn3DMode = true;
+            GameSettings.initializeGame(gameState.seats.size);
             return <SceneComponent 
                         className="scene" 
                         antialias 
                         onSceneReady={onSceneReady} 
-                        onRender={onRender} 
+                        onRender={onRender}
+                        gameState={gameState}
                         id="my-canvas" 
                     />;
+        } else {
+            SceneController.clientIn3DMode = false;
         }
-        return <GameBoard
-            hand={gameState.hand}
-            seats={gameState.seats}
-            playedCards={gameState.playedCards}
-            bids={gameState.bids}
-            bidTricksSelected={gameState.bidTricksSelected}
-            bidTrumpSelected={gameState.bidTrumpSelected}
-        />;
+        if (!started) {
+            return <SelectSeat  />
+        } else {
+            return <GameBoard
+                hand={gameState.hand}
+                seats={gameState.seats}
+                mySeat={gameState.mySeat}
+                currentSeat={gameState.currentSeat}
+                playedCards={gameState.playedCards}
+                highBid={gameState.highBid}
+                bids={gameState.bids}
+                currentBidder={gameState.currentBidder}
+                bidTricksSelected={gameState.bidTricksSelected}
+                bidTrumpSelected={gameState.bidTrumpSelected}
+            />;
+        }
     }
 
     const getContent = () => {

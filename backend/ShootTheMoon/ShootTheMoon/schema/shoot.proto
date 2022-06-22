@@ -73,6 +73,7 @@ message JoinGameRequest {
 
 message JoinGameResponse {
 	string token = 1;
+	uint32 seats = 2;
 }
 
 message SetReadyStatusRequest {
@@ -160,6 +161,7 @@ message PlayedCards {
 message Tricks {
 	uint32 team_1 = 1;
 	uint32 team_2 = 2;
+	uint32 tricks_remaining_in_hand = 3;
 }
 
 message Scores {

@@ -19,6 +19,7 @@ namespace ShootTheMoon.Network
             private UInt32 sequence;
             private SemaphoreSlim semaphore;
             private IServerStreamWriter<Notification> Stream { get; }
+            private Object sequenceLock = new Object();
 
             public bool Connected { get; set; }
 
@@ -31,8 +32,8 @@ namespace ShootTheMoon.Network
                 Connected = true;
             }
 
-            public Task<uint> getNextSequence() {
-                return Task.FromResult(this.sequence++);
+            public uint getNextSequence() {
+                lock(sequenceLock) {return this.sequence++;}
             }
 
             public async Task WriteAsync(Notification message) {
@@ -110,6 +111,13 @@ namespace ShootTheMoon.Network
                 }
             }
 
+            if ((info.Type & GameEventType.TransferRequest) == GameEventType.TransferRequest) {
+                // Request A Transfer From The List Of Clients Specified in the AdditionalInfo
+                if (info.AdditionalData is List<Client>) {
+                    //TODO: Actually Dispatch
+                }
+            }
+
             if ((info.Type & GameEventType.BidUpdate) == GameEventType.BidUpdate) {
                 // Send A Bit List Update To All Players
                 await BidListUpdate(game);
@@ -131,7 +139,7 @@ namespace ShootTheMoon.Network
                 if (info.AdditionalData is Client) {
                     await PlayCardRequest(game, (Client)info.AdditionalData);
                 }
-            }            
+            }
 
             // Progress Tricks Update
             if ((info.Type & GameEventType.TricksUpdate) == GameEventType.TricksUpdate) {
@@ -149,7 +157,7 @@ namespace ShootTheMoon.Network
             const int MAX_RETRIES = 10;
             int retriesAttempted = 0;
 
-            notification.Sequence = await client.getNextSequence();
+            notification.Sequence = client.getNextSequence();
 
             while (!sent)
             {
@@ -240,6 +248,7 @@ namespace ShootTheMoon.Network
             // Send A Join Game Response
             JoinGameResponse jgr = new JoinGameResponse();
             jgr.Token = client.Token;
+            jgr.Seats = (uint)game.NumPlayers;
             n.JoinResponse = jgr;
             await SendNotification(client, n);
 
@@ -322,9 +331,13 @@ namespace ShootTheMoon.Network
         }
 
         public async Task TricksUpdate(Game.Game game) {
+            int tricksPlayed = game.Tricks[0] + game.Tricks[1];
+            int tricksRemaining = game.GameSettings.TricksPerHand - tricksPlayed;
+
             Tricks tricks = new Tricks();
             tricks.Team1 = (uint)game.Tricks[0];
             tricks.Team2 = (uint)game.Tricks[1];
+            tricks.TricksRemainingInHand = (uint)tricksRemaining;
 
             Notification n = new Notification();
             n.Tricks = tricks;
@@ -462,20 +475,16 @@ namespace ShootTheMoon.Network
         }   
 
         public async Task PlayCardRequest(Game.Game game, Client currentPlayer) {
-            if (currentPlayer is RpcClient) {
-                RpcClient rpcClient = (RpcClient)currentPlayer;
+            Notification n = new Notification();
+            n.PlayCardRequest = new PlayCardRequest();
 
-                Notification n = new Notification();
-                n.PlayCardRequest = new PlayCardRequest();
+            // Figure Out How To Indicate The Seat
+            n.PlayCardRequest.Seat = game.FindSeat(currentPlayer);
+            n.PlayCardRequest.Timeout = 30000;  // Just Hard Code 30 seconds
 
-                // Figure Out How To Indicate The Seat
-                n.PlayCardRequest.Seat = game.FindSeat(currentPlayer);
-                n.PlayCardRequest.Timeout = 30000;  // Just Hard Code 30 seconds
-
-                await SendNotification(rpcClient, n);
-                Log.Debug("{0}: Play Card Request sent to player {1}", game.Name,  currentPlayer.Name);
-            }
+            await BroadcastNotification(n, game);
         }
+
         public async Task PlayedCardsUpdate(Game.Game game) {
             PlayedCards playedCards = new PlayedCards();
             playedCards.Cards.Clear();
@@ -652,7 +661,7 @@ namespace ShootTheMoon.Network
                 }
                 
                 bool pass = (request.ShootNum == 0) && (request.Tricks == 0);
-                await game.MakeBid(request.Tricks, trump, request.ShootNum, pass, client);
+                result = await game.MakeBid(request.Tricks, trump, request.ShootNum, pass, client);
             }
             catch (KeyNotFoundException) {
                 r.Success = false;

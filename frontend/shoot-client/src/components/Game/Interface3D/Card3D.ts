@@ -23,11 +23,11 @@ import {
 import { GameSettings } from "./GameSettings3D";
 import { CardStack3D } from "./CardStack3D";
 import { baseRotation, baseRotationQuaternion, gaussianRandom } from "./SceneFunctions";
-import { Card } from "../../../proto/shoot_pb";
+import { Card as ProtoCard } from "../../../proto/shoot_pb";
 
 import cardTextures from "./resources/images/cards.png";
 import { GameState, SceneController } from "./SceneController";
-import { IApp } from "../../App/App.context";
+import { IGame, cardFromProto } from "../../Game/Game.context";
 
 class Card3D {
     cardStack: CardStack3D | null = null;
@@ -35,14 +35,14 @@ class Card3D {
     mesh: Mesh;
     static cardHeight = 0.007;
     static cardBaseRotation: Quaternion = Quaternion.RotationYawPitchRoll(-Math.PI / 2, 0, 0);
-    card: Card;
-    appState: IApp;
+    card: ProtoCard;
+    gameState: IGame;
 
-    constructor(scene: Scene, manager: GUI3DManager, rank: number, suit: number, appState: IApp) {
-        this.appState = appState;
-        this.card = new Card();
-        this.card.setRank(rank);
-        this.card.setSuit(suit);
+    constructor(scene: Scene, manager: GUI3DManager, rank: number, suit: number, gameState: IGame) {
+        this.gameState = gameState;
+        this.card = new ProtoCard();
+        this.card.setRank(rank ?? 0);
+        this.card.setSuit(suit ?? 0);
 
         var faceUV = new Array(6);
 
@@ -55,10 +55,8 @@ class Card3D {
             depth: (1 * 3) / 4,
             faceUV: faceUV
         });
-        this.mesh.position = CardStack3D.deck.position.clone();
-        this.mesh.position.y += CardStack3D.deck.cardsInStack * CardStack3D.cardStackSpacing;
-        this.mesh.rotationQuaternion = Card3D.cardBaseRotation.clone();
-    
+        this.addToDeck();
+
         const cardMaterial = new StandardMaterial("cardMaterial", scene);
         cardMaterial.diffuseTexture = new Texture(cardTextures, scene);
         // cardMaterial.bumpTexture = new Texture(cardNormalTexture, scene);
@@ -86,6 +84,13 @@ class Card3D {
         });
     
         manager.addControl(cardButton);
+    }
+
+    addToDeck () {
+        CardStack3D.deck.addToStack(this);
+        this.mesh.position = CardStack3D.deck.position.clone();
+        this.mesh.position.y += CardStack3D.deck.cardsInStack * CardStack3D.cardStackSpacing;
+        this.mesh.rotationQuaternion = Card3D.cardBaseRotation.clone();
     }
 
     toggleGlow (glow: boolean) {
@@ -585,8 +590,8 @@ class Card3D {
     playCard () {
         SceneController.currentCard = this;
         console.log("attempting to play card: " + this.card.getRank() + this.card.getSuit());
-        if (this.appState.playCard) {
-            this.appState.playCard(this.card);
+        if (this.gameState.playCard) {
+            this.gameState.playCard(cardFromProto(this.card));
             SceneController.awaitingServerResponse = true;
         }
     }
@@ -618,7 +623,7 @@ class Card3D {
         this.animateCardSlide(position, rotationQuaternion, 0, 0, 1, 0.25, scene);
     }
 
-    equals (comparator: Card) {
+    equals (comparator: ProtoCard) {
         return (this.card.getRank() ?? 0) === (comparator.getRank() ?? 0)
             && (this.card.getSuit() ?? 0) === (comparator.getSuit() ?? 0);
     }
@@ -682,7 +687,7 @@ class Card3D {
         }
     }
 
-    static clearCards (scene: Scene) {
+    static clearCards () {
         for (var i = 0; i < GameSettings.players; i++) {
             for (let card of CardStack3D.playMatStacks[i].index) {
                 if (card) {
@@ -694,7 +699,7 @@ class Card3D {
         }
     }
 
-    static findCardInHands (targetCard: Card)
+    static findCardInHands (targetCard: ProtoCard)
     {
         let cardStack: CardStack3D;
         let potentialMatch: Card3D | null;
@@ -705,8 +710,8 @@ class Card3D {
             if (i !== GameSettings.currentPlayer) // Skip searching our own hand.
 
                 for (let j: number = 0; j < cardStack.index.length; j++) {
-                    console.log("checking source card " + j);
                     potentialMatch = cardStack.index[j];
+                    console.log("checking source card " + j + ": " +  + potentialMatch?.card.getRank() + potentialMatch?.card.getSuit());
 
                     if (potentialMatch && potentialMatch.equals(targetCard)) {
                         return [i, j];
@@ -717,7 +722,7 @@ class Card3D {
         return null;
     }
 
-    static findCardInDeck (targetCard: Card) {
+    static findCardInDeck (targetCard: ProtoCard) {
         let cardStack: CardStack3D = CardStack3D.deck;
         let potentialMatch: Card3D | null;
 

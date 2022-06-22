@@ -11,7 +11,7 @@ class GameSettings {
     static players: number;
     static deck: Mesh[] = [];
     static deckSize: number = 48;
-    static cardCopies: number = 1;
+    static cardCopies: number = 2;
     static handRadius = new Vector3(2, 0, 1);
     static currentPlayer: number;
     static currentDealer: number;
@@ -20,27 +20,37 @@ class GameSettings {
     static cameraBeta: number = Math.PI / 3;
     static cameraRadius: number = 8;
     static cameraTargets: Vector3[] = [];
+    static isInitialized: boolean = false;
     // static cameraDefaultTarget: Vector3 = new Vector3(0, GameSettings.tableHeight, -1/2 * GameSettings.tableRadius);
 
-    static initializeGame () {
-        //Radius ratio of camera target to table radius (from centre of table)
-        const cameraTargetRatio = 1 / 3;
+    static initializeGame (numPlayers: number) {
+        if (!GameSettings.isInitialized) {
+            //Radius ratio of camera target to table radius (from centre of table)
+            const cameraTargetRatio = 1 / 3;
 
-        //Populate all camera targets
-        for (var i = 0; i < GameSettings.players; i++) {
-            GameSettings.cameraTargets[i] = new Vector3(
-                GameSettings.tableRadius *
-                cameraTargetRatio *
-                Math.sin((2 / GameSettings.players) * Math.PI * i),
-                GameSettings.tableHeight + 1/2,
-                GameSettings.tableRadius *
-                cameraTargetRatio *
-                Math.cos((2 / GameSettings.players) * Math.PI * i)
-            );
-        }
+            this.players = numPlayers;
 
-        if (GameSettings.players === 2) {
-            GameSettings.deckSize = 24;
+            console.log("initializing game for 3D with " + this.players + " players");
+
+            //Populate all camera targets
+            for (var i = 0; i < GameSettings.players; i++) {
+                GameSettings.cameraTargets[i] = new Vector3(
+                    GameSettings.tableRadius *
+                    cameraTargetRatio *
+                    Math.sin((2 / GameSettings.players) * Math.PI * i),
+                    GameSettings.tableHeight + 1/2,
+                    GameSettings.tableRadius *
+                    cameraTargetRatio *
+                    Math.cos((2 / GameSettings.players) * Math.PI * i)
+                );
+            }
+
+            if (GameSettings.players === 2) {
+                GameSettings.deckSize = 24;
+                GameSettings.cardCopies = 1;
+            }
+
+            GameSettings.isInitialized = true;
         }
     };
 }

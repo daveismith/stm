@@ -19,7 +19,7 @@ const StyledDiv = styled.span`
     margin: 10px;
 `;
 
-const useStyles = makeStyles({
+export const useStyles = makeStyles({
     root: {
       background: '#363636',
       borderRadius: 30,

@@ -1,38 +1,24 @@
 import React, { createContext, useContext, useState } from "react";
-
 import * as grpcWeb from 'grpc-web';
 import { ShootServerClient } from '../../proto/ShootServiceClientPb';
 import {
-    Bid as BidDetails,
-    Card,
     CreateGameRequest,
     CreateGameResponse, 
     JoinGameRequest,
-    Notification,
-    SetReadyStatusRequest,
-    StatusResponse,
-    TakeSeatRequest,
-    Trump
+    Notification
 } from '../../proto/shoot_pb';
-
-import { EventEmitter3D } from "../Game/Interface3D/EventEmitter3D";
-import { Bid } from "../Game/Models/Bid";
 
 export interface IApp {
     connection?: ShootServerClient
     token?: string,
     gameId?: string,
+    numPlayers?: number,
     stream?: grpcWeb.ClientReadableStream<Notification>,
     createGame?(seats: number): void,
     joinGame?(gameId: string, name: string): boolean,
-    takeSeat?(seat: number): void,
-    setSeatReadyStatus?(ready: boolean): void,
-    createBid?(tricks: number, shootNum: number, trump: Bid.Trump, seat: number): void,
-    playCard?(card: Card): void,
     metadata: grpcWeb.Metadata,
     joined: boolean,
-    registered: boolean,
-    eventEmitter: EventEmitter3D
+    registered: boolean
 }
 
 function uuidv4() {
@@ -50,8 +36,7 @@ const connection: ShootServerClient = new ShootServerClient('http://localhost:80
 const initialState: IApp = {
     metadata: { }, 
     joined: false,
-    registered: false,
-    eventEmitter: new EventEmitter3D()
+    registered: false
 }
 
 const AppContext: React.Context<AppContextType> = createContext<AppContextType>([{ ...initialState }]);
@@ -80,15 +65,17 @@ export const AppProvider: React.FC = ({ children }) => {
             return false;
         }
 
-        console.log('join game ' + name);
+        console.log('join game: player ' + name + ', id ' + gameId);
 
         const request: JoinGameRequest = new JoinGameRequest();
         request.setName(name);
         request.setUuid(gameId);
 
         let newState = {...appState};
+        newState.connection = connection;
         newState.stream = connection.joinGame(request, appState.metadata);
         newState.joined = (newState.stream !== undefined);
+        console.log('got stream: ' + newState.joined);
         console.log('newState');
         console.log(newState);
         setState(newState);
@@ -99,7 +86,6 @@ export const AppProvider: React.FC = ({ children }) => {
         });
 
         newState.stream.on('data', (response: Notification) => {
-
             if (response.hasJoinResponse()) {
                 console.log('got join response');
                 let updateState = {...newState};
@@ -108,7 +94,8 @@ export const AppProvider: React.FC = ({ children }) => {
                 updateState.metadata['x-game-token'] = updateState.token;
                 updateState.gameId = gameId;
                 updateState.metadata['x-game-id'] = gameId;
-                setState(updateState);        
+                updateState.numPlayers = response.getJoinResponse()?.getSeats() as number;
+                setState(updateState);
             }
         });
 
@@ -127,88 +114,6 @@ export const AppProvider: React.FC = ({ children }) => {
 
         console.log('joinGame ' + gameId);
         return newState.stream !== undefined;
-    };
-
-    appState.takeSeat = (seat: number) => {
-        if (!appState.joined) {
-            return false;
-        }
-
-        console.log('take seat');
-
-        const request: TakeSeatRequest = new TakeSeatRequest();
-        request.setSeat(seat);
-
-        connection.takeSeat(request, appState.metadata).then((value: StatusResponse) => {
-            appState.eventEmitter.emit('takeSeatRequestResponse', seat, value.getSuccess());
-            return value.getSuccess();
-        }).catch((reason: any) => {
-            appState.eventEmitter.emit('takeSeatRequestResponse', seat, false);
-            return false;
-        });
-    };
-
-    appState.setSeatReadyStatus = (ready: boolean) => {
-        if (!appState.joined) {
-            return false;
-        }
-
-        console.log('set ready status');
-
-        const request: SetReadyStatusRequest = new SetReadyStatusRequest();
-        request.setReady(ready);
-
-        connection.setReadyStatus(request, appState.metadata).then((value: StatusResponse) => {
-            appState.eventEmitter.emit('setReadyStatusResponse', ready, value.getSuccess());
-            return value.getSuccess();
-        }).catch((reason: any) => { 
-            appState.eventEmitter.emit('setReadyStatusResponse', ready, false);
-            return false;
-        });
-    };
-
-    appState.createBid = (tricks: number, shootNum: number, trump: Bid.Trump, seat:number) => {
-        if (!appState.joined) {
-            return false;
-        }
-
-        console.log('create bid');
-
-        const request: BidDetails = new BidDetails();
-        request.setTricks(tricks);
-        request.setShootNum(shootNum);
-        request.setTrump(Bid.toProtoTrump(trump));
-        request.setSeat(seat);
-
-        connection.createBid(request, appState.metadata).then((value: StatusResponse) => {
-            appState.eventEmitter.emit('createBidResponse', tricks, shootNum, trump, seat, value.getSuccess());
-            console.log('bid response: ' + value.getSuccess());
-            return value.getSuccess();
-        }).catch((reason: any) => { 
-            appState.eventEmitter.emit('createBidResponse', tricks, shootNum, trump, seat, false);
-            console.log('bid failed: ' + (reason as grpcWeb.Error).message);
-            return false;
-        });
-    };
-
-    appState.playCard = (card: Card) => {
-        if (!appState.joined) {
-            return false;
-        }
-
-        console.log('play card');
-
-        const request: Card = card;
-
-        connection.playCard(request, appState.metadata).then((value: StatusResponse) => {
-            appState.eventEmitter.emit('playCardResponse', card, value.getSuccess());
-            console.log('play card result: ' + value.getSuccess());
-            return value.getSuccess();
-        }).catch((reason: any) => { 
-            appState.eventEmitter.emit('playCardResponse', card, false);
-            console.log('play card failed: ' + (reason as grpcWeb.Error).message);
-            return false;
-        });
     };
 
     return (

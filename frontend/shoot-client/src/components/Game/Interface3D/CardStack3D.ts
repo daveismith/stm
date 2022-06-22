@@ -147,6 +147,8 @@ class CardStack3D {
         let targetDeckCard2: Card3D | null = null;
         let targetDeckCard3: Card3D;
 
+        this.reshuffleDeck();
+
         for (let i: number = 0; i < cardValues.length; i++) {
             currentHandCard = cardValues[i];
             swapDestinationIndex = i * GameSettings.players + offset; // Find the right card and swap it into this spot.
@@ -198,6 +200,18 @@ class CardStack3D {
 
                 if (!matched) throw new Error('error arranging cards');
             }
+        }
+    }
+
+    static reshuffleDeck () {
+        let trashStack: CardStack3D = this.trashStack;
+        let card: Card3D | null;
+
+        console.log(this.deck);
+        console.log(trashStack);
+        for (let i: number = 0; i < trashStack.index.length; i++) {
+            card = trashStack.index[i];
+            if (card) card.addToDeck();
         }
     }
 }
