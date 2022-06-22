@@ -30,6 +30,8 @@ const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
 
     const orderedSeats = Array.from(seats.values()).sort((s1,s2) => s1.index - s2.index);
 
+    const currentPlayer = currentSeat === mySeat;
+
     const playedCard = (index: number) => {
         const playedCard = playedCards.get(index);
         return playedCard && <PlayingCard card={playedCard}></PlayingCard>;
@@ -75,6 +77,7 @@ const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
                         <PlayingCard
                             key={"playing_card_" + index} 
                             card={card} 
+                            clickable={currentPlayer}
                             onClick={() => onCardClick(card, index)}
                         />)
                     )

@@ -3,14 +3,17 @@ import ControlsMenu from "./ControlsMenu/ControlsMenu";
 import TeamScore from "./TeamScore/TeamScore";
 import View from "./View/View";
 import "./GameControls.css";
+import TrumpView from "./TrumpView/TrumpView";
+import { Bid } from "../Models/Bid";
 
 interface IGameControlsProps {
     score: number[],
-    tricks: number[]
+    tricks: number[],
+    winningBid: Bid | null
 }
 
 const GameControls: React.FC<IGameControlsProps> = (props: IGameControlsProps) => {
- 	const {score, tricks} = props;
+ 	const {score, tricks, winningBid} = props;
     
     return (	
         <div className="game-controls">
@@ -37,6 +40,9 @@ const GameControls: React.FC<IGameControlsProps> = (props: IGameControlsProps) =
                         t2Color={"blue"}
                     >
                     </TeamScore>
+                </div>
+                <div className="row-1">
+                    <TrumpView currentBid={winningBid} />
                 </div>
                 <div className="row-1"> 
                     <View></View>
