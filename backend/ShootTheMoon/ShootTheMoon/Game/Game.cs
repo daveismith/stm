@@ -277,6 +277,9 @@ namespace ShootTheMoon.Game
             Score[0] += (Tricks[0] < GameSettings.LeechLimit || handWinner == 0) ? Tricks[0] : 0;
             Score[1] += (Tricks[1] < GameSettings.LeechLimit || handWinner == 1) ? Tricks[1] : 0;
 
+            // Update The Current Dealer To The Next Player
+            Dealer = (Dealer + 1) % Players.Length;
+
             // Check If Game Over
             if (Score[0] >= GameSettings.ScoreNeededToWin || Score[1] >= GameSettings.ScoreNeededToWin) {
                 await EnterState(GameState.GAME_COMPLETE);
