@@ -236,14 +236,15 @@ class SceneController {
 
         this.awaitingAnimation = true;
         setTimeout(() => {
-            Card3D.clearCards();
+            Card3D.clearCards(this.scene);
             this.awaitingAnimation = false;
         }, 3000);
 
         if (this.gameState >= 10 && tricksRemainingInHand > 0)
             this.gameState = GameState.WaitingToPlay;
-        else if (this.gameState >= 10) {
+        else if (this.gameState >= 10) { // hand complete, ready for next hand
             this.currentBid = null;
+            for (let nameplate of this.nameplates) nameplate.resetToDefault();
             this.gameState = GameState.WaitingForHand;
         }
     }
@@ -624,7 +625,11 @@ class SceneController {
                 card3D = CardStack3D.fanStacks[seat].index[destinationCardLocation[1]];
 
                 if (card3D) {
-                    card3D.playCardAnimation(seat, this.scene);
+                    this.awaitingAnimation = true;
+                    setTimeout(() => {
+                        card3D && card3D.playCardAnimation(seat, this.scene);
+                        this.awaitingAnimation = false;
+                    }, 1000);
                  
                     this.currentCardsInTrick[order] = card3D;
                 }
