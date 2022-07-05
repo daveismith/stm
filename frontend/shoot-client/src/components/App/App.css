@@ -10,3 +10,9 @@ html, body, #root, .App {
   from { zoom: 1.0 }
   to { zoom: 1.2 }
 }
+
+.card.clickable:hover {
+    margin: 10px 10px;
+    width: 66px;
+    zoom: 1.2;
+}
