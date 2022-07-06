@@ -220,7 +220,7 @@ namespace ShootTheMoon.Game
 
                 if (currentPlayerIndex >= 0) {
                     for (int index = currentPlayerIndex + 2; index < currentPlayerIndex + NumPlayers; index += 2) {
-                        transferFrom.Add(Players[index]);
+                        transferFrom.Add(Players[index % NumPlayers]);
                     }
                 }
             
