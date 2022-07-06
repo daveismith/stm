@@ -439,8 +439,14 @@ namespace ShootTheMoon.Game
         }
 
         public async Task<bool> PlayCard(Suit suit, Rank rank, Client client) {
+            if (State != GameState.PLAYING_HAND) {
+                Log.Debug("{0}: {1} sent card when not playing hand", Name, client.Name);
+                return false;
+            }
+
             if (client != CurrentPlayer) {
                 // Only Accept A Play From The Current Player
+                Log.Debug("{0}: {1} sent card out of turn", Name, client.Name);
                 return false;
             }
 
@@ -450,7 +456,6 @@ namespace ShootTheMoon.Game
             }
 
             Card card = new Card(suit, rank);
-
 
             PlayedCard playedCard = new PlayedCard(card, Convert.ToUInt16(PlayedCards.Count), seat);
 
