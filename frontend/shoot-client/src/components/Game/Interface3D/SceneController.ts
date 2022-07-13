@@ -26,6 +26,11 @@ enum GameState {
     ChoosingBid = 12,
     WaitingForBidConfirmation = 13,
     WaitingForBidEnd = 14,
+    ChoosingTransfer = 15,
+    WaitingForTransferConfirmation = 16,
+    WaitingForTransfer = 17,
+    ChoosingThrowaway = 18,
+    WaitingForThrowawayConfirmation = 19,
     WaitingToPlay = 100,
     ChoosingPlay = 101,
     WaitingForTrickEnd = 102,
@@ -635,6 +640,25 @@ class SceneController {
                 }
             }
         }
+    }
+
+    static transferRequestListener(fromSeat: number, toSeat: number) {
+        if (fromSeat === GameSettings.currentPlayer) {
+            for (let card of this.hand) card.toggleGlow(true);
+            this.gameState = GameState.ChoosingTransfer;
+        }
+    }
+
+    static transferResponseListener(fromSeat: number, toSeat: number, card: Card) {
+    }
+
+    static throwawayRequestListener() {
+        for (let card of this.hand) card.toggleGlow(true);
+        this.gameState = GameState.ChoosingThrowaway;
+    }
+
+    static throwawayResponseListener(finished: boolean, cardRemoved: Card) {
+
     }
 
     static moveCameraToSeat(seatNumber: number) {

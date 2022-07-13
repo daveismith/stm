@@ -45,6 +45,8 @@ export interface IGame {
     setSeatReadyStatus?(ready: boolean): void;
     createBid?(tricks: number, shootNum: number, trump: Bid.Trump, seat: number): void;
     playCard?(card: Card, index?: number): void;
+    transferCard?(card: Card, index?: number): void;
+    throwawayCard?(card: Card, index?: number): void;
 }
 
 interface ParamTypes{ 
@@ -75,7 +77,9 @@ const cleanInitialState: IGame = {
     takeSeat: undefined,
     setSeatReadyStatus: undefined,
     createBid: undefined,
-    playCard: undefined
+    playCard: undefined,
+    transferCard: undefined,
+    throwawayCard: undefined
 };
 
 let registered: boolean = false;
@@ -345,6 +349,59 @@ export const GameProvider: React.FC = ({ children }) => {
                 });
             };
 
+            const transferCard = (card: Card, index: number) => {
+                if (!appState.joined) {
+                    return false;
+                }
+
+                console.log('transfer card, index: ' + index);
+
+                const request: ProtoCard = cardToProto(card);
+
+                appState.connection.transferCard(request, appState.metadata).then((value: StatusResponse) => {
+                    eventEmitter.emit('transferResponse', card, value.getSuccess());
+                    console.log('transfer card result: ' + value.getSuccess());
+                    if (value.getSuccess()) {
+                        setState(produce(draft => {
+                            if (index !== undefined) {
+                                draft.hand.splice(index, 1);
+                            }
+                        }));
+                    }
+                    return value.getSuccess();
+                }).catch((reason: any) => { 
+                    eventEmitter.emit('transferResponse', card, false);
+                    console.log('transfer card failed: ' + (reason as grpcWeb.Error).message);
+                    return false;
+                });
+            };
+        
+            const throwawayCard = (card: Card, index: number) => {
+                if (!appState.joined) {
+                    return false;
+                }
+
+                console.log('throw away card, index: ' + index);
+
+                const request: ProtoCard = cardToProto(card);
+
+                appState.connection.throwawayCard(request, appState.metadata).then((value: StatusResponse) => {
+                    eventEmitter.emit('throwawayResponse', card, value.getSuccess());
+                    console.log('throwaway card result: ' + value.getSuccess());
+                    if (value.getSuccess()) {
+                        setState(produce(draft => {
+                            if (index !== undefined) {
+                                draft.hand.splice(index, 1);
+                            }
+                        }));
+                    }
+                    return value.getSuccess();
+                }).catch((reason: any) => { 
+                    eventEmitter.emit('throwawayResponse', card, false);
+                    console.log('throwaway card failed: ' + (reason as grpcWeb.Error).message);
+                    return false;
+                });
+            };
         
             if (state.takeSeat === undefined) { 
                 setState(produce(draft => {
