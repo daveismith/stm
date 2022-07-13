@@ -59,7 +59,8 @@ namespace ShootTheMoon.Network
             SEAT_IN_USE = 2,
             CLIENT_NOT_FOUND = 3,
             INVALID_BID = 4,
-            INVALID_CARD_PLAYED = 5
+            INVALID_CARD_PLAYED = 5,
+            PLAYER_NOT_TRANSFERRING = 6
             
         }
 
@@ -114,7 +115,7 @@ namespace ShootTheMoon.Network
             if ((info.Type & GameEventType.TransferRequest) == GameEventType.TransferRequest) {
                 // Request A Transfer From The List Of Clients Specified in the AdditionalInfo
                 if (info.AdditionalData is List<Client>) {
-                    //TODO: Actually Dispatch
+                    await TransferCardRequest(game, (List<Client>)info.AdditionalData);
                 }
             }
 
@@ -474,6 +475,28 @@ namespace ShootTheMoon.Network
             }
         }   
 
+        public async Task TransferCardRequest(Game.Game game, List<Client> transferFrom) {
+            List<Task> tasks = new List<Task>();
+
+            foreach (Client bidder in transferFrom) {
+                if (bidder is RpcClient) {
+                    RpcClient rpcClient = (RpcClient)bidder;
+
+                    TransferRequest tr = new TransferRequest();
+                    tr.ToSeat = game.FindSeat(game.CurrentPlayer);
+                    tr.FromSeat = game.FindSeat(bidder);
+
+                    Notification n = new Notification();
+                    n.TransferRequest = tr;
+
+                    tasks.Add(SendNotification(rpcClient, n));
+                    Log.Debug("{0}: Transfer Card Request From {1} To {2}", game.Name, bidder.Name, game.CurrentPlayer.Name);
+                }
+            }
+
+            await Task.WhenAll(tasks);
+        }
+
         public async Task PlayCardRequest(Game.Game game, Client currentPlayer) {
             Notification n = new Notification();
             n.PlayCardRequest = new PlayCardRequest();
@@ -682,12 +705,51 @@ namespace ShootTheMoon.Network
             return r;
         }
 
-        /*
-        public virtual global::System.Threading.Tasks.Task<global::ShootTheMoon.Network.Proto.StatusResponse> TransferCard(global::ShootTheMoon.Network.Proto.Transfer request, grpc::ServerCallContext context)
+        public override async Task<StatusResponse> TransferCard(Proto.Transfer request, ServerCallContext context)
         {
-            throw new grpc::RpcException(new grpc::Status(grpc::StatusCode.Unimplemented, ""));
+            string uuid = context.RequestHeaders.GetValue(GAME_ID);
+            string clientToken = context.RequestHeaders.GetValue(CLIENT_TOKEN);
+
+            StatusResponse r = new StatusResponse();
+            Game.Game game;
+
+            try {
+                game = games[uuid];
+            }
+            catch (KeyNotFoundException) {
+                r.Success = false;
+                r.ErrorNum = (int)ErrorCode.GAME_NOT_FOUND;
+                r.ErrorText = "Game Not Found";
+                return r;
+            }
+
+            bool result = false;
+            try {
+                RpcClient client = await FindClient(game, clientToken);
+                Log.Debug("{3}: Received a card of (suit: {0}, rank: {1}) from {2}", request.Card.Suit, request.Card.Rank, client.Name, game.Name);
+
+                //result = await game.MakeBid(request.Tricks, trump, request.ShootNum, pass, client);
+            }
+            catch (KeyNotFoundException) {
+                r.Success = false;
+                r.ErrorNum = (int)ErrorCode.CLIENT_NOT_FOUND;
+                r.ErrorText = "Client Not Found";
+                return r;
+            }
+
+            r.Success = result;
+            if (result) {
+                r.ErrorNum = (int)ErrorCode.SUCCESS;
+                r.ErrorText = "";
+            } else {
+                r.ErrorNum = (int)ErrorCode.PLAYER_NOT_TRANSFERRING;
+                r.ErrorText = "Invalid Bid";
+            }
+
+            return r;
         }
 
+        /*
         public virtual global::System.Threading.Tasks.Task<global::ShootTheMoon.Network.Proto.ThrowawayResponse> ThrowawayCard(global::ShootTheMoon.Network.Proto.Card request, grpc::ServerCallContext context)
         {
             throw new grpc::RpcException(new grpc::Status(grpc::StatusCode.Unimplemented, ""));

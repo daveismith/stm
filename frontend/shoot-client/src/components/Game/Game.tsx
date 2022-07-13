@@ -58,6 +58,7 @@ const Game: React.FC = () => {
                     <GameControls
                         score={gameState.score}
                         tricks={gameState.tricks}
+                        winningBid={gameState.winningBid}
                     />
                 </div>
             </div>);

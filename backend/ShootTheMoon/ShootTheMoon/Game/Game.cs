@@ -220,7 +220,7 @@ namespace ShootTheMoon.Game
 
                 if (currentPlayerIndex >= 0) {
                     for (int index = currentPlayerIndex + 2; index < currentPlayerIndex + NumPlayers; index += 2) {
-                        transferFrom.Add(Players[index]);
+                        transferFrom.Add(Players[index % NumPlayers]);
                     }
                 }
             
@@ -276,6 +276,9 @@ namespace ShootTheMoon.Game
             // Update The Score
             Score[0] += (Tricks[0] < GameSettings.LeechLimit || handWinner == 0) ? Tricks[0] : 0;
             Score[1] += (Tricks[1] < GameSettings.LeechLimit || handWinner == 1) ? Tricks[1] : 0;
+
+            // Update The Current Dealer To The Next Player
+            Dealer = (Dealer + 1) % Players.Length;
 
             // Check If Game Over
             if (Score[0] >= GameSettings.ScoreNeededToWin || Score[1] >= GameSettings.ScoreNeededToWin) {
@@ -436,8 +439,14 @@ namespace ShootTheMoon.Game
         }
 
         public async Task<bool> PlayCard(Suit suit, Rank rank, Client client) {
+            if (State != GameState.PLAYING_HAND) {
+                Log.Debug("{0}: {1} sent card when not playing hand", Name, client.Name);
+                return false;
+            }
+
             if (client != CurrentPlayer) {
                 // Only Accept A Play From The Current Player
+                Log.Debug("{0}: {1} sent card out of turn", Name, client.Name);
                 return false;
             }
 
@@ -447,7 +456,6 @@ namespace ShootTheMoon.Game
             }
 
             Card card = new Card(suit, rank);
-
 
             PlayedCard playedCard = new PlayedCard(card, Convert.ToUInt16(PlayedCards.Count), seat);
 

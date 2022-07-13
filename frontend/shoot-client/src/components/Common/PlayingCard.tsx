@@ -14,11 +14,6 @@ const StyledDiv = styled.div`
 border-radius: 12px;
 margin: 15px 10px;
 width: 55px;
-&:hover {
-    margin: 10px 10px;
-    width: 66px;
-    zoom: 1.2;
-}
 `;
 
 const RankDiv = styled.div`
@@ -33,7 +28,7 @@ padding: 0px 0px 6px 0px;
 `;
 
 const PlayingCard: React.FC<IPlayingCardProps> = (props: IPlayingCardProps) => {
-
+    const clickable = props.clickable || false;
     const suit = props.card.suit;
     const color = (suit === Card.Suit.DIAMONDS || suit === Card.Suit.HEARTS) ? "red" : "black";
 
@@ -44,7 +39,7 @@ const PlayingCard: React.FC<IPlayingCardProps> = (props: IPlayingCardProps) => {
     }
 
     return (  
-        <StyledDiv onClick={onClick}>
+        <StyledDiv onClick={onClick} className={`card ${clickable ? 'clickable' : ''}`}>
             <CardView>
                 <RankDiv style={{color: `${color}`}}>
                     {Card.rankString(props.card.rank)}
