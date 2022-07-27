@@ -24,11 +24,15 @@ namespace ShootTheMoon.Game {
 
         TransferRequest = 256,
 
-        TrumpUpdate = 512,
+        TransferCard = 512,
 
-        PlayCardRequest = 1024,
+        DiscardRequest = 1024,
 
-        PlayedCards = 2048
+        TrumpUpdate = 2048,
+
+        PlayCardRequest = 4096,
+
+        PlayedCards = 8192
     }
 
     public class GameEvent {
