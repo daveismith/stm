@@ -29,8 +29,10 @@ enum GameState {
     ChoosingTransfer = 15,
     WaitingForTransferConfirmation = 16,
     WaitingForTransfer = 17,
-    ChoosingThrowaway = 18,
-    WaitingForThrowawayConfirmation = 19,
+    WaitingForTransfersEnd = 18,
+    ChoosingThrowaway = 19,
+    WaitingForThrowawayConfirmation = 20,
+    WaitingForThrowawaysEnd = 21,
     WaitingToPlay = 100,
     ChoosingPlay = 101,
     WaitingForTrickEnd = 102,
@@ -649,7 +651,24 @@ class SceneController {
         }
     }
 
-    static transferResponseListener(fromSeat: number, toSeat: number, card: Card) {
+    static transferResponseListener(fromSeat: number, toSeat: number, card: Card, success: boolean) {
+        // To do: check if card is the same as this.currentCard?
+
+        if (!this.clientIn3DMode) return;
+
+        if (success) {
+            let card: Card3D | null = this.currentCard;
+
+            card && card.transferCardAnimation(GameSettings.currentPlayer, this.scene);
+
+            for (let card of this.hand) card.toggleGlow(false);
+
+            this.gameState = GameState.WaitingForTransfersEnd;
+        } else {
+            console.log("Error Transferring Card");
+        }
+
+        this.awaitingServerResponse = false;
     }
 
     static throwawayRequestListener() {
@@ -657,8 +676,24 @@ class SceneController {
         this.gameState = GameState.ChoosingThrowaway;
     }
 
-    static throwawayResponseListener(finished: boolean, cardRemoved: Card) {
+    static throwawayResponseListener(finished: boolean, cardRemoved: Card, success: boolean) {
+        // To do: check if cardRemoved is the same as this.currentCard?
 
+        if (!this.clientIn3DMode) return;
+
+        if (success) {
+            let card: Card3D | null = this.currentCard;
+
+            card && card.throwAwayCardAnimation(GameSettings.currentPlayer, this.scene);
+
+            for (let card of this.hand) card.toggleGlow(false);
+
+            this.gameState = GameState.WaitingForThrowawaysEnd;
+        } else {
+            console.log("Error Throwing Away Card");
+        }
+
+        this.awaitingServerResponse = false;
     }
 
     static moveCameraToSeat(seatNumber: number) {

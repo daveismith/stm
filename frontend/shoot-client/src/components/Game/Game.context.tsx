@@ -46,7 +46,7 @@ export interface IGame {
     createBid?(tricks: number, shootNum: number, trump: Bid.Trump, seat: number): void;
     playCard?(card: Card, index?: number): void;
     transferCard?(card: Card, index?: number): void;
-    throwawayCard?(card: Card, index?: number): void;
+    throwAwayCard?(card: Card, index?: number): void;
 }
 
 interface ParamTypes{ 
@@ -79,7 +79,7 @@ const cleanInitialState: IGame = {
     createBid: undefined,
     playCard: undefined,
     transferCard: undefined,
-    throwawayCard: undefined
+    throwAwayCard: undefined
 };
 
 let registered: boolean = false;
@@ -376,7 +376,7 @@ export const GameProvider: React.FC = ({ children }) => {
                 });
             };
         
-            const throwawayCard = (card: Card, index: number) => {
+            const throwAwayCard = (card: Card, index: number) => {
                 if (!appState.joined) {
                     return false;
                 }
@@ -385,7 +385,7 @@ export const GameProvider: React.FC = ({ children }) => {
 
                 const request: ProtoCard = cardToProto(card);
 
-                appState.connection.throwawayCard(request, appState.metadata).then((value: StatusResponse) => {
+                appState.connection.throwAwayCard(request, appState.metadata).then((value: StatusResponse) => {
                     eventEmitter.emit('throwawayResponse', card, value.getSuccess());
                     console.log('throwaway card result: ' + value.getSuccess());
                     if (value.getSuccess()) {
