@@ -13,7 +13,9 @@ import { Notification,
     SetReadyStatusRequest,
     Trump,
     TrumpUpdate,
-    PlayedCard
+    PlayedCard,
+    TransferRequest,
+    Transfer
 } from '../../proto/shoot_pb';
 import { Card } from "./Models/Card";
 import { Seat } from "./Models/Seat";
@@ -34,6 +36,7 @@ export interface IGame {
     currentSeat?: number;
     playedCards: Map<number, Card>;
     currentBidder: boolean;
+    transferTarget?: number;
     highBid: Bid | null;
     winningBid: Bid | null;
     bids: Map<number, Bid>;
@@ -45,7 +48,7 @@ export interface IGame {
     setSeatReadyStatus?(ready: boolean): void;
     createBid?(tricks: number, shootNum: number, trump: Bid.Trump, seat: number): void;
     playCard?(card: Card, index?: number): void;
-    transferCard?(card: Card, index?: number): void;
+    transferCard?(from: number, to: number, card: Card, index?: number): void;
     throwawayCard?(card: Card, index?: number): void;
 }
 
@@ -194,19 +197,43 @@ export const GameProvider: React.FC = ({ children }) => {
                             }
                         }
                         draft.highBid = highBid;
-                }));
+                    }));
                 } else if (notification.hasHand()) {
                     console.log('received hand');
                     const hand: Hand = notification.getHand()!;
                     const cards: Card[] = hand.getHandList().map(cardFromProto);
                     
                     setState(produce(draft => {
+                        draft.transferTarget = undefined;
                         draft.hand = cards;
                     }));
                 } else if (notification.hasTransferRequest()) {
-                    console.log('transfer request');
+                    console.log('transfer request ');
+                    const request: TransferRequest = notification.getTransferRequest()!;
+
+                    setState(produce(draft => {    
+                        console.log('from seat: ' + request.getFromSeat());
+                        console.log('my seat: ' + draft.mySeat);
+                        if (request.getFromSeat() === draft.mySeat) {
+                                draft.transferTarget = request.getToSeat();
+                        }
+                    }));
                 } else if (notification.hasTransfer()) {
                     console.log('transfer');
+                    const transfer: Transfer = notification.getTransfer()!;
+                    
+                    if (transfer.getToSeat() === state.mySeat) {
+                        const card: Card = cardFromProto(transfer.getCard()!);
+                        console.log('my seat, rx card')
+                        console.log(card);
+                        setState(produce(draft => {
+                            draft.hand.push(card);
+                        }));
+                    } else {
+                        console.log('incorrect To seat.');
+                        console.log('to seat: ' + transfer.getToSeat())
+                        console.log('my seat: ' + state.mySeat);
+                    }
                 } else if (notification.hasThrowawayRequest()) {
                     console.log('throwaway request');
                 } else if (notification.hasTrumpUpdate()) {
@@ -254,7 +281,7 @@ export const GameProvider: React.FC = ({ children }) => {
         
             registered = true;
 
-            const takeSeat = (seat: number) => {
+            const takeSeat = async (seat: number) => {
                 if (!appState.joined) { return false; }
         
                 console.log('take seat');
@@ -262,19 +289,29 @@ export const GameProvider: React.FC = ({ children }) => {
                 const request: TakeSeatRequest = new TakeSeatRequest();
                 request.setSeat(seat);
         
-                appState.connection.takeSeat(request, appState.metadata).then((value: StatusResponse) => {
+                await appState.connection.takeSeat(request, appState.metadata).then((value: StatusResponse) => {
                     // Push Selected State Into The Seat
-                    setState(produce(draft => { draft.mySeat = seat; }));
+                    setState(produce((draft) => { 
+                        draft.mySeat = seat; 
+                        console.log(draft);
+                    }));
         
+                    console.log('took seat ' + seat);
+
                     // Emit for 3D
-                    eventEmitter.emit('takeSeatRequestResponse', seat, value.getSuccess());
+                    try {
+                        eventEmitter.emit('takeSeatRequestResponse', seat, value.getSuccess());
+                    } catch (err) {
+                        console.log('error during emit: ' + err);
+                    }
                     return value.getSuccess();
                 }).catch((reason: any) => {
+                    console.log('reason: ');
+                    console.log(reason);
                     eventEmitter.emit('takeSeatRequestResponse', seat, false);
                     return false;
                 });
             };
-
 
             const setSeatReadyStatus = (ready: boolean) => {
                 if (!appState.joined) { return false; }
@@ -349,14 +386,18 @@ export const GameProvider: React.FC = ({ children }) => {
                 });
             };
 
-            const transferCard = (card: Card, index: number) => {
+            const transferCard = (from: number, to: number, card: Card, index: number) => {
                 if (!appState.joined) {
                     return false;
                 }
 
                 console.log('transfer card, index: ' + index);
 
-                const request: ProtoCard = cardToProto(card);
+                const requestCard: ProtoCard = cardToProto(card);
+                const request: Transfer = new Transfer();
+                request.setFromSeat(from);
+                request.setToSeat(to);
+                request.setCard(requestCard);
 
                 appState.connection.transferCard(request, appState.metadata).then((value: StatusResponse) => {
                     eventEmitter.emit('transferResponse', card, value.getSuccess());
@@ -409,11 +450,13 @@ export const GameProvider: React.FC = ({ children }) => {
                     draft.setSeatReadyStatus = setSeatReadyStatus;
                     draft.createBid = createBid;
                     draft.playCard = playCard;
+                    draft.transferCard = transferCard;
+                    draft.throwawayCard = throwawayCard;
                 })); 
             }
 
         }
-    });
+    }, [state.playerName, state.mySeat, state.takeSeat, state.eventEmitter, appState.joined, appState.stream, appState.connection, appState.metadata, joinGame, id, eventEmitter]);
 
     return (
         <GameContext.Provider value={ [state, setState] }>

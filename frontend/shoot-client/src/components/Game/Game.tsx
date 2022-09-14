@@ -38,6 +38,7 @@ const Game: React.FC = () => {
                 seats={gameState.seats}
                 mySeat={gameState.mySeat}
                 currentSeat={gameState.currentSeat}
+                transferTarget={gameState.transferTarget}
                 playedCards={gameState.playedCards}
                 highBid={gameState.highBid}
                 bids={gameState.bids}
