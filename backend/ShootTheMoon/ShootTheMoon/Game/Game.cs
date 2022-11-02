@@ -240,7 +240,7 @@ namespace ShootTheMoon.Game
         }
 
         protected async Task EnterAwaitingDiscard(GameState previousState) {
-            GameEvent ge = new GameEvent( GameEventType.DiscardRequest, this, CurrentPlayer);
+            GameEvent ge = new GameEvent( GameEventType.ThrowawayRequest, this, CurrentPlayer);
             await PublishEvent(ge);
         }
 

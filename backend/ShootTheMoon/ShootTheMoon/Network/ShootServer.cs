@@ -126,8 +126,11 @@ namespace ShootTheMoon.Network
                 }
             }
 
-            if ((info.Type & GameEventType.DiscardRequest) == GameEventType.DiscardRequest) {
+            if ((info.Type & GameEventType.ThrowawayRequest) == GameEventType.ThrowawayRequest) {
                 // Send A Discard Request To Te Current Player
+                if (info.AdditionalData is Client) {
+                    await ThrowawayRequest(game, (Client)info.AdditionalData);
+                }
             }
 
             if ((info.Type & GameEventType.BidUpdate) == GameEventType.BidUpdate) {
@@ -539,8 +542,15 @@ namespace ShootTheMoon.Network
             await Task.WhenAll(tasks);
         }
 
-        public async Task DiscardCardsRequest(Game.Game game, Client currentPlayer) {
+        public async Task ThrowawayRequest(Game.Game game, Client currentPlayer) {
             // Send A Discard Request
+            if (game.CurrentPlayer is RpcClient) {
+                RpcClient player = (RpcClient)game.CurrentPlayer;
+                Notification n = new Notification();
+                n.ThrowawayRequest = new ThrowawayRequest();
+                await SendNotification(player, n);
+                Log.Debug("{0}: Throwaway Card Request complete", game.Name);
+            }
         }
 
         public async Task PlayCardRequest(Game.Game game, Client currentPlayer) {

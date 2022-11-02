@@ -26,7 +26,7 @@ namespace ShootTheMoon.Game {
 
         TransferCard = 512,
 
-        DiscardRequest = 1024,
+        ThrowawayRequest = 1024,
 
         TrumpUpdate = 2048,
 
