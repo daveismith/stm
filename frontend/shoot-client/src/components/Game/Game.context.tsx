@@ -16,7 +16,8 @@ import { Notification,
     PlayedCard,
     TransferRequest,
     Transfer,
-    ThrowawayRequest
+    ThrowawayRequest,
+    ThrowawayResponse
 } from '../../proto/shoot_pb';
 import { Card } from "./Models/Card";
 import { Seat } from "./Models/Seat";
@@ -268,18 +269,17 @@ export const GameProvider: React.FC = ({ children }) => {
 
         const request: ProtoCard = cardToProto(card);
 
-        appState.connection.throwawayCard(request, appState.metadata).then((value: StatusResponse) => {
-            eventEmitter.emit('throwawayResponse', card, value.getSuccess());
-            console.log('throwaway card result: ' + value.getSuccess());
-            if (value.getSuccess()) {
+
+        appState.connection.throwawayCard(request, appState.metadata).then((value: ThrowawayResponse) => {
+            eventEmitter.emit('throwawayResponse', card, value);
+            console.log('throwaway card result: ' + value);
                 setState(produce(draft => {
-                    draft.throwingAway = false;
+                    draft.throwingAway = !value.getFinished();
                     if (index !== undefined) {
                         draft.hand.splice(index, 1);
                     }
                 }));
-            }
-            return value.getSuccess();
+            return value.getFinished();
         }).catch((reason: any) => { 
             eventEmitter.emit('throwawayResponse', card, false);
             console.log('throwaway card failed: ' + (reason as grpcWeb.Error).message);
@@ -378,6 +378,7 @@ export const GameProvider: React.FC = ({ children }) => {
                             }
                         }
                         draft.highBid = highBid;
+                        draft.currentSeat = notification.getBidList()?.getCurrentBidder();
                     }));
                 } else if (notification.hasHand()) {
                     console.log('received hand');

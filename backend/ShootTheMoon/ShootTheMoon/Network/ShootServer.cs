@@ -804,12 +804,39 @@ namespace ShootTheMoon.Network
             return r;
         }
 
-        /*
-        public virtual global::System.Threading.Tasks.Task<global::ShootTheMoon.Network.Proto.ThrowawayResponse> ThrowawayCard(global::ShootTheMoon.Network.Proto.Card request, grpc::ServerCallContext context)
+        public override async Task<ThrowawayResponse> ThrowawayCard(Proto.Card request, ServerCallContext context)
         {
-            throw new grpc::RpcException(new grpc::Status(grpc::StatusCode.Unimplemented, ""));
+            string uuid = context.RequestHeaders.GetValue(GAME_ID);
+            string clientToken = context.RequestHeaders.GetValue(CLIENT_TOKEN);
+
+            ThrowawayResponse r = new ThrowawayResponse();
+            Game.Game game;
+
+            try {
+                game = games[uuid];
+            } catch (KeyNotFoundException) {
+                r.Finished = false;
+                r.CardRemoved = null;
+                return r;
+            }
+
+            Boolean result = false;
+            try {
+                RpcClient client = await FindClient(game, clientToken);
+                Log.Debug("{0}: Received a throwaway card of (suit: {1}, rank: {2}) from {3}", game.Name, request.Suit, request.Rank, client.Name);
+
+                result = await game.ThrowawayCard(GameSuitFromProto(request.Suit), GameRankFromProto(request.Rank), client);
+                r.Finished = (client.Hand.Count <= game.GameSettings.TricksPerHand);
+                r.CardRemoved = new Proto.Card();
+                r.CardRemoved.Rank = request.Rank;
+                r.CardRemoved.Suit = request.Suit;
+                return r;
+            } catch (KeyNotFoundException) {
+                r.Finished = false;
+                r.CardRemoved = null;
+                return r;
+            }
         }
-        */
 
         public override async Task<StatusResponse> PlayCard(Proto.Card request, ServerCallContext context)
         {

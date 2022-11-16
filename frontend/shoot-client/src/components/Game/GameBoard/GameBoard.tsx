@@ -59,26 +59,26 @@ const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
     }
 
     return (
-        <div style={{color: 'white', backgroundColor: '#404040', height: '100%'}}>
+        <div style={{color: 'white', backgroundColor: '#404040', height: '100%', paddingTop: '1rem'}}>
             <Grid
                 container
                 direction="row"
                 justify="center"
-                alignItems="center"
+                alignItems="flex-start"
             >
                 {orderedSeats.map((seat, index) => (
                 <Grid
                     item
                     direction="column"
                     justify="center"
-                    alignItems="center"
+                    alignItems="flex-start"
                     key={index}
                 >
-                    {playedCard(seat.index)}
+                    
+                    <TextBubble size="small" text={seat.name.length === 0 ? "Empty" : seat.name + ((seat.index === mySeat) ? " (me)" : "")} color={seat.index % 2 === 0 ? "green" : "blue"} disabled={seat.empty}></TextBubble><br />
                     { (seat.index === currentSeat) ? '✮' : null}
-                    <TextBubble size="small" text={seat.name.length === 0 ? "Empty" : seat.name} color={seat.index % 2 === 0 ? "green" : "blue"} disabled={seat.empty}></TextBubble>
-                    { (seat.index === mySeat) ? 'My Seat' : null}
                     {bid(seat.index)}
+                    {playedCard(seat.index)}
                 </Grid>
                 ))}
             </Grid>
