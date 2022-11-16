@@ -104,22 +104,32 @@ class SceneController {
 
         this.gameStateEventTypeMap[GameState.WaitingForHand] = [];
         this.gameStateEventTypeMap[GameState.WaitingForHand][Notification.NotificationCase.HAND] = 1;
+        this.gameStateEventTypeMap[GameState.WaitingForHand][Notification.NotificationCase.TRICKS] = 1;
+        this.gameStateEventTypeMap[GameState.WaitingForHand][Notification.NotificationCase.SCORES] = 1;
 
         this.gameStateEventTypeMap[GameState.WaitingToBid] = [];
         this.gameStateEventTypeMap[GameState.WaitingToBid][Notification.NotificationCase.BID] = 1;
         this.gameStateEventTypeMap[GameState.WaitingToBid][Notification.NotificationCase.BID_LIST] = 1;
         this.gameStateEventTypeMap[GameState.WaitingToBid][Notification.NotificationCase.BID_REQUEST] = 1;
+        this.gameStateEventTypeMap[GameState.WaitingToBid][Notification.NotificationCase.TRICKS] = 1;
+        this.gameStateEventTypeMap[GameState.WaitingToBid][Notification.NotificationCase.SCORES] = 1;
 
         this.gameStateEventTypeMap[GameState.ChoosingBid] = [];
         this.gameStateEventTypeMap[GameState.ChoosingBid][Notification.NotificationCase.BID] = 1;
         this.gameStateEventTypeMap[GameState.ChoosingBid][Notification.NotificationCase.BID_LIST] = 1;
+        this.gameStateEventTypeMap[GameState.ChoosingBid][Notification.NotificationCase.TRICKS] = 1;
+        this.gameStateEventTypeMap[GameState.ChoosingBid][Notification.NotificationCase.SCORES] = 1;
 
         this.gameStateEventTypeMap[GameState.WaitingForBidConfirmation] = [];
         this.gameStateEventTypeMap[GameState.WaitingForBidConfirmation][Notification.NotificationCase.BID_LIST] = 1;
+        this.gameStateEventTypeMap[GameState.WaitingForBidConfirmation][Notification.NotificationCase.TRICKS] = 1;
+        this.gameStateEventTypeMap[GameState.WaitingForBidConfirmation][Notification.NotificationCase.SCORES] = 1;
 
         this.gameStateEventTypeMap[GameState.WaitingForBidEnd] = [];
         this.gameStateEventTypeMap[GameState.WaitingForBidEnd][Notification.NotificationCase.BID_LIST] = 1;
         this.gameStateEventTypeMap[GameState.WaitingForBidEnd][Notification.NotificationCase.TRUMP_UPDATE] = 1;
+        this.gameStateEventTypeMap[GameState.WaitingForBidEnd][Notification.NotificationCase.TRICKS] = 1;
+        this.gameStateEventTypeMap[GameState.WaitingForBidEnd][Notification.NotificationCase.SCORES] = 1;
 
         this.gameStateEventTypeMap[GameState.WaitingToPlay] = [];
         this.gameStateEventTypeMap[GameState.WaitingToPlay][Notification.NotificationCase.PLAY_CARD_REQUEST] = 1;
@@ -247,9 +257,9 @@ class SceneController {
             this.awaitingAnimation = false;
         }, 3000);
 
-        if (this.gameState >= 10 && tricksRemainingInHand > 0)
+        if (this.gameState >= 100 && tricksRemainingInHand > 0)
             this.gameState = GameState.WaitingToPlay;
-        else if (this.gameState >= 10) { // hand complete, ready for next hand
+        else if (this.gameState >= 100) { // hand complete, ready for next hand
             this.currentBid = null;
             for (let nameplate of this.nameplates) nameplate.resetToDefault();
             this.gameState = GameState.WaitingForHand;
@@ -598,7 +608,12 @@ class SceneController {
         let card: Card | undefined;
         let card3D: Card3D | null;
 
-        console.log(cardsList);
+        function animate(card3D: Card3D, seat: number) {
+            setTimeout(() => {
+                card3D && card3D.playCardAnimation(seat, SceneController.scene);
+                SceneController.awaitingAnimation = false;
+            }, 1000);
+        }
 
         for (let i: number = 0; i < cardsList.length; i++) {
             playedCard = cardsList[i];
@@ -612,6 +627,7 @@ class SceneController {
              // Skip if this card has already been played in the UI
              // Skip if it's our card, let it be handled by playCardResponseListener 
             if (!this.currentCardsInTrick[order] && card && seat !== GameSettings.currentPlayer) {
+                console.log("order: " + order + ", seat: " + seat + ", card: " + card);
                 console.log("searching for " + card.getRank() + card.getSuit());
                 console.log(CardStack3D.fanStacks[seat].index);
                 sourceCardLocation = Card3D.findCardInHands(card);
@@ -633,10 +649,11 @@ class SceneController {
 
                 if (card3D) {
                     this.awaitingAnimation = true;
-                    setTimeout(() => {
-                        card3D && card3D.playCardAnimation(seat, this.scene);
-                        this.awaitingAnimation = false;
-                    }, 1000);
+                    animate(card3D, seat);
+                    // setTimeout(() => {
+                    //     card3D && card3D.playCardAnimation(seat, this.scene);
+                    //     this.awaitingAnimation = false;
+                    // }, 1000);
                  
                     this.currentCardsInTrick[order] = card3D;
                 }
