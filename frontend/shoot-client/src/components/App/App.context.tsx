@@ -31,7 +31,7 @@ function uuidv4() {
 type AppContextType = (IApp | ((param: any) => void))[];
 
 const clientId: string = uuidv4();
-const serviceUrl = location.protocol + '//' + location.host + ':8080';
+const serviceUrl = 'http://localhost:8080';
 //const serviceUrl = '<your_ngrok_envoy_tunnel>';
 console.log('serviceUrl: ' + serviceUrl);
 const connection: ShootServerClient = new ShootServerClient(serviceUrl, {'clientId': clientId}, null);
