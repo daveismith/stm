@@ -46,3 +46,16 @@ This assumes that you've got protoc and the appropriate extension for generating
 cd frontend/shoot-client
 protoc -I ../../backend/ShootTheMoon/ShootTheMoon/schema shoot.proto --js_out=import_style=commonjs,binary:src/proto --grpc-web_out=import_style=typescript,mode=grpcwebtext:src/proto
 ```
+
+## Hosting with ngrok
+
+1. Sign up for an account
+2. Create `ngrok_auth.yml` and add content
+   ```yaml
+   version: "2"
+   authtoken: <your_auth_token>
+   ```
+3. Start proxy, frontend and backend
+4. Run `./run_grok.sh`
+5. Update the variable `serviceUrl` in `frontend/shoot-client/src/components/App/App.context.tsx` with the ngrok tunnel pointing to port 8080.
+6. Navigate to the tunnel point to port 8001

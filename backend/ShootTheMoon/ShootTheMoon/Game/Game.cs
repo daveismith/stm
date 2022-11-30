@@ -571,6 +571,7 @@ namespace ShootTheMoon.Game
 
             uint seat = FindSeat(client);
             if (seat >= NumPlayers) {
+                Log.Debug("{0}: {1} is in seat {2} which is invalid for {3} players", Name, client.Name, seat, NumPlayers);
                 return false;
             }
 
@@ -581,6 +582,7 @@ namespace ShootTheMoon.Game
             // Validate Card Is Valid For The Player
             Suit leadSuit = (LeadCard != null) ? LeadCard.Card.Suit : null;
             if (!playedCard.isValidWithHand(CurrentPlayer.Hand, leadSuit, CurrentTrump)) {
+                Log.Debug("{0}: {1} played a card that is invalid", Name, client.Name);
                 return false;
             }
             
