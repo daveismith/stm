@@ -26,6 +26,11 @@ enum GameState {
     ChoosingBid = 12,
     WaitingForBidConfirmation = 13,
     WaitingForBidEnd = 14,
+    ChoosingTransfer = 15,
+    WaitingForTransferConfirmation = 16,
+    WaitingForTransfer = 17,
+    ChoosingThrowaway = 18,
+    WaitingForThrowawayConfirmation = 19,
     WaitingToPlay = 100,
     ChoosingPlay = 101,
     WaitingForTrickEnd = 102,
@@ -236,14 +241,15 @@ class SceneController {
 
         this.awaitingAnimation = true;
         setTimeout(() => {
-            Card3D.clearCards();
+            Card3D.clearCards(this.scene);
             this.awaitingAnimation = false;
         }, 3000);
 
         if (this.gameState >= 10 && tricksRemainingInHand > 0)
             this.gameState = GameState.WaitingToPlay;
-        else if (this.gameState >= 10) {
+        else if (this.gameState >= 10) { // hand complete, ready for next hand
             this.currentBid = null;
+            for (let nameplate of this.nameplates) nameplate.resetToDefault();
             this.gameState = GameState.WaitingForHand;
         }
     }
@@ -624,12 +630,35 @@ class SceneController {
                 card3D = CardStack3D.fanStacks[seat].index[destinationCardLocation[1]];
 
                 if (card3D) {
-                    card3D.playCardAnimation(seat, this.scene);
+                    this.awaitingAnimation = true;
+                    setTimeout(() => {
+                        card3D && card3D.playCardAnimation(seat, this.scene);
+                        this.awaitingAnimation = false;
+                    }, 1000);
                  
                     this.currentCardsInTrick[order] = card3D;
                 }
             }
         }
+    }
+
+    static transferRequestListener(fromSeat: number, toSeat: number) {
+        if (fromSeat === GameSettings.currentPlayer) {
+            for (let card of this.hand) card.toggleGlow(true);
+            this.gameState = GameState.ChoosingTransfer;
+        }
+    }
+
+    static transferResponseListener(fromSeat: number, toSeat: number, card: Card) {
+    }
+
+    static throwawayRequestListener() {
+        for (let card of this.hand) card.toggleGlow(true);
+        this.gameState = GameState.ChoosingThrowaway;
+    }
+
+    static throwawayResponseListener(finished: boolean, cardRemoved: Card) {
+
     }
 
     static moveCameraToSeat(seatNumber: number) {

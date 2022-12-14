@@ -687,13 +687,14 @@ class Card3D {
         }
     }
 
-    static clearCards () {
+    static clearCards (scene: Scene) {
         for (var i = 0; i < GameSettings.players; i++) {
             for (let card of CardStack3D.playMatStacks[i].index) {
                 if (card) {
                     CardStack3D.trashStack.addToStack(card);
-                    card.mesh.position = CardStack3D.trashStack.position.clone();
-                    card.mesh.rotationQuaternion = Card3D.cardBaseRotation.clone();
+                    let newPosition: Vector3 = CardStack3D.trashStack.position.clone();
+                    let newRotationQuaternion: Quaternion = card.mesh.rotationQuaternion ?? Card3D.cardBaseRotation;
+                    card.animateCardSlide(newPosition, newRotationQuaternion, 0, CardStack3D.trashStack.cardsInStack, 1, 0, scene);
                 }
             }
         }

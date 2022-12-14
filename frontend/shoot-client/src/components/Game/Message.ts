@@ -2,7 +2,11 @@ import * as grpcWeb from 'grpc-web';
 import { ShootServerClient } from '../../proto/ShootServiceClientPb';
 import { JoinGameRequest, Notification, StatusResponse, TakeSeatRequest } from '../../proto/shoot_pb';
 
-const stmService = new ShootServerClient('http://localhost:8080', {"clientId": "my_client"}, null);
+//const serviceUrl = location.protocol + '//' + location.host + ':8080';
+//console.log('serviceUrl: ' + serviceUrl);
+/*
+const serviceUrl = 'https://39ac-66-207-211-10.ngrok.io';
+const stmService = new ShootServerClient(serviceUrl, {"clientId": "my_client"}, null);
 
 let token: string;
 const request = new JoinGameRequest();
@@ -27,3 +31,4 @@ if (response.hasJoinResponse()) {
     console.log('data');
 }
 }); 
+*/

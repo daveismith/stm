@@ -12,6 +12,7 @@ namespace ShootTheMoon.Game
         DEALING,
         AWAITING_BIDS,
         AWAITING_TRANSFER,
+        AWAITING_DISCARD,
         NEW_TRICK,
         PLAYING_HAND, 
         TRICK_COMPLETE,
@@ -54,8 +55,11 @@ namespace ShootTheMoon.Game
         public List<int> Score { get; set; }
         public int Dealer { get; set; }
         public Client CurrentPlayer { get; set; }
+        public List<uint> SkipSeats {get; set;}
         public int NextShootNum { get; set; }
         public List<Bid> Bids { get; set; }
+
+        public List<Client> OutstandingTransfers { get; private set; }
 
         public Bid CurrentBid { get; set; }
 
@@ -80,7 +84,9 @@ namespace ShootTheMoon.Game
             State = GameState.AWAITING_PLAYERS;
             GameSettings = gameSettings;
             Bids = new List<Bid>();
+            OutstandingTransfers = new List<Client>();
             PlayedCards = new List<PlayedCard>();
+            SkipSeats = new List<uint>();
 
             Random r = new Random();
             Dealer = r.Next(Players.Length);
@@ -157,6 +163,9 @@ namespace ShootTheMoon.Game
                 await EnterAwaitingBids(previousState);
             } else if (State == GameState.AWAITING_TRANSFER) {
                 await EnterAwaitingTransfer(previousState);
+            } else if (State == GameState.AWAITING_DISCARD) {
+                // Need To Do Something
+                await EnterAwaitingDiscard(previousState);
             } else if (State == GameState.NEW_TRICK) {
                 await EnterNewTrick(previousState);
             } else if (State == GameState.PLAYING_HAND) {
@@ -207,7 +216,8 @@ namespace ShootTheMoon.Game
 
             if (previousState == GameState.AWAITING_BIDS) {
                 // Request From The 
-                List<Client> transferFrom = new List<Client>();
+                //List<Client> transferFrom = new List<Client>();
+                OutstandingTransfers.Clear();
                             
                 int currentPlayerIndex = -1;
                 for (int index = 0; index < NumPlayers; index++) {
@@ -220,14 +230,20 @@ namespace ShootTheMoon.Game
 
                 if (currentPlayerIndex >= 0) {
                     for (int index = currentPlayerIndex + 2; index < currentPlayerIndex + NumPlayers; index += 2) {
-                        transferFrom.Add(Players[index]);
+                        //transferFrom.Add(Players[index % NumPlayers]);
+                        OutstandingTransfers.Add(Players[index % NumPlayers]);
                     }
                 }
             
                 // Need To Pass Which Seat It's Coming From and Which Seat It's Going To
-                GameEvent transferEvent = new GameEvent( GameEventType.TransferRequest, this, transferFrom);
+                GameEvent transferEvent = new GameEvent( GameEventType.TransferRequest, this, OutstandingTransfers);
                 await PublishEvent(transferEvent);
             }
+        }
+
+        protected async Task EnterAwaitingDiscard(GameState previousState) {
+            GameEvent ge = new GameEvent( GameEventType.ThrowawayRequest, this, CurrentPlayer);
+            await PublishEvent(ge);
         }
 
         protected async Task EnterNewTrick(GameState previousState) {
@@ -299,6 +315,7 @@ namespace ShootTheMoon.Game
             Tricks[0] = 0;
             Tricks[1] = 0;
             CurrentTrump = null;
+            SkipSeats.Clear();
         }
 
         private async Task Deal() {
@@ -424,6 +441,12 @@ namespace ShootTheMoon.Game
                 if (CurrentBid.isShoot()) {
                     // Handle A Shoot Bid
                     Log.Debug("Game {0} received a Shoot Bid with {1} shoots", Name, CurrentBid.ShootNumber);
+                    uint skippedSeatCount = ((uint)NumPlayers / 2) - 1;
+                    for (uint i = 0; i < skippedSeatCount; i++) {
+                        uint skip_seat = CurrentBid.Seat + (2 * (i + 1)) % (uint)NumPlayers;
+                        SkipSeats.Add(skip_seat);
+                    }
+                    Log.Debug("Game {0} skip seats are {1}", Name, SkipSeats);
                     await EnterState(GameState.AWAITING_TRANSFER);
                 } else {
                     // Handle A Normal Bid
@@ -438,25 +461,128 @@ namespace ShootTheMoon.Game
             return true;
         }
 
+        public async Task<bool> TransferCard(Suit suit, Rank rank, uint from, uint to, Client client) {
+            if (State != GameState.AWAITING_TRANSFER) {
+                Log.Debug("{0}: {1} sent transfer while not awaiting card", Name, client.Name);
+                return false;
+            }
+
+            uint fromSeat = FindSeat(client);
+            if (fromSeat != from) {
+                Log.Debug("{0}: {1} attempting a transfer for a seat that they do not occupy", Name, client.Name);
+                return false;
+            }
+
+            if (!OutstandingTransfers.Contains(client)) {
+                Log.Debug("{0}: {1} attempted to transfer a card while no transfer expected", Name, client.Name);
+                return false;
+            }
+
+            uint currentPlayerSeat = FindSeat(CurrentPlayer);
+            if (currentPlayerSeat != to) {
+                Log.Debug("{0}: {1} attempted to transfer a card to someone other than the bid winner", Name, client.Name);
+                return false;
+            }
+
+            Log.Debug("{0}: Request Transfer of ({1} of {2}) from {3} => {4}", Name, rank, suit, client.Name, CurrentPlayer.Name);
+
+            Card card = new Card(suit, rank);
+            if (!client.Hand.Contains(card)) {
+                Log.Debug("{0}: {1} attempted to transfer a card they did not have", Name, client.Name);
+                return false;
+            }
+
+
+
+            // Remove The Player From The Players Awaiting Transfer
+            OutstandingTransfers.Remove(client);
+
+            // Remove Card From Transferring Player's Hand
+            client.Hand.Remove(card);
+
+            // Add Card To Current Player's Hand
+            CurrentPlayer.Hand.Add(card);
+
+            // Notify The Source & Recipient as well as everyone else
+            PlayedCard playedCard = new PlayedCard(card, 0, from);
+            GameEvent ge = new GameEvent( GameEventType.TransferCard, this, playedCard);
+            await PublishEvent(ge);
+
+            // If Empty, Wait On Discard From CurrentPlayer
+            if (OutstandingTransfers.Count == 0) {
+                // Transition State
+                await EnterState(GameState.AWAITING_DISCARD);
+            }
+
+            return true;
+        }
+
+
+        public async Task<bool> ThrowawayCard(Suit suit, Rank rank, Client client) {
+            if (State != GameState.AWAITING_DISCARD) {
+                Log.Debug("{0}: {1} send throwaway card wile not awaiting card", Name, client.Name);
+                return false;
+            }
+
+            uint fromSeat = FindSeat(client);
+            uint currentPlayerSeat = FindSeat(CurrentPlayer);
+            if (fromSeat != currentPlayerSeat) {
+                Log.Debug("{0}: {1} attempted to throw away card while not their turn", Name, client.Name);
+                return false;
+            }
+
+            if (client.Hand.Count <= GameSettings.TricksPerHand) {
+                Log.Debug("{0}: {1} attempted to throw away a card when they are already at the proper number", Name, client.Name);
+                await EnterState(GameState.PLAYING_HAND);
+                return false;
+            }
+
+            Log.Debug("{0}: Throw Away Request of ({1} of {2}) by {3}", Name, rank, suit, CurrentPlayer.Name);
+
+            Card card = new Card(suit, rank);
+            if (!client.Hand.Contains(card)) {
+                Log.Debug("{0}: {1} attempted to throw away a card they did not have", Name, client.Name);
+                return false;
+            }
+
+            client.Hand.Remove(card);
+
+            if (client.Hand.Count > GameSettings.TricksPerHand) {
+                GameEvent ge = new GameEvent(GameEventType.ThrowawayRequest, this, client);
+                await PublishEvent(ge);
+            } else {
+                await EnterState(GameState.PLAYING_HAND);
+            }
+
+            return true;
+        }
+
         public async Task<bool> PlayCard(Suit suit, Rank rank, Client client) {
+            if (State != GameState.PLAYING_HAND) {
+                Log.Debug("{0}: {1} sent card when not playing hand", Name, client.Name);
+                return false;
+            }
+
             if (client != CurrentPlayer) {
                 // Only Accept A Play From The Current Player
+                Log.Debug("{0}: {1} sent card out of turn", Name, client.Name);
                 return false;
             }
 
             uint seat = FindSeat(client);
             if (seat >= NumPlayers) {
+                Log.Debug("{0}: {1} is in seat {2} which is invalid for {3} players", Name, client.Name, seat, NumPlayers);
                 return false;
             }
 
             Card card = new Card(suit, rank);
-
 
             PlayedCard playedCard = new PlayedCard(card, Convert.ToUInt16(PlayedCards.Count), seat);
 
             // Validate Card Is Valid For The Player
             Suit leadSuit = (LeadCard != null) ? LeadCard.Card.Suit : null;
             if (!playedCard.isValidWithHand(CurrentPlayer.Hand, leadSuit, CurrentTrump)) {
+                Log.Debug("{0}: {1} played a card that is invalid", Name, client.Name);
                 return false;
             }
             
@@ -477,7 +603,12 @@ namespace ShootTheMoon.Game
                 HighCard = playedCard;
             }
 
-            if (PlayedCards.Count < NumPlayers) {
+            int handPlayers = NumPlayers;
+            if (CurrentBid.isShoot()) {
+                handPlayers = (NumPlayers / 2) + 1;
+            }
+
+            if (PlayedCards.Count < handPlayers) {
                 // Find Next Player
                 int nextPlayer = int.MinValue;
                 for (int index = Dealer+1; index <= Dealer + NumPlayers; index++) {
@@ -485,6 +616,9 @@ namespace ShootTheMoon.Game
                     if (Players[player] == CurrentPlayer) {
                         // Add One And Exit
                         nextPlayer = (player + 1) % NumPlayers;
+                        if (SkipSeats.Contains((uint)nextPlayer)) {
+                            nextPlayer = (nextPlayer + 1) % NumPlayers; // Skip Again
+                        }
                         break;
                     }
                 }
@@ -497,6 +631,7 @@ namespace ShootTheMoon.Game
 
             return true;
         }
+
 
         private async Task PublishEvent(GameEvent gameEvent) {
             foreach (var observer in observers)

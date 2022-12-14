@@ -412,6 +412,28 @@ export namespace Transfer {
   }
 }
 
+export class TransferComplete extends jspb.Message {
+  getFromSeat(): number;
+  setFromSeat(value: number): TransferComplete;
+
+  getToSeat(): number;
+  setToSeat(value: number): TransferComplete;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): TransferComplete.AsObject;
+  static toObject(includeInstance: boolean, msg: TransferComplete): TransferComplete.AsObject;
+  static serializeBinaryToWriter(message: TransferComplete, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): TransferComplete;
+  static deserializeBinaryFromReader(message: TransferComplete, reader: jspb.BinaryReader): TransferComplete;
+}
+
+export namespace TransferComplete {
+  export type AsObject = {
+    fromSeat: number,
+    toSeat: number,
+  }
+}
+
 export class ThrowawayRequest extends jspb.Message {
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ThrowawayRequest.AsObject;
@@ -715,6 +737,11 @@ export class Notification extends jspb.Message {
   hasTransfer(): boolean;
   clearTransfer(): Notification;
 
+  getTransferComplete(): TransferComplete | undefined;
+  setTransferComplete(value?: TransferComplete): Notification;
+  hasTransferComplete(): boolean;
+  clearTransferComplete(): Notification;
+
   getThrowawayRequest(): ThrowawayRequest | undefined;
   setThrowawayRequest(value?: ThrowawayRequest): Notification;
   hasThrowawayRequest(): boolean;
@@ -779,6 +806,7 @@ export namespace Notification {
     bidList?: BidList.AsObject,
     transferRequest?: TransferRequest.AsObject,
     transfer?: Transfer.AsObject,
+    transferComplete?: TransferComplete.AsObject,
     throwawayRequest?: ThrowawayRequest.AsObject,
     trumpUpdate?: TrumpUpdate.AsObject,
     playCardRequest?: PlayCardRequest.AsObject,
@@ -802,14 +830,15 @@ export namespace Notification {
     BID_LIST = 10,
     TRANSFER_REQUEST = 11,
     TRANSFER = 12,
-    THROWAWAY_REQUEST = 13,
-    TRUMP_UPDATE = 14,
-    PLAY_CARD_REQUEST = 15,
-    UPDATE_TIMEOUT = 16,
-    PLAYED_CARDS = 17,
-    TRICKS = 18,
-    SCORES = 19,
-    END_GAME = 20,
+    TRANSFER_COMPLETE = 13,
+    THROWAWAY_REQUEST = 14,
+    TRUMP_UPDATE = 15,
+    PLAY_CARD_REQUEST = 16,
+    UPDATE_TIMEOUT = 17,
+    PLAYED_CARDS = 18,
+    TRICKS = 19,
+    SCORES = 20,
+    END_GAME = 21,
   }
 }
 

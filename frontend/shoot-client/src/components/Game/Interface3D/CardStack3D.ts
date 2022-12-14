@@ -38,7 +38,7 @@ class CardStack3D {
         CardStack3D.deck.pivot.position = CardStack3D.deck.position;
 
         CardStack3D.trashStack = new CardStack3D();
-        CardStack3D.trashStack.position = new Vector3(0, 0, 0);
+        CardStack3D.trashStack.position = new Vector3(-1.5, GameSettings.tableHeight + 0.01, -1.5);
 
         // let test = MeshBuilder.CreateBox("test", {
         //     width: (1.4 * 3) / 4,
