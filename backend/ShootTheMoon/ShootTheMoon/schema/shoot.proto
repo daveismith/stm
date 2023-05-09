@@ -122,6 +122,11 @@ message Transfer {
 	Card card = 3;
 }
 
+message TransferComplete {
+	uint32 from_seat = 1;
+	uint32 to_seat = 2;
+}
+
 message ThrowawayRequest {
 }
 
@@ -190,14 +195,15 @@ message Notification {
 		BidList bid_list = 10;
 		TransferRequest transfer_request = 11;
 		Transfer transfer = 12;
-		ThrowawayRequest throwaway_request = 13;
-		TrumpUpdate trump_update = 14;
-		PlayCardRequest play_card_request = 15;
-		UpdateTimeout update_timeout = 16;
-		PlayedCards played_cards = 17;
-		Tricks tricks = 18;
-		Scores scores = 19;
-		EndGame end_game = 20;
+		TransferComplete transfer_complete = 13;
+		ThrowawayRequest throwaway_request = 14;
+		TrumpUpdate trump_update = 15;
+		PlayCardRequest play_card_request = 16;
+		UpdateTimeout update_timeout = 17;
+		PlayedCards played_cards = 18;
+		Tricks tricks = 19;
+		Scores scores = 20;
+		EndGame end_game = 21;
 	};
 }
 // [END messages]

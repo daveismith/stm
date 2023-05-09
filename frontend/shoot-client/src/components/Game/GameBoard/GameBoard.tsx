@@ -13,6 +13,7 @@ interface IGameBoardProps {
     seats: Map<number, Seat>;
     mySeat: number;
     currentSeat: number;
+    transferTarget: number;
     playedCards: Map<number, Card>;
     highBid: Bid | null;
     bids: Map<number, Bid>;
@@ -24,13 +25,15 @@ interface IGameBoardProps {
 const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
     const [ gameState ] = useGame();
     
-    const { playCard } = gameState;
+    const { playCard, transferCard, throwawayCard, throwingAway } = gameState;
 
-    const { hand, seats, mySeat, currentSeat, playedCards, currentBidder, highBid, bids, bidTricksSelected, bidTrumpSelected  } = props;
+    const { hand, seats, mySeat, currentSeat, transferTarget, playedCards, highBid, bids, bidTricksSelected, bidTrumpSelected  } = props;
 
     const orderedSeats = Array.from(seats.values()).sort((s1,s2) => s1.index - s2.index);
 
-    const currentPlayer = currentSeat === mySeat;
+    const currentPlayer = (currentSeat === mySeat) || (transferTarget !== undefined) || throwingAway;
+
+    console.log('transferTarget: ' + transferTarget + ', throwingAway: ' + throwingAway);
 
     const playedCard = (index: number) => {
         const playedCard = playedCards.get(index);
@@ -43,34 +46,45 @@ const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
     }
 
     const onCardClick = (card: Card, index: number) => {
-        playCard(card, index);
+        if (transferTarget !== undefined) {
+            // Transfer Card
+            console.log('transfer card');
+            transferCard(mySeat, transferTarget, card, index);
+        } else if (throwingAway) {            
+            console.log('throw away card')
+            throwawayCard(card, index);
+        } else {
+            playCard(card, index);
+        }
     }
 
     return (
-        <div style={{color: 'white', backgroundColor: '#404040', height: '100%'}}>
+        <div style={{color: 'white', backgroundColor: '#404040', height: '100%', paddingTop: '1rem'}}>
             <Grid
                 container
                 direction="row"
                 justify="center"
-                alignItems="center"
+                alignItems="flex-start"
             >
                 {orderedSeats.map((seat, index) => (
                 <Grid
                     item
                     direction="column"
                     justify="center"
-                    alignItems="center"
+                    alignItems="flex-start"
                     key={index}
                 >
-                    {playedCard(seat.index)}
+                    
+                    <TextBubble size="small" text={seat.name.length === 0 ? "Empty" : seat.name + ((seat.index === mySeat) ? " (me)" : "")} color={seat.index % 2 === 0 ? "green" : "blue"} disabled={seat.empty}></TextBubble><br />
                     { (seat.index === currentSeat) ? '✮' : null}
-                    <TextBubble size="small" text={seat.name.length === 0 ? "Empty" : seat.name} color={seat.index % 2 == 0 ? "green" : "blue"} disabled={seat.empty}></TextBubble>
-                    { (seat.index === mySeat) ? 'My Seat' : null}
                     {bid(seat.index)}
+                    {playedCard(seat.index)}
                 </Grid>
                 ))}
             </Grid>
             <Bidding highBid={highBid} bids={bids} bidTricksSelected={bidTricksSelected} bidTrumpSelected={bidTrumpSelected} />
+            {(transferTarget !== undefined)? <div style={{bottom: '10em', left: 0, right: '25%', position: 'absolute', justifyContent: 'center'}}>Transfer A Card</div> : <></>}
+            {(throwingAway)? <div style={{bottom: '10em', left: 0, right: '25%', position: 'absolute', justifyContent: 'center'}}>Throw Away A Card</div> : <></>}
             <div style={{bottom: 0, left: 0, right: '25%', position: 'absolute', display: 'flex', justifyContent: 'center', marginBottom: '2em', marginTop: '2em'}}>
                 {
                     hand.map((card, index) => (

@@ -119,6 +119,20 @@ namespace ShootTheMoon.Network
                 }
             }
 
+            if ((info.Type & GameEventType.TransferCard) == GameEventType.TransferCard) {
+                // Send The Appropriate Updates To CurrentPlayer, and the rest of the players.
+                if (info.AdditionalData is Game.PlayedCard) {
+                    await TransferCard(game, (Game.PlayedCard)info.AdditionalData);
+                }
+            }
+
+            if ((info.Type & GameEventType.ThrowawayRequest) == GameEventType.ThrowawayRequest) {
+                // Send A Discard Request To Te Current Player
+                if (info.AdditionalData is Client) {
+                    await ThrowawayRequest(game, (Client)info.AdditionalData);
+                }
+            }
+
             if ((info.Type & GameEventType.BidUpdate) == GameEventType.BidUpdate) {
                 // Send A Bit List Update To All Players
                 await BidListUpdate(game);
@@ -489,12 +503,54 @@ namespace ShootTheMoon.Network
                     Notification n = new Notification();
                     n.TransferRequest = tr;
 
-                    tasks.Add(SendNotification(rpcClient, n));
+                    tasks.Add(BroadcastNotification(n, game));
                     Log.Debug("{0}: Transfer Card Request From {1} To {2}", game.Name, bidder.Name, game.CurrentPlayer.Name);
                 }
             }
 
             await Task.WhenAll(tasks);
+        }
+
+        public async Task TransferCard(Game.Game game, Game.PlayedCard transferDetails) {
+            // Notify CurrentPlayer of Updated Hand
+            List<Task> tasks = new List<Task>();
+
+            uint currentPlayerSeat = game.FindSeat(game.CurrentPlayer);
+
+            if (game.CurrentPlayer is RpcClient) {
+                RpcClient currentPlayer = (RpcClient)game.CurrentPlayer;
+                Transfer t = new Transfer();
+                t.ToSeat = currentPlayerSeat;
+                t.FromSeat = transferDetails.Seat;
+                t.Card = GameCardToProtoCard(transferDetails.Card);
+
+                Notification notif = new Notification();
+                notif.Transfer = t;
+
+                tasks.Add(SendNotification(currentPlayer, notif));
+            }
+
+            // Notify Everyone Else That Player X is no longer transferring
+            TransferComplete tc = new TransferComplete();
+            tc.FromSeat = transferDetails.Seat;
+            tc.ToSeat = currentPlayerSeat;
+
+            Notification n = new Notification();
+            n.TransferComplete = tc;
+            tasks.Add(BroadcastNotification(n, game));
+
+            await Task.WhenAll(tasks);
+        }
+
+        public async Task ThrowawayRequest(Game.Game game, Client currentPlayer) {
+            // Send A Discard Request
+            if (game.CurrentPlayer is RpcClient) {
+                RpcClient player = (RpcClient)game.CurrentPlayer;
+                Notification n = new Notification();
+                n.ThrowawayRequest = new ThrowawayRequest();
+                await SendNotification(player, n);
+                Log.Debug("{0}: Throwaway Card Request complete", game.Name);
+            }
         }
 
         public async Task PlayCardRequest(Game.Game game, Client currentPlayer) {
@@ -726,9 +782,8 @@ namespace ShootTheMoon.Network
             bool result = false;
             try {
                 RpcClient client = await FindClient(game, clientToken);
-                Log.Debug("{3}: Received a card of (suit: {0}, rank: {1}) from {2}", request.Card.Suit, request.Card.Rank, client.Name, game.Name);
-
-                //result = await game.MakeBid(request.Tricks, trump, request.ShootNum, pass, client);
+                Log.Debug("{3}: Received transfer request for card of (suit: {0}, rank: {1}) from {2}", request.Card.Suit, request.Card.Rank, client.Name, game.Name);
+                result = await game.TransferCard(GameSuitFromProto(request.Card.Suit), GameRankFromProto(request.Card.Rank), request.FromSeat, request.ToSeat, client);
             }
             catch (KeyNotFoundException) {
                 r.Success = false;
@@ -749,12 +804,39 @@ namespace ShootTheMoon.Network
             return r;
         }
 
-        /*
-        public virtual global::System.Threading.Tasks.Task<global::ShootTheMoon.Network.Proto.ThrowawayResponse> ThrowawayCard(global::ShootTheMoon.Network.Proto.Card request, grpc::ServerCallContext context)
+        public override async Task<ThrowawayResponse> ThrowawayCard(Proto.Card request, ServerCallContext context)
         {
-            throw new grpc::RpcException(new grpc::Status(grpc::StatusCode.Unimplemented, ""));
+            string uuid = context.RequestHeaders.GetValue(GAME_ID);
+            string clientToken = context.RequestHeaders.GetValue(CLIENT_TOKEN);
+
+            ThrowawayResponse r = new ThrowawayResponse();
+            Game.Game game;
+
+            try {
+                game = games[uuid];
+            } catch (KeyNotFoundException) {
+                r.Finished = false;
+                r.CardRemoved = null;
+                return r;
+            }
+
+            Boolean result = false;
+            try {
+                RpcClient client = await FindClient(game, clientToken);
+                Log.Debug("{0}: Received a throwaway card of (suit: {1}, rank: {2}) from {3}", game.Name, request.Suit, request.Rank, client.Name);
+
+                result = await game.ThrowawayCard(GameSuitFromProto(request.Suit), GameRankFromProto(request.Rank), client);
+                r.Finished = (client.Hand.Count <= game.GameSettings.TricksPerHand);
+                r.CardRemoved = new Proto.Card();
+                r.CardRemoved.Rank = request.Rank;
+                r.CardRemoved.Suit = request.Suit;
+                return r;
+            } catch (KeyNotFoundException) {
+                r.Finished = false;
+                r.CardRemoved = null;
+                return r;
+            }
         }
-        */
 
         public override async Task<StatusResponse> PlayCard(Proto.Card request, ServerCallContext context)
         {
