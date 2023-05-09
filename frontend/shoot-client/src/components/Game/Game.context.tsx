@@ -260,7 +260,7 @@ export const GameProvider: React.FC = ({ children }) => {
         });
     };
 
-    const throwawayCard = (card: Card, index: number) => {
+    const throwAwayCard = (card: Card, index: number) => {
         if (!appState.joined) {
             return false;
         }
@@ -270,7 +270,7 @@ export const GameProvider: React.FC = ({ children }) => {
         const request: ProtoCard = cardToProto(card);
 
 
-        appState.connection.throwawayCard(request, appState.metadata).then((value: ThrowawayResponse) => {
+        appState.connection.throwAwayCard(request, appState.metadata).then((value: ThrowawayResponse) => {
             eventEmitter.emit('throwawayResponse', card, value);
             console.log('throwaway card result: ' + value);
                 setState(produce(draft => {
@@ -295,7 +295,7 @@ export const GameProvider: React.FC = ({ children }) => {
             draft.createBid = createBid;
             draft.playCard = playCard;
             draft.transferCard = transferCard;
-            draft.throwAwayCard = throwawayCard;
+            draft.throwAwayCard = throwAwayCard;
         })); 
     }, [appState.joined]);
 
@@ -626,7 +626,7 @@ export const GameProvider: React.FC = ({ children }) => {
                     draft.createBid = createBid;
                     draft.playCard = playCard;
                     draft.transferCard = transferCard;
-                    draft.throwAwayCard = throwawayCard;
+                    draft.throwAwayCard = throwAwayCard;
                 })); 
             }
 

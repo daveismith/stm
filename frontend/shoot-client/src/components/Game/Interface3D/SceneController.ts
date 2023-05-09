@@ -240,7 +240,7 @@ class SceneController {
 
         valid = this.gameStateEventTypeMap[this.gameState][eventType];
 
-        console.log("validating event " + event.notification.getSequence() + ":" + this.gameState + ":" + valid);
+        console.log("validating event seq-" + event.notification.getSequence() + ":state-" + this.gameState + ":type-" + eventType + ":valid-" + valid);
 
         return valid === 1;
     }
