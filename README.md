@@ -55,7 +55,7 @@ protoc -I ../../backend/ShootTheMoon/ShootTheMoon/schema shoot.proto --js_out=im
    version: "2"
    authtoken: <your_auth_token>
    ```
-3. Start proxy, frontend and backend
-4. Run `./run_grok.sh`
-5. Update the variable `serviceUrl` in `frontend/shoot-client/src/components/App/App.context.tsx` with the ngrok tunnel pointing to port 8080.
-6. Navigate to the tunnel point to port 8001
+3. Run `./run_grok.sh`
+4. Start proxy and backend
+5. Start your front-end and it will auto-detect if ngrok is in use and update the pointer to the server.
+6. Navigate to the URL ngrok shows as forwarding to local port 8001/

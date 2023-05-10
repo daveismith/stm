@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import * as grpcWeb from 'grpc-web';
 import { ShootServerClient } from '../../proto/ShootServiceClientPb';
 import {
@@ -31,10 +31,6 @@ function uuidv4() {
 type AppContextType = (IApp | ((param: any) => void))[];
 
 const clientId: string = uuidv4();
-const serviceUrl = 'http://localhost:8080';
-//const serviceUrl = '<your_ngrok_envoy_tunnel>';
-console.log('serviceUrl: ' + serviceUrl);
-const connection: ShootServerClient = new ShootServerClient(serviceUrl, {'clientId': clientId}, null);
 
 const initialState: IApp = {
     metadata: { }, 
@@ -47,12 +43,25 @@ const AppContext: React.Context<AppContextType> = createContext<AppContextType>(
 export const AppProvider: React.FC = ({ children }) => {
     const contextValue = useState(initialState);
     const [ appState, setState ] = contextValue;
+    const [connection, setConnection] = useState<ShootServerClient | undefined>(undefined);
+
+    useEffect(() => {
+        fetch('server.json')
+            .then(res => res.json())
+            .then(
+                (result) => {
+                    console.log('connecting to game server: ' + result.server);
+                    console.log('client id is: ' + clientId);
+                    setConnection(new ShootServerClient(result.server, {'clientId': clientId}, null))
+                }
+            );
+    }, [])
 
     appState.createGame = (seats: number) => {
         const request: CreateGameRequest = new CreateGameRequest();
         request.setSeats(seats);
-
-        connection.createGame(request, appState.metadata).then((response: CreateGameResponse) => {
+        
+        connection?.createGame(request, appState.metadata).then((response: CreateGameResponse) => {
             console.log('createGame returned ' + response.getUuid());
             let newState = {...appState};
             newState.gameId = response.getUuid();
@@ -64,7 +73,7 @@ export const AppProvider: React.FC = ({ children }) => {
     };
 
     appState.joinGame = (gameId: string, name: string) => {
-        if (appState.joined) {
+        if (appState.joined || connection === undefined) {
             return false;
         }
 

@@ -351,3 +351,4 @@ MigrationBackup/
 *.swp
 .DS_Store
 ngrok_auth.yml
+server.json
