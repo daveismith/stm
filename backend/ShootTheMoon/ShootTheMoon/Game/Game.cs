@@ -73,7 +73,7 @@ namespace ShootTheMoon.Game
 
         public GameState State { get; private set; }
 
-        public Game(GameSettings gameSettings)
+        public Game(GameSettings gameSettings, int aDealer = -1)
         {
             Uuid = Guid.NewGuid().ToString();
             Clients = ImmutableList<Client>.Empty;
@@ -88,9 +88,15 @@ namespace ShootTheMoon.Game
             PlayedCards = new List<PlayedCard>();
             SkipSeats = new List<uint>();
 
-            Random r = new Random();
-            Dealer = r.Next(Players.Length);
+            if (aDealer < 0 || aDealer >= Players.Length)
+            {
+                Random r = new Random();
+                Dealer = r.Next(Players.Length);
+            }
+            else
+            {
 
+            }
             Log.Debug("{0} player game created with UUID {1}, Dealer is {2}", NumPlayers, Uuid, Dealer);
 
             observers = new List<IObserver<GameEvent>>();

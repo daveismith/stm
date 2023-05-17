@@ -83,7 +83,6 @@ namespace ShootTheMoonTest.Game
 
             for (int index = 1; index < game.NumPlayers; index++) {
                 Client client = new Client();
-                await c.SetReady(true);
                 await game.AddClient(client);
                 Thread.Sleep(10); // This is needed to allow time for the update to be generated.
                 observer.Verify(x => x.OnNext(It.Is<GameEvent>(p => p.Type == GameEventType.ClientUpdate && p.Game == game)), Times.Exactly(1 + index));
@@ -91,11 +90,15 @@ namespace ShootTheMoonTest.Game
 
                 await game.TakeSeat((uint)index, client);
                 observer.Verify(x => x.OnNext(It.Is<GameEvent>(p => p.Type == GameEventType.SeatListUpdate && p.Game == game)), Times.Exactly(index+1));
+            
+                await client.SetReady(true);
+                Thread.Sleep(10);
+                observer.Verify(x => x.OnNext(It.Is<GameEvent>(p => p.Type == (GameEventType.ClientUpdate | GameEventType.SeatListUpdate) && p.Game == game)), Times.Exactly(index+2));
             }
 
             await c.SetReady(true);
             Thread.Sleep(10); // This is needed to allow time for the update to be generated.
-            observer.Verify(x => x.OnNext(It.Is<GameEvent>(p => p.Type == (GameEventType.ClientUpdate | GameEventType.SeatListUpdate |  GameEventType.StartGame | GameEventType.DealCards) && p.Game == game)), Times.Once);
+            observer.Verify(x => x.OnNext(It.Is<GameEvent>(p => (p.Type == (GameEventType.StartGame | GameEventType.ClientUpdate | GameEventType.SeatListUpdate |  GameEventType.DealCards | GameEventType.TricksUpdate | GameEventType.ScoreUpdate) && p.Game == game))), Times.Once);
 
             foreach (var player in game.Players) {
                 Assert.AreEqual(8, player.Hand.Count);
