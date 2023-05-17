@@ -73,19 +73,21 @@ namespace ShootTheMoonTest.Game
             observer.Verify(x => x.OnNext(It.Is<GameEvent>(p => p.Type == GameEventType.SeatListUpdate && p.Game == game)), Times.Once);
             
 
-            await c.SetReady(true);
+            //await c.SetReady(true);
+            c.SetReady(true).GetAwaiter().GetResult();
             //game.OnNext(c);
             //Thread.Sleep(10); // This is needed to allow time for the update to be generated.
             observer.Verify(x => x.OnNext(It.Is<GameEvent>(p => p.Type == (GameEventType.ClientUpdate | GameEventType.SeatListUpdate) && p.Game == game)), Times.Once);
 
-            await c.SetReady(false);
+            //await c.SetReady(false);
+            c.SetReady(false).GetAwaiter().GetResult();
             //game.OnNext(c);
             //Thread.Sleep(10); // This is needed to allow time for the update to be generated.
             observer.Verify(x => x.OnNext(It.Is<GameEvent>(p => p.Type == (GameEventType.ClientUpdate | GameEventType.SeatListUpdate) && p.Game == game)), Times.Exactly(2));            
 
             for (int index = 1; index < game.NumPlayers; index++) {
                 Client client = new Client();
-                await game.AddClient(client);
+                game.AddClient(client).GetAwaiter().GetResult();
                 //game.OnNext(client);
                 //Thread.Sleep(10); // This is needed to allow time for the update to be generated.
                 observer.Verify(x => x.OnNext(It.Is<GameEvent>(p => p.Type == GameEventType.ClientUpdate && p.Game == game)), Times.Exactly(1 + index));
