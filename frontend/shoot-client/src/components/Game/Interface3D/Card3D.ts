@@ -68,13 +68,13 @@ class Card3D {
     
         const cardButton = new MeshButton3D(this.mesh, "cardButton");
         cardButton.onPointerDownObservable.add(() => {
-            console.log("skip card play attempt: not our turn");
             if (SceneController.gameState === GameState.ChoosingPlay)
                 this.playCard();
             else if (SceneController.gameState === GameState.ChoosingTransfer)
                 this.transferCard();
             else if (SceneController.gameState === GameState.ChoosingThrowaway)
                 this.throwAwayCard();
+            else { console.log("skip card play attempt: not our turn"); }
         //     // if (this.mesh.position.z === CardStack3D.deck.position.z)
         //     //     this.dealCard(scene, 3, 0);
         //     if (this.mesh.position.z > CardStack3D.dealMatStacks[3].position.z - 0.3 && this.mesh.position.z < CardStack3D.dealMatStacks[3].position.z + 0.3)
@@ -631,7 +631,7 @@ class Card3D {
         SceneController.currentCard = this;
         console.log("attempting to transfer card: " + this.card.getRank() + this.card.getSuit());
         if (this.gameState.transferCard) {
-            this.gameState.transferCard(cardFromProto(this.card));
+            this.gameState.transferCard(GameSettings.currentPlayer, SceneController.transferRecipient, cardFromProto(this.card));
             SceneController.awaitingServerResponse = true;
         }
     }

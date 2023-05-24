@@ -51,7 +51,7 @@ export interface IGame {
     setSeatReadyStatus?(ready: boolean): void;
     createBid?(tricks: number, shootNum: number, trump: Bid.Trump, seat: number): void;
     playCard?(card: Card, index?: number): void;
-    transferCard?(card: Card, index?: number): void;
+    transferCard?(from: number, to: number, card: Card, index?: number): void;
     throwAwayCard?(card: Card, index?: number): void;
 }
 
@@ -229,7 +229,7 @@ export const GameProvider: React.FC = ({ children }) => {
         });
     };
 
-    const transferCard = (card: Card, index: number) => {
+    const transferCard = (from: number, to: number, card: Card, index: number) => {
         if (!appState.joined) {
             return false;
         }
@@ -238,8 +238,8 @@ export const GameProvider: React.FC = ({ children }) => {
 
         const requestCard: ProtoCard = cardToProto(card);
         const request: Transfer = new Transfer();
-        // request.setFromSeat(from);
-        // request.setToSeat(to);
+        request.setFromSeat(from);
+        request.setToSeat(to);
         request.setCard(requestCard);
 
         appState.connection.transferCard(request, appState.metadata).then((value: StatusResponse) => {
@@ -565,7 +565,7 @@ export const GameProvider: React.FC = ({ children }) => {
                 });
             };
 
-            const transferCard = (card: Card, index: number) => {
+            const transferCard = (from: number, to: number, card: Card, index: number) => {
                 if (!appState.joined) {
                     return false;
                 }

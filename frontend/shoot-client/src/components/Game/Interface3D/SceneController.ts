@@ -63,6 +63,7 @@ class SceneController {
     static awaitingServerResponse: boolean = false;
     static awaitingAnimation: boolean = false;
     static clientIn3DMode: boolean = false;
+    static transferRecipient: number = -1;
 
     static initialize () {
         this.gameStateEventTypeMap = [];
@@ -131,9 +132,18 @@ class SceneController {
         this.gameStateEventTypeMap[GameState.WaitingForBidEnd][Notification.NotificationCase.TRICKS] = 1;
         this.gameStateEventTypeMap[GameState.WaitingForBidEnd][Notification.NotificationCase.SCORES] = 1;
 
+        this.gameStateEventTypeMap[GameState.ChoosingTransfer] = [];
+        this.gameStateEventTypeMap[GameState.ChoosingTransfer][Notification.NotificationCase.TRANSFER_COMPLETE] = 1;
+
+        this.gameStateEventTypeMap[GameState.WaitingForTransfersEnd] = [];
+        this.gameStateEventTypeMap[GameState.WaitingForTransfersEnd][Notification.NotificationCase.TRANSFER_COMPLETE] = 1;
+
         this.gameStateEventTypeMap[GameState.WaitingToPlay] = [];
         this.gameStateEventTypeMap[GameState.WaitingToPlay][Notification.NotificationCase.PLAY_CARD_REQUEST] = 1;
         this.gameStateEventTypeMap[GameState.WaitingToPlay][Notification.NotificationCase.PLAYED_CARDS] = 1;
+        this.gameStateEventTypeMap[GameState.WaitingToPlay][Notification.NotificationCase.TRANSFER_REQUEST] = 1;
+        this.gameStateEventTypeMap[GameState.WaitingToPlay][Notification.NotificationCase.TRANSFER] = 1;
+        this.gameStateEventTypeMap[GameState.WaitingToPlay][Notification.NotificationCase.THROWAWAY_REQUEST] = 1;
 
         this.gameStateEventTypeMap[GameState.ChoosingPlay] = [];
         this.gameStateEventTypeMap[GameState.ChoosingPlay][Notification.NotificationCase.PLAY_CARD_REQUEST] = 1;
@@ -663,8 +673,17 @@ class SceneController {
 
     static transferRequestListener(fromSeat: number, toSeat: number) {
         if (fromSeat === GameSettings.currentPlayer) {
+            this.transferRecipient = toSeat;
+
             for (let card of this.hand) card.toggleGlow(true);
+
             this.gameState = GameState.ChoosingTransfer;
+            
+            console.log("Game state -> Choosing transfer");
+        }
+        else {
+            this.gameState = GameState.WaitingForTransfersEnd;
+            console.log("Game state -> Waiting for transfers to end.");
         }
     }
 
