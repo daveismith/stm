@@ -13,26 +13,20 @@ const BidTricksSelector: React.FC<IBidTricksSelector> = (props: IBidTricksSelect
     const { highBid, bidTricksSelected } = props;
     const [ gameState, setGameState ] = useGame();
 
+    const bidNumber = highBid != null ? highBid.number : 0;
+
     const onClick = (selectedValue: string) => {
         setGameState({ ...gameState, bidTricksSelected: selectedValue });
     }
 
     const getItems = () => {
-        const items : IButtonGroupItem[] = [
-            {value: "1", disabled: false}, 
-            {value: "2", disabled: false}, 
-            {value: "3", disabled: false},
-            {value: "4", disabled: false},
-            {value: "5", disabled: false},
-            {value: "6", disabled: false},
-            {value: "7", disabled: false},
-            {value: "8",  disabled: false},
-            {value: "SHOOT",  disabled: false}
-        ];
+        const items : IButtonGroupItem[] = [];
+        for (let val = 1; val <= 8; val++) {
+            items.push({value: val.toString(), disabled: bidNumber >= val});
+        }
+        items.push({value: 'SHOOT', disabled: false});
         return items;
     }
-
-    console.log('highBid: ' + highBid);
 
     return (  
         <ButtonGroupSelector 
