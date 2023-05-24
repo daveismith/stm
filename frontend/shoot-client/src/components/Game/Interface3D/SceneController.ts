@@ -267,9 +267,9 @@ class SceneController {
             this.awaitingAnimation = false;
         }, 3000);
 
-        if (this.gameState >= 100 && tricksRemainingInHand > 0)
+        if (this.gameState >= GameState.WaitingToPlay && tricksRemainingInHand > 0) // trick complete, ready for next trick
             this.gameState = GameState.WaitingToPlay;
-        else if (this.gameState >= 100) { // hand complete, ready for next hand
+        else if (this.gameState >= GameState.WaitingToPlay) { // hand complete, ready for next hand
             this.currentBid = null;
             for (let nameplate of this.nameplates) nameplate.resetToDefault();
             this.gameState = GameState.WaitingForHand;
@@ -678,7 +678,7 @@ class SceneController {
             for (let card of this.hand) card.toggleGlow(true);
 
             this.gameState = GameState.ChoosingTransfer;
-            
+
             console.log("Game state -> Choosing transfer");
         }
         else {

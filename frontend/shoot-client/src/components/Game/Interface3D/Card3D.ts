@@ -69,11 +69,11 @@ class Card3D {
         const cardButton = new MeshButton3D(this.mesh, "cardButton");
         cardButton.onPointerDownObservable.add(() => {
             if (SceneController.gameState === GameState.ChoosingPlay)
-                this.playCard();
+                { this.playCard(); }
             else if (SceneController.gameState === GameState.ChoosingTransfer)
-                this.transferCard();
+                { this.transferCard(); }
             else if (SceneController.gameState === GameState.ChoosingThrowaway)
-                this.throwAwayCard();
+                { this.throwAwayCard(); }
             else { console.log("skip card play attempt: not our turn"); }
         //     // if (this.mesh.position.z === CardStack3D.deck.position.z)
         //     //     this.dealCard(scene, 3, 0);
