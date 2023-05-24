@@ -29,8 +29,10 @@ enum GameState {
     ChoosingTransfer = 15,
     WaitingForTransferConfirmation = 16,
     WaitingForTransfer = 17,
-    ChoosingThrowaway = 18,
-    WaitingForThrowawayConfirmation = 19,
+    WaitingForTransfersEnd = 18,
+    ChoosingThrowaway = 19,
+    WaitingForThrowawayConfirmation = 20,
+    WaitingForThrowawaysEnd = 21,
     WaitingToPlay = 100,
     ChoosingPlay = 101,
     WaitingForTrickEnd = 102,
@@ -61,6 +63,7 @@ class SceneController {
     static awaitingServerResponse: boolean = false;
     static awaitingAnimation: boolean = false;
     static clientIn3DMode: boolean = false;
+    static transferRecipient: number = -1;
 
     static initialize () {
         this.gameStateEventTypeMap = [];
@@ -102,26 +105,45 @@ class SceneController {
 
         this.gameStateEventTypeMap[GameState.WaitingForHand] = [];
         this.gameStateEventTypeMap[GameState.WaitingForHand][Notification.NotificationCase.HAND] = 1;
+        this.gameStateEventTypeMap[GameState.WaitingForHand][Notification.NotificationCase.TRICKS] = 1;
+        this.gameStateEventTypeMap[GameState.WaitingForHand][Notification.NotificationCase.SCORES] = 1;
 
         this.gameStateEventTypeMap[GameState.WaitingToBid] = [];
         this.gameStateEventTypeMap[GameState.WaitingToBid][Notification.NotificationCase.BID] = 1;
         this.gameStateEventTypeMap[GameState.WaitingToBid][Notification.NotificationCase.BID_LIST] = 1;
         this.gameStateEventTypeMap[GameState.WaitingToBid][Notification.NotificationCase.BID_REQUEST] = 1;
+        this.gameStateEventTypeMap[GameState.WaitingToBid][Notification.NotificationCase.TRICKS] = 1;
+        this.gameStateEventTypeMap[GameState.WaitingToBid][Notification.NotificationCase.SCORES] = 1;
 
         this.gameStateEventTypeMap[GameState.ChoosingBid] = [];
         this.gameStateEventTypeMap[GameState.ChoosingBid][Notification.NotificationCase.BID] = 1;
         this.gameStateEventTypeMap[GameState.ChoosingBid][Notification.NotificationCase.BID_LIST] = 1;
+        this.gameStateEventTypeMap[GameState.ChoosingBid][Notification.NotificationCase.TRICKS] = 1;
+        this.gameStateEventTypeMap[GameState.ChoosingBid][Notification.NotificationCase.SCORES] = 1;
 
         this.gameStateEventTypeMap[GameState.WaitingForBidConfirmation] = [];
         this.gameStateEventTypeMap[GameState.WaitingForBidConfirmation][Notification.NotificationCase.BID_LIST] = 1;
+        this.gameStateEventTypeMap[GameState.WaitingForBidConfirmation][Notification.NotificationCase.TRICKS] = 1;
+        this.gameStateEventTypeMap[GameState.WaitingForBidConfirmation][Notification.NotificationCase.SCORES] = 1;
 
         this.gameStateEventTypeMap[GameState.WaitingForBidEnd] = [];
         this.gameStateEventTypeMap[GameState.WaitingForBidEnd][Notification.NotificationCase.BID_LIST] = 1;
         this.gameStateEventTypeMap[GameState.WaitingForBidEnd][Notification.NotificationCase.TRUMP_UPDATE] = 1;
+        this.gameStateEventTypeMap[GameState.WaitingForBidEnd][Notification.NotificationCase.TRICKS] = 1;
+        this.gameStateEventTypeMap[GameState.WaitingForBidEnd][Notification.NotificationCase.SCORES] = 1;
+
+        this.gameStateEventTypeMap[GameState.ChoosingTransfer] = [];
+        this.gameStateEventTypeMap[GameState.ChoosingTransfer][Notification.NotificationCase.TRANSFER_COMPLETE] = 1;
+
+        this.gameStateEventTypeMap[GameState.WaitingForTransfersEnd] = [];
+        this.gameStateEventTypeMap[GameState.WaitingForTransfersEnd][Notification.NotificationCase.TRANSFER_COMPLETE] = 1;
 
         this.gameStateEventTypeMap[GameState.WaitingToPlay] = [];
         this.gameStateEventTypeMap[GameState.WaitingToPlay][Notification.NotificationCase.PLAY_CARD_REQUEST] = 1;
         this.gameStateEventTypeMap[GameState.WaitingToPlay][Notification.NotificationCase.PLAYED_CARDS] = 1;
+        this.gameStateEventTypeMap[GameState.WaitingToPlay][Notification.NotificationCase.TRANSFER_REQUEST] = 1;
+        this.gameStateEventTypeMap[GameState.WaitingToPlay][Notification.NotificationCase.TRANSFER] = 1;
+        this.gameStateEventTypeMap[GameState.WaitingToPlay][Notification.NotificationCase.THROWAWAY_REQUEST] = 1;
 
         this.gameStateEventTypeMap[GameState.ChoosingPlay] = [];
         this.gameStateEventTypeMap[GameState.ChoosingPlay][Notification.NotificationCase.PLAY_CARD_REQUEST] = 1;
@@ -228,7 +250,7 @@ class SceneController {
 
         valid = this.gameStateEventTypeMap[this.gameState][eventType];
 
-        console.log("validating event " + event.notification.getSequence() + ":" + this.gameState + ":" + valid);
+        console.log("validating event seq-" + event.notification.getSequence() + ":state-" + this.gameState + ":type-" + eventType + ":valid-" + valid);
 
         return valid === 1;
     }
@@ -245,9 +267,9 @@ class SceneController {
             this.awaitingAnimation = false;
         }, 3000);
 
-        if (this.gameState >= 10 && tricksRemainingInHand > 0)
+        if (this.gameState >= GameState.WaitingToPlay && tricksRemainingInHand > 0) // trick complete, ready for next trick
             this.gameState = GameState.WaitingToPlay;
-        else if (this.gameState >= 10) { // hand complete, ready for next hand
+        else if (this.gameState >= GameState.WaitingToPlay) { // hand complete, ready for next hand
             this.currentBid = null;
             for (let nameplate of this.nameplates) nameplate.resetToDefault();
             this.gameState = GameState.WaitingForHand;
@@ -596,7 +618,12 @@ class SceneController {
         let card: Card | undefined;
         let card3D: Card3D | null;
 
-        console.log(cardsList);
+        function animate(card3D: Card3D, seat: number) {
+            setTimeout(() => {
+                card3D && card3D.playCardAnimation(seat, SceneController.scene);
+                SceneController.awaitingAnimation = false;
+            }, 1000);
+        }
 
         for (let i: number = 0; i < cardsList.length; i++) {
             playedCard = cardsList[i];
@@ -610,6 +637,7 @@ class SceneController {
              // Skip if this card has already been played in the UI
              // Skip if it's our card, let it be handled by playCardResponseListener 
             if (!this.currentCardsInTrick[order] && card && seat !== GameSettings.currentPlayer) {
+                console.log("order: " + order + ", seat: " + seat + ", card: " + card);
                 console.log("searching for " + card.getRank() + card.getSuit());
                 console.log(CardStack3D.fanStacks[seat].index);
                 sourceCardLocation = Card3D.findCardInHands(card);
@@ -631,10 +659,11 @@ class SceneController {
 
                 if (card3D) {
                     this.awaitingAnimation = true;
-                    setTimeout(() => {
-                        card3D && card3D.playCardAnimation(seat, this.scene);
-                        this.awaitingAnimation = false;
-                    }, 1000);
+                    animate(card3D, seat);
+                    // setTimeout(() => {
+                    //     card3D && card3D.playCardAnimation(seat, this.scene);
+                    //     this.awaitingAnimation = false;
+                    // }, 1000);
                  
                     this.currentCardsInTrick[order] = card3D;
                 }
@@ -644,12 +673,38 @@ class SceneController {
 
     static transferRequestListener(fromSeat: number, toSeat: number) {
         if (fromSeat === GameSettings.currentPlayer) {
+            this.transferRecipient = toSeat;
+
             for (let card of this.hand) card.toggleGlow(true);
+
             this.gameState = GameState.ChoosingTransfer;
+
+            console.log("Game state -> Choosing transfer");
+        }
+        else {
+            this.gameState = GameState.WaitingForTransfersEnd;
+            console.log("Game state -> Waiting for transfers to end.");
         }
     }
 
-    static transferResponseListener(fromSeat: number, toSeat: number, card: Card) {
+    static transferResponseListener(fromSeat: number, toSeat: number, card: Card, success: boolean) {
+        // To do: check if card is the same as this.currentCard?
+
+        if (!this.clientIn3DMode) return;
+
+        if (success) {
+            let card: Card3D | null = this.currentCard;
+
+            card && card.transferCardAnimation(GameSettings.currentPlayer, this.scene);
+
+            for (let card of this.hand) card.toggleGlow(false);
+
+            this.gameState = GameState.WaitingForTransfersEnd;
+        } else {
+            console.log("Error Transferring Card");
+        }
+
+        this.awaitingServerResponse = false;
     }
 
     static throwawayRequestListener() {
@@ -657,8 +712,24 @@ class SceneController {
         this.gameState = GameState.ChoosingThrowaway;
     }
 
-    static throwawayResponseListener(finished: boolean, cardRemoved: Card) {
+    static throwawayResponseListener(finished: boolean, cardRemoved: Card, success: boolean) {
+        // To do: check if cardRemoved is the same as this.currentCard?
 
+        if (!this.clientIn3DMode) return;
+
+        if (success) {
+            let card: Card3D | null = this.currentCard;
+
+            card && card.throwAwayCardAnimation(GameSettings.currentPlayer, this.scene);
+
+            for (let card of this.hand) card.toggleGlow(false);
+
+            this.gameState = GameState.WaitingForThrowawaysEnd;
+        } else {
+            console.log("Error Throwing Away Card");
+        }
+
+        this.awaitingServerResponse = false;
     }
 
     static moveCameraToSeat(seatNumber: number) {

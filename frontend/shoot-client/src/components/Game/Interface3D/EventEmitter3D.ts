@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events';
-import { Card, SeatDetails, Bid as BidDetails, Hand, TrumpUpdate, PlayCardRequest, PlayedCard, Tricks } from '../../../proto/shoot_pb';
+import { Card, SeatDetails, Bid as BidDetails, Hand, TrumpUpdate, PlayCardRequest, PlayedCard, Tricks, TransferRequest } from '../../../proto/shoot_pb';
 import { SceneController } from "./SceneController";
 import { Bid } from "../../Game/Models/Bid";
 
@@ -60,20 +60,20 @@ class EventEmitter3D extends EventEmitter {
             SceneController.playedCardsListener(cardsList);
         });
 
-        this.on('transferRequest', function(fromSeat: number, toSeat: number) {
-            SceneController.transferRequestListener(fromSeat, toSeat);
+        this.on('transferRequest', function(transferRequest: TransferRequest) {
+            SceneController.transferRequestListener(transferRequest.getFromSeat(), transferRequest.getToSeat());
         });
 
-        this.on('transferResponse', function(fromSeat: number, toSeat: number, card: Card) {
-            SceneController.transferResponseListener(fromSeat, toSeat, card);
+        this.on('transferResponse', function(fromSeat: number, toSeat: number, card: Card, success: boolean) {
+            SceneController.transferResponseListener(fromSeat, toSeat, card, success);
         });
 
         this.on('throwawayRequest', function() {
             SceneController.throwawayRequestListener();
         });
 
-        this.on('throwawayResponse', function(finished: boolean, cardRemoved: Card) {
-            SceneController.throwawayResponseListener(finished, cardRemoved);
+        this.on('throwawayResponse', function(finished: boolean, cardRemoved: Card, success: boolean) {
+            SceneController.throwawayResponseListener(finished, cardRemoved, success);
         });
     }
 }

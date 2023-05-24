@@ -54,6 +54,14 @@ class GameEvent3D {
                 this.eventEmitter.emit("trumpUpdate", this.notification.getTrumpUpdate());
                 break;
             }
+            case Notification.NotificationCase.TRANSFER_REQUEST: {
+                this.eventEmitter.emit("transferRequest", this.notification.getTransferRequest());
+                break;
+            }
+            case Notification.NotificationCase.THROWAWAY_REQUEST: {
+                this.eventEmitter.emit("throwawayRequest", this.notification.getThrowawayRequest());
+                break;
+            }
             default:
         }
 

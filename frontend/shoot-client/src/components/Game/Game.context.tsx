@@ -52,7 +52,7 @@ export interface IGame {
     createBid?(tricks: number, shootNum: number, trump: Bid.Trump, seat: number): void;
     playCard?(card: Card, index?: number): void;
     transferCard?(from: number, to: number, card: Card, index?: number): void;
-    throwawayCard?(card: Card, index?: number): void;
+    throwAwayCard?(card: Card, index?: number): void;
 }
 
 interface ParamTypes{ 
@@ -86,7 +86,7 @@ const cleanInitialState: IGame = {
     createBid: undefined,
     playCard: undefined,
     transferCard: undefined,
-    throwawayCard: undefined
+    throwAwayCard: undefined
 };
 
 let registered: boolean = false;
@@ -263,7 +263,7 @@ export const GameProvider: React.FC = ({ children }) => {
         });
     };
 
-    const throwawayCard = (card: Card, index: number) => {
+    const throwAwayCard = (card: Card, index: number) => {
         if (!appState.joined) {
             return false;
         }
@@ -273,7 +273,7 @@ export const GameProvider: React.FC = ({ children }) => {
         const request: ProtoCard = cardToProto(card);
 
 
-        appState.connection.throwawayCard(request, appState.metadata).then((value: ThrowawayResponse) => {
+        appState.connection.throwAwayCard(request, appState.metadata).then((value: ThrowawayResponse) => {
             eventEmitter.emit('throwawayResponse', card, value);
             console.log('throwaway card result: ' + value);
                 setState(produce(draft => {
@@ -298,7 +298,7 @@ export const GameProvider: React.FC = ({ children }) => {
             draft.createBid = createBid;
             draft.playCard = playCard;
             draft.transferCard = transferCard;
-            draft.throwawayCard = throwawayCard;
+            draft.throwAwayCard = throwAwayCard;
         })); 
     }, [appState.joined]);
 
@@ -473,17 +473,6 @@ export const GameProvider: React.FC = ({ children }) => {
         
             registered = true;
 
-            /*
-            if (state.takeSeat === undefined) { 
-                setState(produce(draft => {
-                    draft.takeSeat = takeSeat; 
-                    draft.setSeatReadyStatus = setSeatReadyStatus;
-                    draft.createBid = createBid;
-                    draft.playCard = playCard;
-                    draft.transferCard = transferCard;
-                    draft.throwawayCard = throwawayCard;
-                })); 
-            }*/
         }
     }, [state.playerName, state.mySeat, state.takeSeat, state.eventEmitter, appState.joined, appState.stream, appState.connection, appState.metadata, joinGame, id, eventEmitter]);
 
