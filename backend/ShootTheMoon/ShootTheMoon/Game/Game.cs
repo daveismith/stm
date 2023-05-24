@@ -40,6 +40,8 @@ namespace ShootTheMoon.Game
 
     public class Game : IObservable<GameEvent>, IObserver<Client>
     {
+        private DeckFactory DeckFactory { get; set; }
+
         private List<IObserver<GameEvent>> observers;
 
         public GameSettings GameSettings { get; set; }
@@ -76,6 +78,7 @@ namespace ShootTheMoon.Game
         public Game(GameSettings gameSettings, int aDealer = -1)
         {
             Uuid = Guid.NewGuid().ToString();
+            DeckFactory = new RandomDeckFactory();
             Clients = ImmutableList<Client>.Empty;
             var numPlayers = gameSettings.NumPlayersPerTeam * 2;
             Players = new Client[numPlayers];
@@ -326,7 +329,8 @@ namespace ShootTheMoon.Game
 
         private async Task Deal() {
             // TODO: Get The Deck Somehow So It Can Be Injected
-            var deck = new Deck(GameSettings.NumDuplicateCards);
+            //var deck = new Deck(GameSettings.NumDuplicateCards);
+            var deck = DeckFactory.BuildDeck(GameSettings.NumDuplicateCards);
             await deck.Shuffle();
 
             int dealTo = (Dealer + 1) % NumPlayers;
