@@ -642,10 +642,13 @@ namespace ShootTheMoon.Game
             return true;
         }
 
-
         private async Task PublishEvent(GameEvent gameEvent) {
+            List<Task> tasks = new List<Task>();
+
             foreach (var observer in observers)
-                await Task.Run(() => observer.OnNext(gameEvent));
+                tasks.Add(Task.Run(() => observer.OnNext(gameEvent)));
+
+            await Task.WhenAll(tasks);
         }
 
         public uint FindSeat(Client client ) {
