@@ -453,7 +453,7 @@ namespace ShootTheMoon.Game
                     Log.Debug("Game {0} received a Shoot Bid with {1} shoots", Name, CurrentBid.ShootNumber);
                     uint skippedSeatCount = ((uint)NumPlayers / 2) - 1;
                     for (uint i = 0; i < skippedSeatCount; i++) {
-                        uint skip_seat = CurrentBid.Seat + (2 * (i + 1)) % (uint)NumPlayers;
+                        uint skip_seat = (CurrentBid.Seat + (2 * (i + 1))) % (uint)NumPlayers;
                         SkipSeats.Add(skip_seat);
                     }
                     Log.Debug("Game {0} skip seats are {1}", Name, SkipSeats);

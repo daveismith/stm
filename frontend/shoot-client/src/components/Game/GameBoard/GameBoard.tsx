@@ -25,7 +25,7 @@ interface IGameBoardProps {
 const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
     const [ gameState ] = useGame();
 
-    const { playCard, transferCard, throwawayCard, throwingAway } = gameState;
+    const { playCard, transferCard, throwAwayCard, throwingAway } = gameState;
 
     const { hand, seats, mySeat, currentBidder, currentSeat, transferTarget, playedCards, highBid, bids, bidTricksSelected, bidTrumpSelected  } = props;
 
@@ -52,7 +52,7 @@ const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
             transferCard(mySeat, transferTarget, card, index);
         } else if (throwingAway) {            
             console.log('throw away card')
-            throwawayCard(card, index);
+            throwAwayCard(card, index);
         } else {
             playCard(card, index);
         }
