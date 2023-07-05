@@ -87,7 +87,9 @@ namespace ShootTheMoonTest.Game
 
             for (int index = 1; index < game.NumPlayers; index++) {
                 Client client = new Client();
-                game.AddClient(client).GetAwaiter().GetResult();
+                //game.AddClient(client).GetAwaiter().GetResult();
+                await game.AddClient(client);
+                
                 //game.OnNext(client);
                 //Thread.Sleep(10); // This is needed to allow time for the update to be generated.
                 observer.Verify(x => x.OnNext(It.Is<GameEvent>(p => p.Type == GameEventType.ClientUpdate && p.Game == game)), Times.Exactly(1 + index));
