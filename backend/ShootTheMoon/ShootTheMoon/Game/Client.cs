@@ -55,8 +55,12 @@ namespace ShootTheMoon.Game
 
         protected async Task PublishChange() {
             if (observers != null) {
+                List<Task> tasks = new List<Task>();
+
                 foreach (var observer in observers)
-                    await Task.Run(() => observer.OnNext(this));
+                    tasks.Add(Task.Run(() => observer.OnNext(this)));
+
+                await Task.WhenAll(tasks);
             }
         }
 

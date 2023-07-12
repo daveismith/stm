@@ -40,6 +40,8 @@ namespace ShootTheMoon.Game
 
     public class Game : IObservable<GameEvent>, IObserver<Client>
     {
+        private DeckFactory DeckFactory { get; set; }
+
         private List<IObserver<GameEvent>> observers;
 
         public GameSettings GameSettings { get; set; }
@@ -73,9 +75,10 @@ namespace ShootTheMoon.Game
 
         public GameState State { get; private set; }
 
-        public Game(GameSettings gameSettings)
+        public Game(GameSettings gameSettings, int aDealer = -1)
         {
             Uuid = Guid.NewGuid().ToString();
+            DeckFactory = new RandomDeckFactory();
             Clients = ImmutableList<Client>.Empty;
             var numPlayers = gameSettings.NumPlayersPerTeam * 2;
             Players = new Client[numPlayers];
@@ -88,9 +91,15 @@ namespace ShootTheMoon.Game
             PlayedCards = new List<PlayedCard>();
             SkipSeats = new List<uint>();
 
-            Random r = new Random();
-            Dealer = r.Next(Players.Length);
+            if (aDealer < 0 || aDealer >= Players.Length)
+            {
+                Random r = new Random();
+                Dealer = r.Next(Players.Length);
+            }
+            else
+            {
 
+            }
             Log.Debug("{0} player game created with UUID {1}, Dealer is {2}", NumPlayers, Uuid, Dealer);
 
             observers = new List<IObserver<GameEvent>>();
@@ -116,16 +125,16 @@ namespace ShootTheMoon.Game
 
         }
 
-        public async virtual void OnNext(Client client) {
+        public virtual void OnNext(Client client) {
 
             GameState startState = State;
-            await Tick();
+            Tick().Wait();
             if (startState == State) {
                 // If the Tick causes a change in the state, then the update isn't needed.
                 if (Players.Contains(client)) {
-                    await PublishEvent(new GameEvent(GameEventType.ClientUpdate | GameEventType.SeatListUpdate, this));
+                    PublishEvent(new GameEvent(GameEventType.ClientUpdate | GameEventType.SeatListUpdate, this)).Wait();
                 } else {
-                    await PublishEvent(new GameEvent(GameEventType.ClientUpdate, this));
+                    PublishEvent(new GameEvent(GameEventType.ClientUpdate, this)).Wait();
                 }
             }
 
@@ -320,7 +329,8 @@ namespace ShootTheMoon.Game
 
         private async Task Deal() {
             // TODO: Get The Deck Somehow So It Can Be Injected
-            var deck = new Deck(GameSettings.NumDuplicateCards);
+            //var deck = new Deck(GameSettings.NumDuplicateCards);
+            var deck = DeckFactory.BuildDeck(GameSettings.NumDuplicateCards);
             await deck.Shuffle();
 
             int dealTo = (Dealer + 1) % NumPlayers;
@@ -443,7 +453,7 @@ namespace ShootTheMoon.Game
                     Log.Debug("Game {0} received a Shoot Bid with {1} shoots", Name, CurrentBid.ShootNumber);
                     uint skippedSeatCount = ((uint)NumPlayers / 2) - 1;
                     for (uint i = 0; i < skippedSeatCount; i++) {
-                        uint skip_seat = CurrentBid.Seat + (2 * (i + 1)) % (uint)NumPlayers;
+                        uint skip_seat = (CurrentBid.Seat + (2 * (i + 1))) % (uint)NumPlayers;
                         SkipSeats.Add(skip_seat);
                     }
                     Log.Debug("Game {0} skip seats are {1}", Name, SkipSeats);
@@ -632,10 +642,13 @@ namespace ShootTheMoon.Game
             return true;
         }
 
-
         private async Task PublishEvent(GameEvent gameEvent) {
+            List<Task> tasks = new List<Task>();
+
             foreach (var observer in observers)
-                await Task.Run(() => observer.OnNext(gameEvent));
+                tasks.Add(Task.Run(() => observer.OnNext(gameEvent)));
+
+            await Task.WhenAll(tasks);
         }
 
         public uint FindSeat(Client client ) {

@@ -1,0 +1,30 @@
+name: Test backend package
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        dotnet-version: [ '6.0.x' ]
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup .NET Core SDK ${{ matrix.dotnet-version }}
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: ${{ matrix.dotnet-version }}
+      - name: Install dependencies
+        run: |
+          cd backend/ShootTheMoon
+          dotnet restore
+      - name: Build
+        run: |
+          cd backend/ShootTheMoon
+          dotnet build --configuration Debug --no-restore
+      - name: Test
+        run: |
+          cd backend/ShootTheMoon
+          dotnet test --no-restore --verbosity normal
