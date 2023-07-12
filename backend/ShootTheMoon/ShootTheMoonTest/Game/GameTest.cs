@@ -12,13 +12,16 @@ namespace ShootTheMoonTest.Game
     [TestClass]
     public class GameTest
     {
-        [TestMethod]
-        public void TestFourPlayerGame()
+        [DataRow("FOURPLAYER", 4)]
+        [DataRow("SIXPLAYER", 6)]
+        [DataRow("EIGHTPLAYER", 8)]
+        [DataTestMethod]
+        public void TestGame(String presetName, int numPlayers)
         {
-            ShootTheMoon.Game.Game game = new ShootTheMoon.Game.Game(GameSettings.GamePresets["FOURPLAYER"]);
+            ShootTheMoon.Game.Game game = new ShootTheMoon.Game.Game(GameSettings.GamePresets[presetName]);
 
-            Assert.AreEqual(4, game.NumPlayers);
-            Assert.AreEqual(4, game.Players.Length);
+            Assert.AreEqual(numPlayers, game.NumPlayers);
+            Assert.AreEqual(numPlayers, game.Players.Length);
             Assert.AreEqual(0, game.Clients.Count);
             Assert.AreEqual(0, game.Score[0]);
             Assert.AreEqual(0, game.Score[1]);
@@ -27,39 +30,11 @@ namespace ShootTheMoonTest.Game
             Assert.AreEqual(GameState.AWAITING_PLAYERS, game.State);
         }
 
-        [TestMethod]
-        public void TestSixPlayerGame()
-        {
-            ShootTheMoon.Game.Game game = new ShootTheMoon.Game.Game(ShootTheMoon.Game.GameSettings.GamePresets["SIXPLAYER"]);
-
-            Assert.AreEqual(6, game.NumPlayers);
-            Assert.AreEqual(6, game.Players.Length);
-            Assert.AreEqual(0, game.Clients.Count);
-            Assert.AreEqual(0, game.Score[0]);
-            Assert.AreEqual(0, game.Score[1]);
-            Assert.AreEqual(0, game.Tricks[0]);
-            Assert.AreEqual(0, game.Tricks[1]);            
-            Assert.AreEqual(GameState.AWAITING_PLAYERS, game.State);
-        }        
-
-
-        [TestMethod]
-        public void TestEightPlayerGame()
-        {
-            ShootTheMoon.Game.Game game = new ShootTheMoon.Game.Game(ShootTheMoon.Game.GameSettings.GamePresets["EIGHTPLAYER"]);
-
-            Assert.AreEqual(8, game.NumPlayers);
-            Assert.AreEqual(8, game.Players.Length);
-            Assert.AreEqual(0, game.Clients.Count);
-            Assert.AreEqual(0, game.Score[0]);
-            Assert.AreEqual(0, game.Score[1]);
-            Assert.AreEqual(0, game.Tricks[0]);
-            Assert.AreEqual(0, game.Tricks[1]);            
-            Assert.AreEqual(GameState.AWAITING_PLAYERS, game.State);
-        }               
-
-        [TestMethod]
-        public async Task TestTakeSeat()
+        [DataRow("FOURPLAYER", 12)]
+        [DataRow("SIXPLAYER", 8)]
+        [DataRow("EIGHTPLAYER", 6)]
+        [DataTestMethod]
+        public async Task TestTakeSeat(String presetName, int handCount)
         {
             var observer = new Mock<IObserver<ShootTheMoon.Game.GameEvent>>();
             ShootTheMoon.Game.Game game = new ShootTheMoon.Game.Game(ShootTheMoon.Game.GameSettings.GamePresets["SIXPLAYER"]);
