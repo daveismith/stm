@@ -73,16 +73,10 @@ namespace ShootTheMoonTest.Game
             observer.Verify(x => x.OnNext(It.Is<GameEvent>(p => p.Type == GameEventType.SeatListUpdate && p.Game == game)), Times.Once);
             
 
-            //await c.SetReady(true);
-            c.SetReady(true).GetAwaiter().GetResult();
-            //game.OnNext(c);
-            //Thread.Sleep(10); // This is needed to allow time for the update to be generated.
+            await c.SetReady(true);
             observer.Verify(x => x.OnNext(It.Is<GameEvent>(p => p.Type == (GameEventType.ClientUpdate | GameEventType.SeatListUpdate) && p.Game == game)), Times.Once);
 
-            //await c.SetReady(false);
-            c.SetReady(false).GetAwaiter().GetResult();
-            //game.OnNext(c);
-            //Thread.Sleep(10); // This is needed to allow time for the update to be generated.
+            await c.SetReady(false);
             observer.Verify(x => x.OnNext(It.Is<GameEvent>(p => p.Type == (GameEventType.ClientUpdate | GameEventType.SeatListUpdate) && p.Game == game)), Times.Exactly(2));            
 
             for (int index = 1; index < game.NumPlayers; index++) {
@@ -102,12 +96,12 @@ namespace ShootTheMoonTest.Game
             }
 
             await c.SetReady(true);
-            //Thread.Sleep(10); // This is needed to allow time for the update to be generated.
             observer.Verify(x => x.OnNext(It.Is<GameEvent>(p => (p.Type == (GameEventType.StartGame | GameEventType.ClientUpdate | GameEventType.SeatListUpdate |  GameEventType.DealCards | GameEventType.TricksUpdate | GameEventType.ScoreUpdate) && p.Game == game))), Times.Once);
 
             foreach (var player in game.Players) {
                 Assert.AreEqual(8, player.Hand.Count);
             }
         }
+
     }
 }

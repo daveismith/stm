@@ -125,16 +125,16 @@ namespace ShootTheMoon.Game
 
         }
 
-        public async virtual void OnNext(Client client) {
+        public virtual void OnNext(Client client) {
 
             GameState startState = State;
-            await Tick();
+            Tick().Wait();
             if (startState == State) {
                 // If the Tick causes a change in the state, then the update isn't needed.
                 if (Players.Contains(client)) {
-                    await PublishEvent(new GameEvent(GameEventType.ClientUpdate | GameEventType.SeatListUpdate, this));
+                    PublishEvent(new GameEvent(GameEventType.ClientUpdate | GameEventType.SeatListUpdate, this)).Wait();
                 } else {
-                    await PublishEvent(new GameEvent(GameEventType.ClientUpdate, this));
+                    PublishEvent(new GameEvent(GameEventType.ClientUpdate, this)).Wait();
                 }
             }
 
