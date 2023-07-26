@@ -504,7 +504,7 @@ namespace ShootTheMoon.Network
                     n.TransferRequest = tr;
 
                     tasks.Add(BroadcastNotification(n, game));
-                    Log.Debug("{0}: Transfer Card Request From {1} To {2}", game.Name, bidder.Name, game.CurrentPlayer.Name);
+                    Log.Debug("{0}: Transfer Card Request From {1} To {2} (to: {3}, from: {4})", game.Name, bidder.Name, game.CurrentPlayer.Name, tr.ToSeat, tr.FromSeat);
                 }
             }
 
