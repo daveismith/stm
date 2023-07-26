@@ -152,11 +152,26 @@ namespace ShootTheMoonTest.Game
 
         }
 
-        [DataRow("FOURPLAYER", 6)]
-        [DataRow("SIXPLAYER", 8)]
-        [DataRow("EIGHTPLAYER", 9)]
+        [DataRow("FOURPLAYER", 6, 0)]
+        [DataRow("FOURPLAYER", 6, 1)]
+        [DataRow("FOURPLAYER", 6, 2)]
+        [DataRow("FOURPLAYER", 6, 3)]
+        [DataRow("SIXPLAYER", 8, 0)]
+        [DataRow("SIXPLAYER", 8, 1)]
+        [DataRow("SIXPLAYER", 8, 2)]
+        [DataRow("SIXPLAYER", 8, 3)]
+        [DataRow("SIXPLAYER", 8, 4)]
+        [DataRow("SIXPLAYER", 8, 5)]
+        [DataRow("EIGHTPLAYER", 9, 0)]
+        [DataRow("EIGHTPLAYER", 9, 1)]
+        [DataRow("EIGHTPLAYER", 9, 2)]
+        [DataRow("EIGHTPLAYER", 9, 3)]
+        [DataRow("EIGHTPLAYER", 9, 4)]
+        [DataRow("EIGHTPLAYER", 9, 5)]
+        [DataRow("EIGHTPLAYER", 9, 6)]
+        [DataRow("EIGHTPLAYER", 9, 7)]
         [DataTestMethod]
-        public async Task TestShootBids(String presetName, int handCount)
+        public async Task TestShootBids(String presetName, int handCount, int shootSeat)
         {
             IDictionary<int, Client> clients = new Dictionary<int, Client>();
 
@@ -212,11 +227,11 @@ namespace ShootTheMoonTest.Game
                 observer.Verify(x => x.OnNext(It.Is<GameEvent>(p => p.Type == (GameEventType.BidUpdate | GameEventType.RequestBid) && p.Game == game)), Times.Exactly(index + 1));
 
                 lastClient = game.CurrentPlayer;
-                if (index == 0) {
+                if (index == shootSeat) {
                     // Shoot
                     shootClient = game.CurrentPlayer;
                     await game.MakeBid(0, Trump.Clubs, 1, false, game.CurrentPlayer);
-                } else if (index % 2 == 0) {
+                } else if ((index + shootSeat) % 2 == 0) {
                     // partners
                     partners.AddLast(game.CurrentPlayer);
                     await game.MakeBid(0, Trump.Clubs, 0, true, game.CurrentPlayer);
@@ -229,6 +244,8 @@ namespace ShootTheMoonTest.Game
             Assert.AreEqual(shootClient, game.CurrentPlayer);
 
             // Validate that trump is declared
+            observer.Verify(x => x.OnNext(It.Is<GameEvent>(p => p.Type == (GameEventType.BidUpdate | GameEventType.TrumpUpdate) && p.Game == game)), Times.Exactly(1));
+
             // TODO: Check Clients
             observer.Verify(x => x.OnNext(It.Is<GameEvent>(p => p.Type == (GameEventType.TransferRequest) && p.Game == game)), Times.Exactly(1));
             CollectionAssert.AreEquivalent(partners, game.OutstandingTransfers);
@@ -240,13 +257,11 @@ namespace ShootTheMoonTest.Game
                 uint to = game.FindSeat(shootClient);
 
                 Card pCard = player.Hand[0];
-                await game.TransferCard(pCard.Suit, pCard.Rank, from, to, player);
-                
-                //observer.Verify(x => x.OnNext(It.Is<GameEvent>(p => p.Type == (GameEventType.TransferRequest) && p.Game == game)), Times.Exactly(1));
-
+                await game.TransferCard(pCard.Suit, pCard.Rank, from, to, player);                
             }
 
-            //observer.Verify(x => x.OnNext(It.Is<GameEvent>(p => p.Type == (GameEventType.BidUpdate | GameEventType.TrumpUpdate) && p.Game == game)), Times.Exactly(1));
+            Assert.AreEqual(handCount + partners.Count, shootClient.Hand.Count);
+
             for (uint i = 0; i < partners.Count; i++) {
                 await game.ThrowawayCard(shootClient.Hand[0].Suit, shootClient.Hand[0].Rank, shootClient);
             }
