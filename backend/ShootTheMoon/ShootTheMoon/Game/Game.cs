@@ -494,7 +494,7 @@ namespace ShootTheMoon.Game
                 return false;
             }
 
-            Log.Debug("{0}: Request Transfer of ({1} of {2}) from {3} => {4}", Name, rank, suit, client.Name, CurrentPlayer.Name);
+            Log.Debug("{0}: Request Transfer of ({1} of {2}) from {3} => {4}", Name, rank.LongName, suit.LongName, client.Name, CurrentPlayer.Name);
 
             Card card = new Card(suit, rank);
             if (!client.Hand.Contains(card)) {
