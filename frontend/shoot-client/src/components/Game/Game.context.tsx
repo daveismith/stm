@@ -251,6 +251,7 @@ export const GameProvider: React.FC = ({ children }) => {
             console.log('transfer card result: ' + value.getSuccess());
             if (value.getSuccess()) {
                 setState(produce(draft => {
+                    draft.transferTarget = undefined;
                     if (index !== undefined) {
                         draft.hand.splice(index, 1);
                     }
@@ -274,7 +275,7 @@ export const GameProvider: React.FC = ({ children }) => {
         const request: ProtoCard = cardToProto(card);
 
 
-        appState.connection.throwAwayCard(request, appState.metadata).then((value: ThrowawayResponse) => {
+        appState.connection.throwawayCard(request, appState.metadata).then((value: ThrowawayResponse) => {
             eventEmitter.emit('throwawayResponse', card, value);
             console.log('throwaway card result: ' + value);
                 setState(produce(draft => {

@@ -24,10 +24,10 @@ interface IGameBoardProps {
 
 const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
     const [ gameState ] = useGame();
-    
-    const { playCard, transferCard, throwawayCard, throwingAway } = gameState;
 
-    const { hand, seats, mySeat, currentSeat, transferTarget, playedCards, highBid, bids, bidTricksSelected, bidTrumpSelected  } = props;
+    const { playCard, transferCard, throwAwayCard, throwingAway } = gameState;
+
+    const { hand, seats, mySeat, currentBidder, currentSeat, transferTarget, playedCards, highBid, bids, bidTricksSelected, bidTrumpSelected  } = props;
 
     const orderedSeats = Array.from(seats.values()).sort((s1,s2) => s1.index - s2.index);
 
@@ -52,7 +52,7 @@ const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
             transferCard(mySeat, transferTarget, card, index);
         } else if (throwingAway) {            
             console.log('throw away card')
-            throwawayCard(card, index);
+            throwAwayCard(card, index);
         } else {
             playCard(card, index);
         }
@@ -91,7 +91,7 @@ const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
                         <PlayingCard
                             key={"playing_card_" + index} 
                             card={card} 
-                            clickable={currentPlayer}
+                            clickable={currentPlayer && !currentBidder}
                             onClick={() => onCardClick(card, index)}
                         />)
                     )
