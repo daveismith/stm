@@ -692,8 +692,12 @@ class SceneController {
 
         if (!this.clientIn3DMode) return;
 
-        if (success) {
+        if (success) { // something strange happening here?
+            console.log("Transfer success");
+
             let card: Card3D | null = this.currentCard;
+
+            console.log("Start card transfer animation");
 
             card && card.transferCardAnimation(GameSettings.currentPlayer, this.scene);
 
@@ -705,6 +709,14 @@ class SceneController {
         }
 
         this.awaitingServerResponse = false;
+    }
+
+    static transferCompleteListener(fromSeat: number, toSeat: number) {
+        // animate card traveling from one to the other
+    }
+
+    static transferListener(fromSeat: number, card: Card) {
+
     }
 
     static throwawayRequestListener() {

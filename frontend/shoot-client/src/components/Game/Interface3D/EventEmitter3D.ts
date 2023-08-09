@@ -68,6 +68,14 @@ class EventEmitter3D extends EventEmitter {
             SceneController.transferResponseListener(fromSeat, toSeat, card, success);
         });
 
+        this.on('transferComplete', function(fromSeat: number, toSeat: number) {
+            SceneController.transferCompleteListener(fromSeat, toSeat);
+        });
+
+        this.on('transfer', function(fromSeat: number, card: Card) {
+            SceneController.transferListener(fromSeat, card);
+        });
+
         this.on('throwawayRequest', function() {
             SceneController.throwawayRequestListener();
         });

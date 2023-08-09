@@ -629,7 +629,7 @@ class Card3D {
 
     transferCard () {
         SceneController.currentCard = this;
-        console.log("attempting to transfer card: " + this.card.getRank() + this.card.getSuit());
+        console.log("attempting to transfer card: " + this.card.getRank() + this.card.getSuit() + " to " + SceneController.transferRecipient);
         if (this.gameState.transferCard) {
             this.gameState.transferCard(GameSettings.currentPlayer, SceneController.transferRecipient, cardFromProto(this.card));
             SceneController.awaitingServerResponse = true;

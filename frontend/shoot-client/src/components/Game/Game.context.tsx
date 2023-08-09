@@ -17,7 +17,8 @@ import { Notification,
     TransferRequest,
     Transfer,
     ThrowawayRequest,
-    ThrowawayResponse
+    ThrowawayResponse,
+    TransferComplete
 } from '../../proto/shoot_pb';
 import { Card } from "./Models/Card";
 import { Seat } from "./Models/Seat";
@@ -246,7 +247,7 @@ export const GameProvider: React.FC = ({ children }) => {
         request.setCard(requestCard);
 
         appState.connection.transferCard(request, appState.metadata).then((value: StatusResponse) => {
-            eventEmitter.emit('transferResponse', card, value.getSuccess());
+            eventEmitter.emit('transferResponse', from, to, card, value.getSuccess());
             console.log('transfer card result: ' + value.getSuccess());
             if (value.getSuccess()) {
                 setState(produce(draft => {
@@ -420,6 +421,10 @@ export const GameProvider: React.FC = ({ children }) => {
                             console.log('incorrect To seat.');
                         }
                     }));
+                } else if (notification.hasTransferComplete()) {
+                    console.log('transfer complete');
+                    const transferComplete: TransferComplete = notification.getTransferComplete()!;
+                    
                 } else if (notification.hasThrowawayRequest()) {
                     console.log('throwaway request');
                     // Nothing to read from Request
