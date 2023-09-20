@@ -692,16 +692,23 @@ class SceneController {
 
         if (!this.clientIn3DMode) return;
 
-        if (success) { // something strange happening here?
+        if (success) {
             console.log("Transfer success");
 
             let card: Card3D | null = this.currentCard;
 
             console.log("Start card transfer animation");
 
-            card && card.transferCardAnimation(GameSettings.currentPlayer, this.scene);
+            card && card.playCardAnimation(fromSeat, this.scene);
 
             for (let card of this.hand) card.toggleGlow(false);
+
+            this.awaitingAnimation = true;
+            setTimeout(() => {
+                card && card.pickUpCard(toSeat, this.scene);
+                card && card.fanCard(toSeat, this.scene);
+                this.awaitingAnimation = false;
+            }, 1000);
 
             this.gameState = GameState.WaitingForTransfersEnd;
         } else {
@@ -732,7 +739,7 @@ class SceneController {
         if (success) {
             let card: Card3D | null = this.currentCard;
 
-            card && card.throwAwayCardAnimation(GameSettings.currentPlayer, this.scene);
+            card && card.playCardAnimation(GameSettings.currentPlayer, this.scene);
 
             for (let card of this.hand) card.toggleGlow(false);
 

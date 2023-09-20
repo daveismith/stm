@@ -636,33 +636,6 @@ class Card3D {
         }
     }
 
-    transferCardAnimation (player: number, scene: Scene) {
-        const targetStack = CardStack3D.playMatStacks[player];
-        targetStack.addToStack(this);
-
-        const rotationDriftFactor = new Vector3(0, 0.1, 0);
-        const rotationDrift = new Vector3(gaussianRandom(), gaussianRandom(), gaussianRandom());
-        const rotations = new Vector3(
-            -Math.PI + 2 * Math.PI * rotationDriftFactor.x * rotationDrift.x, // -Math.PI to flip card over.
-            2 * Math.PI * rotationDriftFactor.y * rotationDrift.y,
-            2 * Math.PI * rotationDriftFactor.z * rotationDrift.z
-        )
-        const rotationQuaternion = baseRotationQuaternion(player).multiply(Quaternion.RotationYawPitchRoll(rotations.y, rotations.x, rotations.z));
-    
-        const stackHeightCompensation = new Vector3(0, targetStack.cardsInStack * CardStack3D.cardStackSpacing, 0);
-        const positionDriftFactor = new Vector3(0.3, 0, 0.3);
-        const positionDrift = new Vector3(
-            gaussianRandom() * positionDriftFactor.x,
-            gaussianRandom() * positionDriftFactor.y,
-            gaussianRandom() * positionDriftFactor.z
-        );
-        const position = targetStack.position.add(stackHeightCompensation).add(positionDrift);
-
-        this.mesh.setParent(null);
-            
-        this.animateCardSlide(position, rotationQuaternion, 0, 0, 1, 0.25, scene);
-    }
-
     throwAwayCard () {
         SceneController.currentCard = this;
         console.log("attempting to throw away card: " + this.card.getRank() + this.card.getSuit());
@@ -670,33 +643,6 @@ class Card3D {
             this.gameState.throwAwayCard(cardFromProto(this.card));
             SceneController.awaitingServerResponse = true;
         }
-    }
-
-    throwAwayCardAnimation (player: number, scene: Scene) {
-        const targetStack = CardStack3D.playMatStacks[player];
-        targetStack.addToStack(this);
-
-        const rotationDriftFactor = new Vector3(0, 0.1, 0);
-        const rotationDrift = new Vector3(gaussianRandom(), gaussianRandom(), gaussianRandom());
-        const rotations = new Vector3(
-            -Math.PI + 2 * Math.PI * rotationDriftFactor.x * rotationDrift.x, // -Math.PI to flip card over.
-            2 * Math.PI * rotationDriftFactor.y * rotationDrift.y,
-            2 * Math.PI * rotationDriftFactor.z * rotationDrift.z
-        )
-        const rotationQuaternion = baseRotationQuaternion(player).multiply(Quaternion.RotationYawPitchRoll(rotations.y, rotations.x, rotations.z));
-    
-        const stackHeightCompensation = new Vector3(0, targetStack.cardsInStack * CardStack3D.cardStackSpacing, 0);
-        const positionDriftFactor = new Vector3(0.3, 0, 0.3);
-        const positionDrift = new Vector3(
-            gaussianRandom() * positionDriftFactor.x,
-            gaussianRandom() * positionDriftFactor.y,
-            gaussianRandom() * positionDriftFactor.z
-        );
-        const position = targetStack.position.add(stackHeightCompensation).add(positionDrift);
-
-        this.mesh.setParent(null);
-            
-        this.animateCardSlide(position, rotationQuaternion, 0, 0, 1, 0.25, scene);
     }
 
     equals (comparator: ProtoCard) {
