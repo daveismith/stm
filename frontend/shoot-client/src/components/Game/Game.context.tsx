@@ -25,6 +25,8 @@ import { Bid } from "./Models/Bid";
 import { EventEmitter3D } from "./Interface3D/EventEmitter3D";
 import { SceneController } from "./Interface3D/SceneController";
 import { GameEvent3D } from "./Interface3D/GameEvent3D";
+import { has } from "immer/dist/internal";
+import { stat } from "fs";
 
 export interface IGame {
     playerName?: string;
@@ -37,6 +39,7 @@ export interface IGame {
     mySeat?: number;
     currentSeat?: number;
     playedCards: Map<number, Card>;
+    leadCard?: Card;
     currentBidder: boolean;
     transferTarget?: number;
     throwingAway: boolean;
@@ -53,6 +56,7 @@ export interface IGame {
     playCard?(card: Card, index?: number): void;
     transferCard?(from: number, to: number, card: Card, index?: number): void;
     throwAwayCard?(card: Card, index?: number): void;
+    validToPlay?(card: Card, lead: Card, hand: Card[], trump?: Bid.Trump): boolean;
 }
 
 interface ParamTypes{ 
@@ -291,6 +295,42 @@ export const GameProvider: React.FC = ({ children }) => {
         });
     };
 
+    const validToPlay = (card: Card, lead: Card, hand: Card[], trump?: Bid.Trump) => {
+        if (lead === undefined) {
+            console.log('no lead');
+            return true;
+        } else if (trump && Bid.isCardTrump(trump, lead)) {
+            console.log('lead is trump'); 
+            if (Bid.isCardTrump(trump, card)) {
+                // Check For If This Is A Trump Card
+                // first, is the lead card trump
+                // then, if so, is this a complimentary card
+
+                return true;
+            } else if (hand) {
+                return !hand.map(card => Bid.isCardTrump(trump, card)).reduce((acc, isLead) => acc || isLead);
+            }
+        } else if (card.suit === lead.suit)
+        {
+            // card matches lead suit
+            console.log('lead is ' + lead.rank + ' of '  + lead.suit );
+            if (!Bid.isCardTrump(trump, card)) {
+                return true;
+            }
+        }
+
+        let hasLeadSuit: boolean = false;
+        if (state.hand.length > 0) {
+            hasLeadSuit = hand.map(card => 
+                card.suit === lead.suit // the card matches the lead
+                && (Bid.isCardTrump(trump, lead) == Bid.isCardTrump(trump, card)) // also check if it matches trump, and the lead is trump
+            ).reduce((acc, isLead) => acc || isLead);
+            console.log('hasLeadSuit: ' + hasLeadSuit);
+        }
+
+        return !hasLeadSuit;
+    }
+
     useEffect(() => {
         console.log('set state');
         setState(produce(draft => {
@@ -300,6 +340,7 @@ export const GameProvider: React.FC = ({ children }) => {
             draft.playCard = playCard;
             draft.transferCard = transferCard;
             draft.throwAwayCard = throwAwayCard;
+            draft.validToPlay = validToPlay;
         })); 
     }, [appState.joined]);
 
@@ -326,6 +367,7 @@ export const GameProvider: React.FC = ({ children }) => {
                     setState(produce(draft => {
                         draft.tricks[0] = notification.getTricks()?.getTeam1() as number;
                         draft.tricks[1] = notification.getTricks()?.getTeam2() as number;
+                        draft.leadCard = undefined;
                     }));
                 } else if (notification.hasSeatList()) {
                     console.log('seats list');
@@ -361,6 +403,7 @@ export const GameProvider: React.FC = ({ children }) => {
                         const bidDetailsList: BidDetails[] = notification.getBidList()?.getBidsList() as BidDetails[];
                         
                         draft.playedCards.clear();
+                        draft.leadCard = undefined;
 
                         let highBid = null;
                         draft.bids = new Map();
@@ -459,10 +502,14 @@ export const GameProvider: React.FC = ({ children }) => {
                         const handCards: PlayedCard[] = notification.getPlayedCards()?.getCardsList()!;
                         console.log(handCards);
                         for (let card of handCards) {
+                            const order: number = card.getOrder()
                             const seat: number = card.getSeat();
                             const pc: Card = cardFromProto(card.getCard()!); 
                             draft.playedCards.set(seat, pc);
-                            console.log('seat: ' + seat + ', rank: ' + pc.rank + ', suit: ' + pc.suit);
+                            if (0 === order) {
+                                draft.leadCard = pc;
+                            }
+                            console.log('  - order: ' + order + ', seat: ' + seat + ', rank: ' + pc.rank + ', suit: ' + pc.suit);
                         }
                     }));
                 } else {

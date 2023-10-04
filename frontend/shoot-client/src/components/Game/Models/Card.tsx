@@ -38,6 +38,19 @@ export namespace Card {
                 return "X";
         }
       }
+
+      export function complimentarySuit(suit: Card.Suit): Suit {
+        switch (suit) {
+            case Card.Suit.SPADES:
+                return Card.Suit.CLUBS;
+            case Card.Suit.CLUBS:
+                return Card.Suit.SPADES;
+            case Card.Suit.HEARTS:
+                return Card.Suit.DIAMONDS;
+            case Card.Suit.DIAMONDS:
+                return Card.Suit.HEARTS;
+        }
+      }
       
       export function rankString(rank: Card.Rank): String {
         switch (rank) {
@@ -61,4 +74,5 @@ export namespace Card {
                 return "X";
         }
       }
+
   }

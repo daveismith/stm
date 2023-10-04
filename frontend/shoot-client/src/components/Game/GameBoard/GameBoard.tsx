@@ -25,9 +25,9 @@ interface IGameBoardProps {
 const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
     const [ gameState ] = useGame();
 
-    const { playCard, transferCard, throwAwayCard, throwingAway } = gameState;
+    const { playCard, transferCard, throwAwayCard, throwingAway, validToPlay, leadCard, winningBid } = gameState;
 
-    const { hand, seats, mySeat, currentBidder, currentSeat, transferTarget, playedCards, highBid, bids, bidTricksSelected, bidTrumpSelected  } = props;
+    const { hand, seats, mySeat, currentBidder, currentSeat, transferTarget, playedCards, highBid, bids, bidTricksSelected, bidTrumpSelected } = props;
 
     const orderedSeats = Array.from(seats.values()).sort((s1,s2) => s1.index - s2.index);
 
@@ -87,14 +87,14 @@ const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
             {(throwingAway)? <div style={{bottom: '10em', left: 0, right: '25%', position: 'absolute', justifyContent: 'center'}}>Throw Away A Card</div> : <></>}
             <div style={{bottom: 0, left: 0, right: '25%', position: 'absolute', display: 'flex', justifyContent: 'center', marginBottom: '2em', marginTop: '2em'}}>
                 {
-                    hand.map((card, index) => (
-                        <PlayingCard
-                            key={"playing_card_" + index} 
-                            card={card} 
-                            clickable={currentPlayer && !currentBidder}
-                            onClick={() => onCardClick(card, index)}
-                        />)
-                    )
+                    hand.map((card, index) => 
+                            <PlayingCard
+                                key={"playing_card_" + index} 
+                                card={card} 
+                                clickable={currentPlayer && !currentBidder}
+                                illegal={!validToPlay(card, leadCard, hand, winningBid?.trump)}
+                                onClick={() => onCardClick(card, index)}
+                            />)
                 }
             </div>
         </div>
