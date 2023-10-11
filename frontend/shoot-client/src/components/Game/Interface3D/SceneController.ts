@@ -597,7 +597,7 @@ class SceneController {
         if (success) {
             let card: Card3D | null = this.currentCard;
 
-            card && card.playCardAnimation(GameSettings.currentPlayer, this.scene);
+            card && card.playCardAnimation(GameSettings.currentPlayer, this.scene, true);
 
             for (let card of this.hand) card.toggleGlow(false);
 
@@ -620,7 +620,7 @@ class SceneController {
 
         function animate(card3D: Card3D, seat: number) {
             setTimeout(() => {
-                card3D && card3D.playCardAnimation(seat, SceneController.scene);
+                card3D && card3D.playCardAnimation(seat, SceneController.scene, true);
                 SceneController.awaitingAnimation = false;
             }, 1000);
         }
@@ -637,9 +637,9 @@ class SceneController {
              // Skip if this card has already been played in the UI
              // Skip if it's our card, let it be handled by playCardResponseListener 
             if (!this.currentCardsInTrick[order] && card && seat !== GameSettings.currentPlayer) {
-                console.log("order: " + order + ", seat: " + seat + ", card: " + card);
-                console.log("searching for " + card.getRank() + card.getSuit());
-                console.log(CardStack3D.fanStacks[seat].index);
+                //console.log("order: " + order + ", seat: " + seat + ", card: " + card);
+                //console.log("searching for " + card.getRank() + card.getSuit());
+                //console.log(CardStack3D.fanStacks[seat].index);
                 sourceCardLocation = Card3D.findCardInHands(card);
                 if (!sourceCardLocation) throw new Error("could not find source card to swap");
 
@@ -660,10 +660,6 @@ class SceneController {
                 if (card3D) {
                     this.awaitingAnimation = true;
                     animate(card3D, seat);
-                    // setTimeout(() => {
-                    //     card3D && card3D.playCardAnimation(seat, this.scene);
-                    //     this.awaitingAnimation = false;
-                    // }, 1000);
                  
                     this.currentCardsInTrick[order] = card3D;
                 }
@@ -699,7 +695,7 @@ class SceneController {
 
             console.log("Start card transfer animation");
 
-            card && card.playCardAnimation(fromSeat, this.scene);
+            card && card.playCardAnimation(fromSeat, this.scene, false);
 
             for (let card of this.hand) card.toggleGlow(false);
 
@@ -718,11 +714,25 @@ class SceneController {
         this.awaitingServerResponse = false;
     }
 
+    // animate card traveling from one to the other
     static transferCompleteListener(fromSeat: number, toSeat: number) {
-        // animate card traveling from one to the other
+         // If the player is involved in the transfer, it's handled elsewhere.
+        if (GameSettings.currentPlayer === fromSeat || GameSettings.currentPlayer === toSeat) return;
+
+        let sourceCardStack: CardStack3D = CardStack3D.fanStacks[fromSeat];
+        let card: Card3D | null = sourceCardStack.index[sourceCardStack.cardsInStack-1];
+
+        card && card.playCardAnimation(fromSeat, this.scene, false);
+
+        this.awaitingAnimation = true;
+        setTimeout(() => {
+            card && card.pickUpCard(toSeat, this.scene);
+            card && card.fanCard(toSeat, this.scene);
+            this.awaitingAnimation = false;
+        }, 1000);
     }
 
-    static transferListener(fromSeat: number, card: Card) {
+    static transferListener(fromSeat: number, card: Card | undefined) {
 
     }
 
@@ -739,7 +749,7 @@ class SceneController {
         if (success) {
             let card: Card3D | null = this.currentCard;
 
-            card && card.playCardAnimation(GameSettings.currentPlayer, this.scene);
+            card && card.playCardAnimation(GameSettings.currentPlayer, this.scene, false);
 
             for (let card of this.hand) card.toggleGlow(false);
 

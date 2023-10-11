@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events';
-import { Card, SeatDetails, Bid as BidDetails, Hand, TrumpUpdate, PlayCardRequest, PlayedCard, Tricks, TransferRequest } from '../../../proto/shoot_pb';
+import { Card, SeatDetails, Bid as BidDetails, Hand, TrumpUpdate, PlayCardRequest, PlayedCard, Tricks, TransferRequest, TransferComplete, Transfer } from '../../../proto/shoot_pb';
 import { SceneController } from "./SceneController";
 import { Bid } from "../../Game/Models/Bid";
 
@@ -68,12 +68,12 @@ class EventEmitter3D extends EventEmitter {
             SceneController.transferResponseListener(fromSeat, toSeat, card, success);
         });
 
-        this.on('transferComplete', function(fromSeat: number, toSeat: number) {
-            SceneController.transferCompleteListener(fromSeat, toSeat);
+        this.on('transferComplete', function(transferComplete: TransferComplete) {
+            SceneController.transferCompleteListener(transferComplete.getFromSeat(), transferComplete.getToSeat());
         });
 
-        this.on('transfer', function(fromSeat: number, card: Card) {
-            SceneController.transferListener(fromSeat, card);
+        this.on('transfer', function(transfer: Transfer) {
+            SceneController.transferListener(transfer.getFromSeat(), transfer.getCard());
         });
 
         this.on('throwawayRequest', function() {

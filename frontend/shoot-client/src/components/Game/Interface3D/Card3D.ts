@@ -600,14 +600,16 @@ class Card3D {
         }
     }
 
-    playCardAnimation (player: number, scene: Scene) {
+    playCardAnimation (player: number, scene: Scene, faceUp: boolean) {
         const targetStack = CardStack3D.playMatStacks[player];
         targetStack.addToStack(this);
+
+        const flip: number = faceUp ? 1 : 0; // If 1, flip card face up.  Otherwise keep it face down.
 
         const rotationDriftFactor = new Vector3(0, 0.1, 0);
         const rotationDrift = new Vector3(gaussianRandom(), gaussianRandom(), gaussianRandom());
         const rotations = new Vector3(
-            -Math.PI + 2 * Math.PI * rotationDriftFactor.x * rotationDrift.x, // -Math.PI to flip card over.
+            -Math.PI * flip + 2 * Math.PI * rotationDriftFactor.x * rotationDrift.x, // -Math.PI to flip card over.
             2 * Math.PI * rotationDriftFactor.y * rotationDrift.y,
             2 * Math.PI * rotationDriftFactor.z * rotationDrift.z
         )
