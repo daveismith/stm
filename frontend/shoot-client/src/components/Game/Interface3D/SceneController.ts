@@ -135,6 +135,9 @@ class SceneController {
         this.gameStateEventTypeMap[GameState.ChoosingTransfer] = [];
         this.gameStateEventTypeMap[GameState.ChoosingTransfer][Notification.NotificationCase.TRANSFER_COMPLETE] = 1;
 
+        this.gameStateEventTypeMap[GameState.WaitingForTransfer] = [];
+        this.gameStateEventTypeMap[GameState.WaitingForTransfer][Notification.NotificationCase.TRANSFER] = 1;
+
         this.gameStateEventTypeMap[GameState.WaitingForTransfersEnd] = [];
         this.gameStateEventTypeMap[GameState.WaitingForTransfersEnd][Notification.NotificationCase.TRANSFER_COMPLETE] = 1;
 
@@ -677,6 +680,11 @@ class SceneController {
 
             console.log("Game state -> Choosing transfer");
         }
+        else if (toSeat === GameSettings.currentPlayer) {
+            this.gameState = GameState.WaitingForTransfer;
+
+            console.log("Game state -> Waiting for transfer");
+        }
         else {
             this.gameState = GameState.WaitingForTransfersEnd;
             console.log("Game state -> Waiting for transfers to end.");
@@ -733,7 +741,40 @@ class SceneController {
     }
 
     static transferListener(fromSeat: number, card: Card | undefined) {
+        // Handle the transfer for the destination player
+        let card3D: Card3D | null;
+        let sourceCardLocation: number[] | null;
+        let destinationCardLocation: number[] | null = null;
 
+        if (card) {
+            sourceCardLocation = Card3D.findCardInHands(card);
+
+            if (!sourceCardLocation) throw new Error("could not find source card to swap");
+
+            for (let j: number = 0; j < CardStack3D.fanStacks[fromSeat].index.length; j++) {
+                if (CardStack3D.fanStacks[fromSeat].index[j]) {
+                    destinationCardLocation = [fromSeat, j];
+                    break;
+                }
+            }
+            if (!destinationCardLocation) throw new Error("could not find destination card to swap");
+
+            // find the actual card and swap it into the right spot before transferring it
+            if (sourceCardLocation && destinationCardLocation) Card3D.swapCards(sourceCardLocation, destinationCardLocation);
+            else throw new Error("could not find cards to swap");
+
+            card3D = CardStack3D.fanStacks[fromSeat].index[destinationCardLocation[1]];
+    
+            card3D && card3D.playCardAnimation(fromSeat, this.scene, false);
+    
+            this.awaitingAnimation = true;
+            setTimeout(() => {
+                card3D && card3D.pickUpCard(GameSettings.currentPlayer, this.scene);
+                card3D && card3D.fanCard(GameSettings.currentPlayer, this.scene);
+                this.awaitingAnimation = false;
+                this.gameState = GameState.WaitingForTransfersEnd;
+            }, 1000);
+        }
     }
 
     static throwawayRequestListener() {
