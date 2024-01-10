@@ -127,4 +127,28 @@ export namespace Bid {
         return false;
     }
 
+    export function effectiveSuit(card: Card, trump: Bid.Trump) {
+        if (card.rank !== Card.Rank.JACK) {
+            return card.suit;
+        }
+
+        if (isCardTrump(trump, card)) {
+            switch (trump) {
+                case Trump.CLUBS:
+                    return Card.Suit.CLUBS;
+                case Trump.DIAMONDS:
+                    return Card.Suit.DIAMONDS;
+                case Trump.HEARTS:
+                    return Card.Suit.HEARTS;
+                case Trump.SPADES:
+                    return Card.Suit.SPADES;
+                case Trump.HIGH:
+                case Trump.LOW:
+                    return card.suit;
+            }
+        }
+
+        return card.suit;
+      }
+
 } 

@@ -6,6 +6,7 @@ import TextBubble from "../../Common/TextBubble"
 import { Card } from "../Models/Card";
 import { Seat } from "../Models/Seat";
 import { Bid } from "../Models/Bid";
+import PlayArea from "./PlayArea";
 import Bidding from "./Bidding";
 
 interface IGameBoardProps {
@@ -54,6 +55,7 @@ const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
             console.log('throw away card')
             throwAwayCard(card, index);
         } else {
+            // Need to figure out how to animate here.
             playCard(card, index);
         }
     }
@@ -82,9 +84,10 @@ const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
                 </Grid>
                 ))}
             </Grid>
-            <Bidding highBid={highBid} bids={bids} bidTricksSelected={bidTricksSelected} bidTrumpSelected={bidTrumpSelected} />
+            <PlayArea />
             {(transferTarget !== undefined)? <div style={{bottom: '10em', left: 0, right: '25%', position: 'absolute', justifyContent: 'center'}}>Transfer A Card</div> : <></>}
             {(throwingAway)? <div style={{bottom: '10em', left: 0, right: '25%', position: 'absolute', justifyContent: 'center'}}>Throw Away A Card</div> : <></>}
+            {(currentPlayer) ? <div style={{bottom: '10em', left: 0, right: '25%', position: 'absolute', justifyContent: 'center'}}>Play A Card</div> : <></>}
             <div style={{bottom: 0, left: 0, right: '25%', position: 'absolute', display: 'flex', justifyContent: 'center', marginBottom: '2em', marginTop: '2em'}}>
                 {
                     hand.map((card, index) => 

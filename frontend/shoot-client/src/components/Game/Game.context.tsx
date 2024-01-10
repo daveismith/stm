@@ -313,7 +313,7 @@ export const GameProvider: React.FC = ({ children }) => {
         } else if (card.suit === lead.suit)
         {
             // card matches lead suit
-            console.log('lead is ' + lead.rank + ' of '  + lead.suit );
+            console.log('lead is ' + Card.cardString(lead) );
             if (!Bid.isCardTrump(trump, card)) {
                 return true;
             }

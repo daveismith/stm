@@ -1,30 +1,29 @@
-
 export interface Card {
     rank: Card.Rank;
     suit: Card.Suit;
 }
 
 export namespace Card {
-  
-    export enum Rank { 
-      SEVEN = 0,
-      EIGHT = 1,
-      NINE = 2,
-      TEN = 3,
-      JACK = 4,
-      QUEEN = 5,
-      KING = 6,
-      ACE = 7,
+
+    export enum Rank {
+        SEVEN = 0,
+        EIGHT = 1,
+        NINE = 2,
+        TEN = 3,
+        JACK = 4,
+        QUEEN = 5,
+        KING = 6,
+        ACE = 7,
     }
 
-    export enum Suit { 
+    export enum Suit {
         SPADES = 0,
         HEARTS = 1,
         DIAMONDS = 2,
         CLUBS = 3,
-      }
+    }
 
-      export function suitString(suit: Card.Suit): String {
+    export function suitString(suit: Card.Suit): String {
         switch (suit) {
             case Card.Suit.SPADES:
                 return "♠️";
@@ -37,9 +36,9 @@ export namespace Card {
             default:
                 return "X";
         }
-      }
+    }
 
-      export function complimentarySuit(suit: Card.Suit): Suit {
+    export function complimentarySuit(suit: Card.Suit): Suit {
         switch (suit) {
             case Card.Suit.SPADES:
                 return Card.Suit.CLUBS;
@@ -50,9 +49,9 @@ export namespace Card {
             case Card.Suit.DIAMONDS:
                 return Card.Suit.HEARTS;
         }
-      }
-      
-      export function rankString(rank: Card.Rank): String {
+    }
+
+    export function rankString(rank: Card.Rank): String {
         switch (rank) {
             case Card.Rank.ACE:
                 return "A";
@@ -73,6 +72,10 @@ export namespace Card {
             default:
                 return "X";
         }
-      }
+    }
 
-  }
+    export function cardString(card: Card): String {
+        return rankString(card.rank) + ' of ' + suitString(card.suit);
+    }
+
+}
