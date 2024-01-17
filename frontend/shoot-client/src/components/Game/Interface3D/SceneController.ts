@@ -140,6 +140,11 @@ class SceneController {
 
         this.gameStateEventTypeMap[GameState.WaitingForTransfersEnd] = [];
         this.gameStateEventTypeMap[GameState.WaitingForTransfersEnd][Notification.NotificationCase.TRANSFER_COMPLETE] = 1;
+        this.gameStateEventTypeMap[GameState.WaitingForTransfersEnd][Notification.NotificationCase.THROWAWAY_REQUEST] = 1;
+
+        this.gameStateEventTypeMap[GameState.WaitingForThrowawaysEnd] = [];
+        this.gameStateEventTypeMap[GameState.WaitingForThrowawaysEnd][Notification.NotificationCase.PLAY_CARD_REQUEST] = 1;
+        this.gameStateEventTypeMap[GameState.WaitingForThrowawaysEnd][Notification.NotificationCase.PLAYED_CARDS] = 1;
 
         this.gameStateEventTypeMap[GameState.WaitingToPlay] = [];
         this.gameStateEventTypeMap[GameState.WaitingToPlay][Notification.NotificationCase.PLAY_CARD_REQUEST] = 1;
@@ -621,6 +626,10 @@ class SceneController {
         let card: Card | undefined;
         let card3D: Card3D | null;
 
+        if (this.gameState === GameState.WaitingForThrowawaysEnd) {
+            this.gameState = GameState.WaitingToPlay;
+        }
+
         function animate(card3D: Card3D, seat: number) {
             setTimeout(() => {
                 card3D && card3D.playCardAnimation(seat, SceneController.scene, true);
@@ -677,12 +686,10 @@ class SceneController {
             for (let card of this.hand) card.toggleGlow(true);
 
             this.gameState = GameState.ChoosingTransfer;
-
             console.log("Game state -> Choosing transfer");
         }
         else if (toSeat === GameSettings.currentPlayer) {
             this.gameState = GameState.WaitingForTransfer;
-
             console.log("Game state -> Waiting for transfer");
         }
         else {
@@ -715,6 +722,7 @@ class SceneController {
             }, 1000);
 
             this.gameState = GameState.WaitingForTransfersEnd;
+            console.log("Game state -> Waiting for transfers to end.");
         } else {
             console.log("Error Transferring Card");
         }
@@ -773,6 +781,7 @@ class SceneController {
                 card3D && card3D.fanCard(GameSettings.currentPlayer, this.scene);
                 this.awaitingAnimation = false;
                 this.gameState = GameState.WaitingForTransfersEnd;
+                console.log("Game state -> Waiting for transfers to end.");
             }, 1000);
         }
     }
@@ -780,6 +789,7 @@ class SceneController {
     static throwawayRequestListener() {
         for (let card of this.hand) card.toggleGlow(true);
         this.gameState = GameState.ChoosingThrowaway;
+        console.log("Game state -> Choosing throwaway.");
     }
 
     static throwawayResponseListener(finished: boolean, cardRemoved: Card, success: boolean) {
@@ -787,7 +797,7 @@ class SceneController {
 
         if (!this.clientIn3DMode) return;
 
-        if (success) {
+        if (success) { // Error in here somewhere
             let card: Card3D | null = this.currentCard;
 
             card && card.playCardAnimation(GameSettings.currentPlayer, this.scene, false);
@@ -795,6 +805,7 @@ class SceneController {
             for (let card of this.hand) card.toggleGlow(false);
 
             this.gameState = GameState.WaitingForThrowawaysEnd;
+            console.log("Game state -> Waiting for throwaways to end.");
         } else {
             console.log("Error Throwing Away Card");
         }
