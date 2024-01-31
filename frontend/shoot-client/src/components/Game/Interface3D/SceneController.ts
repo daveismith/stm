@@ -141,6 +141,7 @@ class SceneController {
         this.gameStateEventTypeMap[GameState.WaitingForTransfersEnd] = [];
         this.gameStateEventTypeMap[GameState.WaitingForTransfersEnd][Notification.NotificationCase.TRANSFER_COMPLETE] = 1;
         this.gameStateEventTypeMap[GameState.WaitingForTransfersEnd][Notification.NotificationCase.THROWAWAY_REQUEST] = 1;
+        this.gameStateEventTypeMap[GameState.WaitingForTransfersEnd][Notification.NotificationCase.PLAYED_CARDS] = 1;
 
         this.gameStateEventTypeMap[GameState.WaitingForThrowawaysEnd] = [];
         this.gameStateEventTypeMap[GameState.WaitingForThrowawaysEnd][Notification.NotificationCase.PLAY_CARD_REQUEST] = 1;
@@ -626,7 +627,9 @@ class SceneController {
         let card: Card | undefined;
         let card3D: Card3D | null;
 
-        if (this.gameState === GameState.WaitingForThrowawaysEnd) {
+        if (this.gameState === GameState.WaitingForTransfersEnd) {
+            this.gameState = GameState.WaitingToPlay;
+        } else if (this.gameState === GameState.WaitingForThrowawaysEnd) {
             this.gameState = GameState.WaitingToPlay;
         }
 
@@ -797,15 +800,20 @@ class SceneController {
 
         if (!this.clientIn3DMode) return;
 
-        if (success) { // Error in here somewhere
+        if (success) {
             let card: Card3D | null = this.currentCard;
 
             card && card.playCardAnimation(GameSettings.currentPlayer, this.scene, false);
 
             for (let card of this.hand) card.toggleGlow(false);
 
-            this.gameState = GameState.WaitingForThrowawaysEnd;
-            console.log("Game state -> Waiting for throwaways to end.");
+            if (finished) {
+                this.gameState = GameState.WaitingToPlay;
+                console.log("Game state -> Waiting to play.");
+            } else {
+                this.gameState = GameState.WaitingForThrowawaysEnd;
+                console.log("Game state -> Waiting for throwaways to end.");
+            }
         } else {
             console.log("Error Throwing Away Card");
         }
