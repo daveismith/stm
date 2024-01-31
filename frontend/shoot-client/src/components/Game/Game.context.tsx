@@ -28,6 +28,11 @@ import { GameEvent3D } from "./Interface3D/GameEvent3D";
 import { has } from "immer/dist/internal";
 import { stat } from "fs";
 
+export interface INotificationQueue {
+    entries: Notification[];
+    running: boolean
+};
+
 export interface IGame {
     playerName?: string;
     started: boolean;
@@ -93,6 +98,11 @@ const cleanInitialState: IGame = {
     throwAwayCard: undefined
 };
 
+const cleanInitialQueue: INotificationQueue = {
+    entries: [],
+    running: true
+};
+
 let registered: boolean = false;
 
 export const GameContext: React.Context<GameContextType> = createContext<GameContextType>([{ ...cleanInitialState }]);
@@ -118,13 +128,198 @@ export const cardToProto = (card: Card): ProtoCard => {
 export const GameProvider: React.FC = ({ children }) => {
     const [ appState ] = useApp();
     const [ state, setState ] = useState(cleanInitialState);
+    const [ queue, setQueue ] = useState<INotificationQueue>(cleanInitialQueue);
     const { id } = useParams<ParamTypes>();
 
     const { joinGame } = appState;
 
     const { eventEmitter } = state;
 
-    console.log(state)
+    useEffect(() => {
+        if (!queue.running || queue.entries.length == 0) {
+            return;
+        }
+
+        let processed: Notification[] = [];
+        for (let idx = 0; idx < queue.entries.length; idx++) {
+            let notification: Notification = queue.entries[idx];
+
+            console.log("processing notification sequence: " + notification.getSequence());
+            SceneController.addNewEvent(new GameEvent3D(notification, state.eventEmitter));
+
+            if (notification.hasScores()) {
+                console.log('score update');
+                // Handle A Score Update
+                setState(produce(draft => {
+                    draft.score[0] = notification.getScores()?.getTeam1() as number;
+                    draft.score[1] = notification.getScores()?.getTeam2() as number;
+                }));
+            } else if (notification.hasTricks()) {
+                console.log('tricks update');
+                console.log(notification.getTricks());
+                // Handle A Tricks Update
+                setState(produce(draft => {
+                    draft.tricks[0] = notification.getTricks()?.getTeam1() as number;
+                    draft.tricks[1] = notification.getTricks()?.getTeam2() as number;
+                    draft.leadCard = undefined;
+                }));
+            } else if (notification.hasSeatList()) {
+                console.log('seats list');
+                // Handle Seat List Update
+                setState(produce(draft => {
+                    const seatDetailsList: SeatDetails[] = notification.getSeatList()?.getSeatsList() as SeatDetails[];
+                    
+                    draft.seats = new Map();
+                    for (let seatDetails of seatDetailsList) {
+                        const seat: Seat = {
+                            index: seatDetails.getSeat(),
+                            name: seatDetails.getName(),
+                            empty: seatDetails.getEmpty(),
+                            human: seatDetails.getHuman(),
+                            ready: seatDetails.getReady(),
+                        };
+                        draft.seats.set(seat.index, seat);
+                    }
+                }));
+            } else if (notification.hasStartGame()) {
+                console.log('start game');
+                setState(produce(draft => {
+                    draft.started = true;
+                }));                    
+            } else if (notification.hasBidRequest()) {
+                console.log('bid request');
+                setState(produce(draft => {
+                    draft.currentBidder = true;
+                }));
+            } else if (notification.hasBidList()) {
+                console.log('bid list');
+                setState(produce(draft => {
+                    const bidDetailsList: BidDetails[] = notification.getBidList()?.getBidsList() as BidDetails[];
+                    
+                    draft.playedCards.clear();
+                    draft.leadCard = undefined;
+
+                    let highBid = null;
+                    draft.bids = new Map();
+                    for (let bidDetails of bidDetailsList) {
+                        const bid: Bid = {
+                            number: bidDetails.getTricks(),
+                            shootNum: bidDetails.getShootNum(),
+                            trump: Bid.fromProtoTrump(bidDetails.getTrump()),
+                            seat: bidDetails.getSeat(),
+                        };
+                        draft.bids.set(bid.seat, bid);
+
+                        if (bidDetails.getSeat() === draft.mySeat) {
+                            draft.currentBidder = false;
+                        }
+
+                        if (highBid == null ||  highBid.number < bid.number || highBid.shootNum < bid.shootNum) {
+                            highBid = bid;
+                        }
+                    }
+                    draft.highBid = highBid;
+                    draft.currentSeat = notification.getBidList()?.getCurrentBidder();
+                }));
+            } else if (notification.hasHand()) {
+                console.log('received hand');
+                const hand: Hand = notification.getHand()!;
+                const cards: Card[] = hand.getHandList().map(cardFromProto);
+                
+                setState(produce(draft => {
+                    draft.transferTarget = undefined;
+                    draft.throwingAway = false;
+                    draft.hand = cards;
+                }));
+            } else if (notification.hasTransferRequest()) {
+                console.log('transfer request ');
+                const request: TransferRequest = notification.getTransferRequest()!;
+
+                setState(produce(draft => {    
+                    console.log('from seat: ' + request.getFromSeat());
+                    console.log('my seat: ' + draft.mySeat);
+                    if (request.getFromSeat() === draft.mySeat) {
+                            draft.transferTarget = request.getToSeat();
+                    }
+                }));
+            } else if (notification.hasTransfer()) {
+                console.log('transfer');
+                const transfer: Transfer = notification.getTransfer()!;
+                
+                setState(produce(draft => {
+                    console.log('to seat: ' + transfer.getToSeat())
+                    console.log('my seat: ' + draft.mySeat);
+                    if (transfer.getToSeat() === draft.mySeat) {
+                        const card: Card = cardFromProto(transfer.getCard()!);
+                        console.log('my seat, rx card')
+                        console.log(card);
+                        draft.hand.push(card);
+                    } else {
+                        console.log('incorrect To seat.');
+                    }
+                }));
+            } else if (notification.hasThrowawayRequest()) {
+                console.log('throwaway request');
+                // Nothing to read from Request
+                //const throwaway: ThrowawayRequest = notification.getThrowawayRequest();
+
+                setState(produce(draft => {
+                    draft.throwingAway = true;
+                }));
+            } else if (notification.hasTrumpUpdate()) {
+                console.log('trump update');
+                setState(produce(draft => {
+                    const trump: TrumpUpdate = notification.getTrumpUpdate()!;
+
+                    draft.bids = new Map();
+                    draft.highBid = null;
+                    draft.winningBid = {
+                        number: trump.getTricks(),
+                        shootNum: trump.getShootNum(),
+                        trump: Bid.fromProtoTrump(trump.getTrump()),
+                        seat: trump.getSeat(),
+                    };
+
+                }));
+            } else if (notification.hasPlayCardRequest()) {
+                console.log('play card request');
+                setState(produce(draft => {
+                    draft.currentSeat = notification.getPlayCardRequest()?.getSeat();
+                }));
+            } else if(notification.hasUpdateTimeout()) {
+                console.log('update timeout');
+            } else if (notification.hasPlayedCards()) {
+                console.log('played cards');
+                setState(produce(draft => {
+                    draft.playedCards = new Map();
+
+                    const handCards: PlayedCard[] = notification.getPlayedCards()?.getCardsList()!;
+                    console.log(handCards);
+                    for (let card of handCards) {
+                        const order: number = card.getOrder()
+                        const seat: number = card.getSeat();
+                        const pc: Card = cardFromProto(card.getCard()!); 
+                        draft.playedCards.set(seat, pc);
+                        if (0 === order) {
+                            draft.leadCard = pc;
+                        }
+                        console.log('  - order: ' + order + ', seat: ' + seat + ', rank: ' + pc.rank + ', suit: ' + pc.suit);
+                    }
+                }));
+            } else {
+                    console.log('game data');
+                    // const obj: object = notification.toObject();
+                    // console.log(obj);
+            }
+
+            processed.push(notification);
+        }
+
+        setQueue(old => ({
+            ...old,
+            entries: old.entries.filter((e) => processed.indexOf(e) === -1)
+        }));
+    }, [queue])
 
     // Function To Take A Seat
     const takeSeat = async (seat: number) => {
@@ -214,6 +409,9 @@ export const GameProvider: React.FC = ({ children }) => {
             return false;
         }
 
+        // disable queue
+        setQueue(q => ({ ...q, running: false }));
+
         console.log('play card, index: ' + index);
 
         const request: ProtoCard = cardToProto(card);            
@@ -229,10 +427,17 @@ export const GameProvider: React.FC = ({ children }) => {
                     draft.currentSeat = -1; // clear the current player seat since we're no longer the current player
                 }));
             }
+
+            // re-enable queue
+            setQueue(q => ({...q, running: true}));
+
             return value.getSuccess();
         }).catch((reason: any) => { 
             eventEmitter.emit('playCardResponse', card, false);
             console.log('play card failed: ' + (reason as grpcWeb.Error).message);
+            
+            // re-enable queue
+            setQueue(q => ({ ...q, running: true }));
             return false;
         });
     };
@@ -357,177 +562,11 @@ export const GameProvider: React.FC = ({ children }) => {
             joinGame(id, state.playerName);
         } else if (!registered) {
             appState.stream.on('data', (notification: Notification) => {
-                console.log("rx notification sequence: " + notification.getSequence());
-                SceneController.addNewEvent(new GameEvent3D(notification, state.eventEmitter));
-
-                if (notification.hasScores()) {
-                    console.log('score update');
-                    // Handle A Score Update
-                    setState(produce(draft => {
-                        draft.score[0] = notification.getScores()?.getTeam1() as number;
-                        draft.score[1] = notification.getScores()?.getTeam2() as number;
-                    }));
-                } else if (notification.hasTricks()) {
-                    console.log('tricks update');
-                    console.log(notification.getTricks());
-                    // Handle A Tricks Update
-                    setState(produce(draft => {
-                        draft.tricks[0] = notification.getTricks()?.getTeam1() as number;
-                        draft.tricks[1] = notification.getTricks()?.getTeam2() as number;
-                        draft.leadCard = undefined;
-                    }));
-                } else if (notification.hasSeatList()) {
-                    console.log('seats list');
-                    // Handle Seat List Update
-                    setState(produce(draft => {
-                        const seatDetailsList: SeatDetails[] = notification.getSeatList()?.getSeatsList() as SeatDetails[];
-                        
-                        draft.seats = new Map();
-                        for (let seatDetails of seatDetailsList) {
-                            const seat: Seat = {
-                                index: seatDetails.getSeat(),
-                                name: seatDetails.getName(),
-                                empty: seatDetails.getEmpty(),
-                                human: seatDetails.getHuman(),
-                                ready: seatDetails.getReady(),
-                            };
-                            draft.seats.set(seat.index, seat);
-                        }
-                    }));
-                } else if (notification.hasStartGame()) {
-                    console.log('start game');
-                    setState(produce(draft => {
-                        draft.started = true;
-                    }));                    
-                } else if (notification.hasBidRequest()) {
-                    console.log('bid request');
-                    setState(produce(draft => {
-                        draft.currentBidder = true;
-                    }));
-                } else if (notification.hasBidList()) {
-                    console.log('bid list');
-                    setState(produce(draft => {
-                        const bidDetailsList: BidDetails[] = notification.getBidList()?.getBidsList() as BidDetails[];
-                        
-                        draft.playedCards.clear();
-                        draft.leadCard = undefined;
-
-                        let highBid = null;
-                        draft.bids = new Map();
-                        for (let bidDetails of bidDetailsList) {
-                            const bid: Bid = {
-                                number: bidDetails.getTricks(),
-                                shootNum: bidDetails.getShootNum(),
-                                trump: Bid.fromProtoTrump(bidDetails.getTrump()),
-                                seat: bidDetails.getSeat(),
-                            };
-                            draft.bids.set(bid.seat, bid);
-
-                            if (bidDetails.getSeat() === draft.mySeat) {
-                                draft.currentBidder = false;
-                            }
-
-                            if (highBid == null ||  highBid.number < bid.number || highBid.shootNum < bid.shootNum) {
-                                highBid = bid;
-                            }
-                        }
-                        draft.highBid = highBid;
-                        draft.currentSeat = notification.getBidList()?.getCurrentBidder();
-                    }));
-                } else if (notification.hasHand()) {
-                    console.log('received hand');
-                    const hand: Hand = notification.getHand()!;
-                    const cards: Card[] = hand.getHandList().map(cardFromProto);
-                    
-                    setState(produce(draft => {
-                        draft.transferTarget = undefined;
-                        draft.throwingAway = false;
-                        draft.hand = cards;
-                    }));
-                } else if (notification.hasTransferRequest()) {
-                    console.log('transfer request ');
-                    const request: TransferRequest = notification.getTransferRequest()!;
-
-                    setState(produce(draft => {    
-                        console.log('from seat: ' + request.getFromSeat());
-                        console.log('my seat: ' + draft.mySeat);
-                        if (request.getFromSeat() === draft.mySeat) {
-                                draft.transferTarget = request.getToSeat();
-                        }
-                    }));
-                } else if (notification.hasTransfer()) {
-                    console.log('transfer');
-                    const transfer: Transfer = notification.getTransfer()!;
-                    
-                    setState(produce(draft => {
-                        console.log('to seat: ' + transfer.getToSeat())
-                        console.log('my seat: ' + draft.mySeat);
-                        if (transfer.getToSeat() === draft.mySeat) {
-                            const card: Card = cardFromProto(transfer.getCard()!);
-                            console.log('my seat, rx card')
-                            console.log(card);
-                            draft.hand.push(card);
-                        } else {
-                            console.log('incorrect To seat.');
-                        }
-                    }));
-                } else if (notification.hasThrowawayRequest()) {
-                    console.log('throwaway request');
-                    // Nothing to read from Request
-                    //const throwaway: ThrowawayRequest = notification.getThrowawayRequest();
-
-                    setState(produce(draft => {
-                        draft.throwingAway = true;
-                    }));
-                } else if (notification.hasTrumpUpdate()) {
-                    console.log('trump update');
-                    setState(produce(draft => {
-                        const trump: TrumpUpdate = notification.getTrumpUpdate()!;
-
-                        draft.bids = new Map();
-                        draft.highBid = null;
-                        draft.winningBid = {
-                            number: trump.getTricks(),
-                            shootNum: trump.getShootNum(),
-                            trump: Bid.fromProtoTrump(trump.getTrump()),
-                            seat: trump.getSeat(),
-                        };
-
-                    }));
-                } else if (notification.hasPlayCardRequest()) {
-                    console.log('play card request');
-                    setState(produce(draft => {
-                        draft.currentSeat = notification.getPlayCardRequest()?.getSeat();
-                    }));
-                } else if(notification.hasUpdateTimeout()) {
-                    console.log('update timeout');
-                } else if (notification.hasPlayedCards()) {
-                    console.log('played cards');
-                    setState(produce(draft => {
-                        draft.playedCards = new Map();
-
-                        const handCards: PlayedCard[] = notification.getPlayedCards()?.getCardsList()!;
-                        console.log(handCards);
-                        for (let card of handCards) {
-                            const order: number = card.getOrder()
-                            const seat: number = card.getSeat();
-                            const pc: Card = cardFromProto(card.getCard()!); 
-                            draft.playedCards.set(seat, pc);
-                            if (0 === order) {
-                                draft.leadCard = pc;
-                            }
-                            console.log('  - order: ' + order + ', seat: ' + seat + ', rank: ' + pc.rank + ', suit: ' + pc.suit);
-                        }
-                    }));
-                } else {
-                        console.log('game data');
-                        // const obj: object = notification.toObject();
-                        // console.log(obj);
-                }
+                //console.log("queueing notification sequence: " + notification.getSequence());
+                setQueue(q => ({ ...q, entries: [...q.entries, notification] }));
             });
         
             registered = true;
-
         }
     }, [state.playerName, state.mySeat, state.takeSeat, state.eventEmitter, appState.joined, appState.stream, appState.connection, appState.metadata, joinGame, id, eventEmitter]);
 
