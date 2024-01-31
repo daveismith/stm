@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Grid } from "@material-ui/core";
 import { useGame } from "../../Game/Game.context";
 import PlayingCard from "../../Common/PlayingCard";
@@ -7,7 +7,6 @@ import { Card } from "../Models/Card";
 import { Seat } from "../Models/Seat";
 import { Bid } from "../Models/Bid";
 import PlayArea from "./PlayArea";
-import Bidding from "./Bidding";
 
 interface IGameBoardProps {
     hand: Card[];
@@ -23,8 +22,16 @@ interface IGameBoardProps {
     bidTrumpSelected: string | null;
 }
 
+interface IPendingCard {
+    card: Card;
+    index: number;
+    operation: string;
+}
+
 const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
     const [ gameState ] = useGame();
+
+    const [pendingCards, setPendingCards] = useState<IPendingCard[]>([]);
 
     const { playCard, transferCard, throwAwayCard, throwingAway, validToPlay, leadCard, winningBid } = gameState;
 
@@ -34,7 +41,25 @@ const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
 
     const currentPlayer = (currentSeat === mySeat) || (transferTarget !== undefined) || throwingAway;
 
-    console.log('transferTarget: ' + transferTarget + ', throwingAway: ' + throwingAway);
+    React.useEffect(() => {
+        if (pendingCards.length > 0) {
+            const timeout = setTimeout(() => {
+                let pending = pendingCards[0];
+                if ('play' === pending.operation) {
+                    playCard(pending.card, pending.index);
+                }
+            }, 500);
+
+            return () => clearTimeout(timeout);
+        } else {
+            return () => {}
+        }
+    }, [pendingCards]);
+
+    useEffect(() => {
+        console.log('hand updated');
+        setPendingCards([]);
+    }, [hand])
 
     const playedCard = (index: number) => {
         const playedCard = playedCards.get(index);
@@ -47,16 +72,22 @@ const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
     }
 
     const onCardClick = (card: Card, index: number) => {
+        if (!currentPlayer) {
+            return; // not our turn
+        }
+
         if (transferTarget !== undefined) {
             // Transfer Card
             console.log('transfer card');
+            //setCardToRemove(index);
             transferCard(mySeat, transferTarget, card, index);
         } else if (throwingAway) {            
             console.log('throw away card')
+            //setCardToRemove(index);
             throwAwayCard(card, index);
         } else {
             // Need to figure out how to animate here.
-            playCard(card, index);
+            setPendingCards([{card: card, index: index, operation: 'play'}]);
         }
     }
 
@@ -85,19 +116,27 @@ const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
                 ))}
             </Grid>
             <PlayArea />
-            {(transferTarget !== undefined)? <div style={{bottom: '10em', left: 0, right: '25%', position: 'absolute', justifyContent: 'center'}}>Transfer A Card</div> : <></>}
-            {(throwingAway)? <div style={{bottom: '10em', left: 0, right: '25%', position: 'absolute', justifyContent: 'center'}}>Throw Away A Card</div> : <></>}
-            {(currentPlayer) ? <div style={{bottom: '10em', left: 0, right: '25%', position: 'absolute', justifyContent: 'center'}}>Play A Card</div> : <></>}
+            {(transferTarget !== undefined && pendingCards.length == 0)? <div style={{bottom: '10em', left: 0, right: '25%', position: 'absolute', justifyContent: 'center'}}>Transfer A Card</div> : <></>}
+            {(throwingAway && pendingCards.length == 0)? <div style={{bottom: '10em', left: 0, right: '25%', position: 'absolute', justifyContent: 'center'}}>Throw Away A Card</div> : <></>}
+            {(currentPlayer && winningBid !== null && pendingCards.length == 0) ? <div style={{bottom: '10em', left: 0, right: '25%', position: 'absolute', justifyContent: 'center'}}>Play A Card</div> : <></>}
             <div style={{bottom: 0, left: 0, right: '25%', position: 'absolute', display: 'flex', justifyContent: 'center', marginBottom: '2em', marginTop: '2em'}}>
                 {
-                    hand.map((card, index) => 
-                            <PlayingCard
+                    hand.map((card, index) => {
+                            let remove = false;
+                            for (var i = 0; i < pendingCards.length; i++) {
+                                //console.log('card: ' + card);
+                                if (pendingCards[i].card === card && pendingCards[i].index == index) {
+                                    remove = true;
+                                }
+                            }
+                            return <PlayingCard
                                 key={"playing_card_" + index} 
                                 card={card} 
-                                clickable={currentPlayer && !currentBidder}
+                                clickable={currentPlayer && !currentBidder && pendingCards.length === 0}
                                 illegal={!validToPlay(card, leadCard, hand, winningBid?.trump)}
+                                remove={remove}
                                 onClick={() => onCardClick(card, index)}
-                            />)
+                            />})
                 }
             </div>
         </div>

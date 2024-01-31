@@ -226,6 +226,7 @@ export const GameProvider: React.FC = ({ children }) => {
                     if (index !== undefined) {
                         draft.hand.splice(index, 1);
                     }
+                    draft.currentSeat = -1; // clear the current player seat since we're no longer the current player
                 }));
             }
             return value.getSuccess();
@@ -296,11 +297,17 @@ export const GameProvider: React.FC = ({ children }) => {
     };
 
     const validToPlay = (card: Card, lead: Card, hand: Card[], trump?: Bid.Trump) => {
+        if (undefined === lead) {
+            return true;
+        }
+
+        //console.log('card: ' + Card.cardString(card) + ', lead: ' + Card.cardString(lead) + ', trump: ' + trump!);
+        //console.log(hand);
         if (lead === undefined) {
-            console.log('no lead');
+            //console.log('no lead');
             return true;
         } else if (trump && Bid.isCardTrump(trump, lead)) {
-            console.log('lead is trump'); 
+            //console.log('lead is trump'); 
             if (Bid.isCardTrump(trump, card)) {
                 // Check For If This Is A Trump Card
                 // first, is the lead card trump
@@ -313,19 +320,19 @@ export const GameProvider: React.FC = ({ children }) => {
         } else if (card.suit === lead.suit)
         {
             // card matches lead suit
-            console.log('lead is ' + Card.cardString(lead) );
+            //console.log('lead is ' + Card.cardString(lead) );
             if (!Bid.isCardTrump(trump, card)) {
                 return true;
             }
         }
 
         let hasLeadSuit: boolean = false;
-        if (state.hand.length > 0) {
+        if (hand.length > 0) {
             hasLeadSuit = hand.map(card => 
                 card.suit === lead.suit // the card matches the lead
                 && (Bid.isCardTrump(trump, lead) == Bid.isCardTrump(trump, card)) // also check if it matches trump, and the lead is trump
             ).reduce((acc, isLead) => acc || isLead);
-            console.log('hasLeadSuit: ' + hasLeadSuit);
+            //console.log('hasLeadSuit: ' + hasLeadSuit);
         }
 
         return !hasLeadSuit;

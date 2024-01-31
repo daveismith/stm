@@ -7,6 +7,7 @@ interface IPlayingCardProps {
     card: Card,
     clickable?: boolean,
     illegal?: boolean,
+    remove?: boolean,
     onClick?: (card: Card) => void
 }
 
@@ -31,6 +32,7 @@ padding: 0px 0px 6px 0px;
 const PlayingCard: React.FC<IPlayingCardProps> = (props: IPlayingCardProps) => {
     const clickable = props.clickable || false;
     const illegal = props.illegal || false;
+    const remove = props.remove || false;
     const suit = props.card.suit;
     const color = (suit === Card.Suit.DIAMONDS || suit === Card.Suit.HEARTS) ? "red" : "black";
 
@@ -41,7 +43,7 @@ const PlayingCard: React.FC<IPlayingCardProps> = (props: IPlayingCardProps) => {
     }
 
     return (  
-        <StyledDiv onClick={onClick} className={`card ${clickable ? (illegal ? 'illegal' : 'clickable') : ''}`}>
+        <StyledDiv onClick={onClick} className={`card ${clickable ? (illegal ? 'illegal' : 'clickable') : ''} ${remove ? 'remove' : ''}`}>
             <CardView>
                 <RankDiv style={{color: `${color}`}}>
                     {Card.rankString(props.card.rank)}
