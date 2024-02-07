@@ -36,6 +36,7 @@ enum GameState {
     WaitingToPlay = 100,
     ChoosingPlay = 101,
     WaitingForTrickEnd = 102,
+    SittingOut = 103,
     WaitingForGameEnd = 1000
 }
 
@@ -64,6 +65,7 @@ class SceneController {
     static awaitingAnimation: boolean = false;
     static clientIn3DMode: boolean = false;
     static transferRecipient: number = -1;
+    static partnerIsShooting: boolean = false;
 
     static initialize () {
         this.gameStateEventTypeMap = [];
@@ -161,6 +163,12 @@ class SceneController {
         this.gameStateEventTypeMap[GameState.WaitingForTrickEnd][Notification.NotificationCase.PLAYED_CARDS] = 1;
         this.gameStateEventTypeMap[GameState.WaitingForTrickEnd][Notification.NotificationCase.TRICKS] = 1;
         this.gameStateEventTypeMap[GameState.WaitingForTrickEnd][Notification.NotificationCase.SCORES] = 1;
+
+        this.gameStateEventTypeMap[GameState.SittingOut] = [];
+        this.gameStateEventTypeMap[GameState.SittingOut][Notification.NotificationCase.PLAYED_CARDS] = 1;
+        this.gameStateEventTypeMap[GameState.SittingOut][Notification.NotificationCase.TRICKS] = 1;
+        this.gameStateEventTypeMap[GameState.SittingOut][Notification.NotificationCase.SCORES] = 1;
+        this.gameStateEventTypeMap[GameState.SittingOut][Notification.NotificationCase.PLAY_CARD_REQUEST] = 1;
     }
 
     static addNewEvent (newEvent: GameEvent3D) {
@@ -414,6 +422,7 @@ class SceneController {
         this.hand = [];
         this.currentCard = null;
         this.currentCardsInTrick = [];
+        this.partnerIsShooting = false;
 
         CardStack3D.arrangeDeck(hand.getHandList());
 
@@ -628,7 +637,19 @@ class SceneController {
         let card3D: Card3D | null;
 
         if (this.gameState === GameState.WaitingForTransfersEnd) {
-            this.gameState = GameState.WaitingToPlay;
+            if (this.partnerIsShooting) {
+                this.gameState = GameState.SittingOut;
+                console.log("Game state -> Sitting out");
+
+                // Error here somewhere throwing out all hands
+                // If we're sitting out, throw away all our cards when the first card is played
+                for (let throwawayCard of this.hand) {
+                    throwawayCard.toggleGlow(false);
+                    throwawayCard.playCardAnimation(GameSettings.currentPlayer, this.scene, false);
+                }
+            } else {
+                this.gameState = GameState.WaitingToPlay;
+            }
         } else if (this.gameState === GameState.WaitingForThrowawaysEnd) {
             this.gameState = GameState.WaitingToPlay;
         }
@@ -689,6 +710,7 @@ class SceneController {
             for (let card of this.hand) card.toggleGlow(true);
 
             this.gameState = GameState.ChoosingTransfer;
+            this.partnerIsShooting = true;
             console.log("Game state -> Choosing transfer");
         }
         else if (toSeat === GameSettings.currentPlayer) {
@@ -707,11 +729,7 @@ class SceneController {
         if (!this.clientIn3DMode) return;
 
         if (success) {
-            console.log("Transfer success");
-
             let card: Card3D | null = this.currentCard;
-
-            console.log("Start card transfer animation");
 
             card && card.playCardAnimation(fromSeat, this.scene, false);
 
