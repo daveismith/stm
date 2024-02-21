@@ -25,16 +25,19 @@ import { Bid } from "./Models/Bid";
 import { EventEmitter3D } from "./Interface3D/EventEmitter3D";
 import { SceneController } from "./Interface3D/SceneController";
 import { GameEvent3D } from "./Interface3D/GameEvent3D";
-import { has } from "immer/dist/internal";
-import { stat } from "fs";
 
 export interface INotificationQueue {
     entries: Notification[];
     running: boolean
 };
 
+export enum ClearingItem {
+    TRICKS
+};
+
 export interface IGame {
     playerName?: string;
+    clearing?: ClearingItem;
     started: boolean;
     sceneView: boolean;
     score: number[];
@@ -72,6 +75,7 @@ export type GameContextType = (IGame | ((param: any) => void))[];
 
 const cleanInitialState: IGame = {
     playerName: undefined,
+    clearing: undefined,
     started: false,
     sceneView: false,
     score: [0, 0],
@@ -125,6 +129,12 @@ export const cardToProto = (card: Card): ProtoCard => {
     return protoCard;
 }
 
+function delay(duration: number) {
+    return new Promise((resolve) => {
+      setTimeout(resolve, duration);
+    });
+  }
+
 export const GameProvider: React.FC = ({ children }) => {
     const [ appState ] = useApp();
     const [ state, setState ] = useState(cleanInitialState);
@@ -136,12 +146,13 @@ export const GameProvider: React.FC = ({ children }) => {
     const { eventEmitter } = state;
 
     useEffect(() => {
-        if (!queue.running || queue.entries.length == 0) {
+        if (!queue.running || queue.entries.length === 0) {
             return;
         }
 
         let processed: Notification[] = [];
-        for (let idx = 0; idx < queue.entries.length; idx++) {
+        let running: boolean = queue.running;
+        for (let idx = 0; idx < queue.entries.length && running; idx++) {
             let notification: Notification = queue.entries[idx];
 
             console.log("processing notification sequence: " + notification.getSequence());
@@ -289,23 +300,62 @@ export const GameProvider: React.FC = ({ children }) => {
             } else if(notification.hasUpdateTimeout()) {
                 console.log('update timeout');
             } else if (notification.hasPlayedCards()) {
-                console.log('played cards');
-                setState(produce(draft => {
-                    draft.playedCards = new Map();
+                console.log('has played cards');
+                let clearing: boolean = false;
+                
+                let resumeQueue = () => {
+                    console.log('resume queue');
+                    setQueue(produce(draft => {
+                        draft.running = true;
+                    }));
+                }
 
-                    const handCards: PlayedCard[] = notification.getPlayedCards()?.getCardsList()!;
-                    console.log(handCards);
-                    for (let card of handCards) {
-                        const order: number = card.getOrder()
-                        const seat: number = card.getSeat();
-                        const pc: Card = cardFromProto(card.getCard()!); 
-                        draft.playedCards.set(seat, pc);
-                        if (0 === order) {
-                            draft.leadCard = pc;
+                let markClearing = () => {
+                    console.log('hello from markClearing')
+                    setState(produce(draft => {
+                        draft.clearing = ClearingItem.TRICKS
+                    }));
+                };
+
+                let updateHand = () => {
+                    console.log('update hand');
+                    setState(produce(draft => {
+                        draft.clearing = undefined;
+                        draft.playedCards = new Map();
+
+                        const handCards: PlayedCard[] = notification.getPlayedCards()?.getCardsList()!;
+                        console.log(handCards);
+                        for (let card of handCards) {
+                            const order: number = card.getOrder()
+                            const seat: number = card.getSeat();
+                            const pc: Card = cardFromProto(card.getCard()!); 
+                            draft.playedCards.set(seat, pc);
+                            if (0 === order) {
+                                draft.leadCard = pc;
+                            }
+                            console.log('  - order: ' + order + ', seat: ' + seat + ', rank: ' + pc.rank + ', suit: ' + pc.suit);
                         }
-                        console.log('  - order: ' + order + ', seat: ' + seat + ', rank: ' + pc.rank + ', suit: ' + pc.suit);
-                    }
-                }));
+                    }));
+                }
+
+                if (state.playedCards.size > 0 && notification.getPlayedCards()?.getCardsList().length === 0) {
+                    clearing = true;
+                }
+
+                // https://stackoverflow.com/questions/6921275/is-it-possible-to-chain-settimeout-functions-in-javascript
+                running = false;
+                if (clearing) {
+                    let prom = Promise.resolve()
+                        .then(() => delay(1500))
+                        .then(() => markClearing())
+                        .then(() => delay(500))
+                        .then(() => updateHand())
+                        .then(() => resumeQueue());
+                } else {
+                    let prom = Promise.resolve()
+                        .then(() => updateHand())
+                        .then(() => resumeQueue());
+                }
             } else {
                     console.log('game data');
                     // const obj: object = notification.toObject();
@@ -316,8 +366,8 @@ export const GameProvider: React.FC = ({ children }) => {
         }
 
         setQueue(old => ({
-            ...old,
-            entries: old.entries.filter((e) => processed.indexOf(e) === -1)
+            entries: old.entries.filter((e) => processed.indexOf(e) === -1),
+            running: running
         }));
     }, [queue])
 
@@ -535,7 +585,7 @@ export const GameProvider: React.FC = ({ children }) => {
         if (hand.length > 0) {
             hasLeadSuit = hand.map(card => 
                 card.suit === lead.suit // the card matches the lead
-                && (Bid.isCardTrump(trump, lead) == Bid.isCardTrump(trump, card)) // also check if it matches trump, and the lead is trump
+                && (Bid.isCardTrump(trump, lead) === Bid.isCardTrump(trump, card)) // also check if it matches trump, and the lead is trump
             ).reduce((acc, isLead) => acc || isLead);
             //console.log('hasLeadSuit: ' + hasLeadSuit);
         }

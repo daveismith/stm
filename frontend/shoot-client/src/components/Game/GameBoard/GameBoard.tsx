@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { Grid } from "@material-ui/core";
-import { useGame } from "../../Game/Game.context";
+import { ClearingItem, useGame } from "../../Game/Game.context";
 import PlayingCard from "../../Common/PlayingCard";
 import TextBubble from "../../Common/TextBubble"
 import { Card } from "../Models/Card";
 import { Seat } from "../Models/Seat";
 import { Bid } from "../Models/Bid";
 import PlayArea from "./PlayArea";
+import { clear } from "console";
 
 interface IGameBoardProps {
+    clearing?: ClearingItem;
     hand: Card[];
     seats: Map<number, Seat>;
     mySeat: number;
@@ -35,7 +37,7 @@ const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
 
     const { playCard, transferCard, throwAwayCard, throwingAway, validToPlay, leadCard, winningBid } = gameState;
 
-    const { hand, seats, mySeat, currentBidder, currentSeat, transferTarget, playedCards, highBid, bids, bidTricksSelected, bidTrumpSelected } = props;
+    const { clearing, hand, seats, mySeat, currentBidder, currentSeat, transferTarget, playedCards, bids } = props;
 
     const orderedSeats = Array.from(seats.values()).sort((s1,s2) => s1.index - s2.index);
 
@@ -54,7 +56,7 @@ const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
         } else {
             return () => {}
         }
-    }, [pendingCards]);
+    }, [pendingCards, playCard]);
 
     useEffect(() => {
         console.log('hand updated');
@@ -63,7 +65,8 @@ const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
 
     const playedCard = (index: number) => {
         const playedCard = playedCards.get(index);
-        return playedCard && <PlayingCard card={playedCard}></PlayingCard>;
+        let clear = clearing === ClearingItem.TRICKS;
+        return playedCard && <PlayingCard card={playedCard} fade={clear} />;
     }
 
     const bid = (index: number) => {
@@ -107,25 +110,26 @@ const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
                     alignItems="flex-start"
                     key={index}
                 >
-                    
-                    <TextBubble size="small" text={seat.name.length === 0 ? "Empty" : seat.name + ((seat.index === mySeat) ? " (me)" : "")} color={seat.index % 2 === 0 ? "green" : "blue"} disabled={seat.empty}></TextBubble><br />
-                    { (seat.index === currentSeat) ? '✮' : null}
-                    {bid(seat.index)}
-                    {playedCard(seat.index)}
+                    <div>
+                        <TextBubble size="small" text={seat.name.length === 0 ? "Empty" : seat.name + ((seat.index === mySeat) ? " (me)" : "")} color={seat.index % 2 === 0 ? "green" : "blue"} disabled={seat.empty}></TextBubble>
+                        <div className="turn-indicator">{ (seat.index === currentSeat) ? '✮' : null}</div>
+                        {bid(seat.index)}
+                        {playedCard(seat.index)}
+                    </div>
                 </Grid>
                 ))}
             </Grid>
             <PlayArea />
-            {(transferTarget !== undefined && pendingCards.length == 0)? <div style={{bottom: '10em', left: 0, right: '25%', position: 'absolute', justifyContent: 'center'}}>Transfer A Card</div> : <></>}
-            {(throwingAway && pendingCards.length == 0)? <div style={{bottom: '10em', left: 0, right: '25%', position: 'absolute', justifyContent: 'center'}}>Throw Away A Card</div> : <></>}
-            {(currentPlayer && winningBid !== null && pendingCards.length == 0) ? <div style={{bottom: '10em', left: 0, right: '25%', position: 'absolute', justifyContent: 'center'}}>Play A Card</div> : <></>}
+            {(transferTarget !== undefined && pendingCards.length === 0)? <div style={{bottom: '10em', left: 0, right: '25%', position: 'absolute', justifyContent: 'center'}}>Transfer A Card</div> : <></>}
+            {(throwingAway && pendingCards.length === 0)? <div style={{bottom: '10em', left: 0, right: '25%', position: 'absolute', justifyContent: 'center'}}>Throw Away A Card</div> : <></>}
+            {(currentPlayer && winningBid !== null && pendingCards.length === 0) ? <div style={{bottom: '10em', left: 0, right: '25%', position: 'absolute', justifyContent: 'center'}}>Play A Card</div> : <></>}
             <div style={{bottom: 0, left: 0, right: '25%', position: 'absolute', display: 'flex', justifyContent: 'center', marginBottom: '2em', marginTop: '2em'}}>
                 {
                     hand.map((card, index) => {
                             let remove = false;
                             for (var i = 0; i < pendingCards.length; i++) {
                                 //console.log('card: ' + card);
-                                if (pendingCards[i].card === card && pendingCards[i].index == index) {
+                                if (pendingCards[i].card === card && pendingCards[i].index === index) {
                                     remove = true;
                                 }
                             }

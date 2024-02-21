@@ -8,7 +8,7 @@ html, body, #root, .App {
 
 .card {
   margin: 0px;
-  padding: 1em 0px 0px;
+  padding: 0;
 }
 
 @keyframes shrinkOut {
@@ -43,4 +43,21 @@ html, body, #root, .App {
   transition-timing-function: ease-in-out;
   transition-duration: 0.5s;
   animation-fill-mode: forwards;
+}
+
+.card.fade {
+  opacity: 0;
+  transition-property: opacity;
+  transition-timing-function: ease-in-out;
+  transition-duration: 0.5s;
+  animation-fill-mode: forwards;
+  background-color: red;
+}
+
+.turn-indicator {
+  height: 1.5em;
+  line-height: 1.5em;
+  vertical-align: center;
+  margin-top: 0em;
+  margin-bottom: 0.5em
 }
