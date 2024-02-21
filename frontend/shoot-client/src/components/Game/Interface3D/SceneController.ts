@@ -645,7 +645,7 @@ class SceneController {
                 // If we're sitting out, throw away all our cards when the first card is played
                 for (let throwawayCard of this.hand) {
                     throwawayCard.toggleGlow(false);
-                    throwawayCard.playCardAnimation(GameSettings.currentPlayer, this.scene, false);
+                    throwawayCard.dropCardAnimation(GameSettings.currentPlayer, this.scene, false);
                 }
             } else {
                 this.gameState = GameState.WaitingToPlay;
