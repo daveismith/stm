@@ -684,9 +684,11 @@ class Card3D {
         const targetStack = CardStack3D.handStacks[player];
         const revealCards = player === GameSettings.currentPlayer;
 
-        targetStack.addToStack(this);
+        console.log("player:" + player + ", card number: " + targetStack.cardsInStack);
+        console.log(SceneController.hand);
+        SceneController.hand[player][targetStack.cardsInStack] = this;
 
-        SceneController.hand[SceneController.hand.length] = this;
+        targetStack.addToStack(this);
 
         this.animateCardToHand(player, 1, scene, revealCards);
     }
