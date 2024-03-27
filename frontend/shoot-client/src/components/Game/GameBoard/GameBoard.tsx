@@ -7,7 +7,6 @@ import { Card } from "../Models/Card";
 import { Seat } from "../Models/Seat";
 import { Bid } from "../Models/Bid";
 import PlayArea from "./PlayArea";
-import { clear } from "console";
 
 interface IGameBoardProps {
     clearing?: ClearingItem;

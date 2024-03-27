@@ -11,12 +11,10 @@ import { Notification,
     TakeSeatRequest, 
     StatusResponse,
     SetReadyStatusRequest,
-    Trump,
     TrumpUpdate,
     PlayedCard,
     TransferRequest,
     Transfer,
-    ThrowawayRequest,
     ThrowawayResponse
 } from '../../proto/shoot_pb';
 import { Card } from "./Models/Card";
@@ -345,14 +343,14 @@ export const GameProvider: React.FC = ({ children }) => {
                 // https://stackoverflow.com/questions/6921275/is-it-possible-to-chain-settimeout-functions-in-javascript
                 running = false;
                 if (clearing) {
-                    let prom = Promise.resolve()
+                    Promise.resolve()
                         .then(() => delay(1500))
                         .then(() => markClearing())
                         .then(() => delay(500))
                         .then(() => updateHand())
                         .then(() => resumeQueue());
                 } else {
-                    let prom = Promise.resolve()
+                    Promise.resolve()
                         .then(() => updateHand())
                         .then(() => resumeQueue());
                 }
