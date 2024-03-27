@@ -65,7 +65,7 @@ class SceneController {
     static awaitingAnimation: boolean = false;
     static clientIn3DMode: boolean = false;
     static transferRecipient: number = -1;
-    static partnerIsShooting: boolean = false;
+    static shootingPlayer: number = -1;
 
     static initialize () {
         this.gameStateEventTypeMap = [];
@@ -169,6 +169,15 @@ class SceneController {
         this.gameStateEventTypeMap[GameState.SittingOut][Notification.NotificationCase.TRICKS] = 1;
         this.gameStateEventTypeMap[GameState.SittingOut][Notification.NotificationCase.SCORES] = 1;
         this.gameStateEventTypeMap[GameState.SittingOut][Notification.NotificationCase.PLAY_CARD_REQUEST] = 1;
+    }
+
+    static isPartner (seat1: number, seat2: number) {
+        // if the seats in question are both odd or both even then they are partners.
+        if ((seat1 + seat2) % 2 === 0) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     static addNewEvent (newEvent: GameEvent3D) {
@@ -421,7 +430,7 @@ class SceneController {
     static handListener (hand: Hand) {
         this.currentCard = null;
         this.currentCardsInTrick = [];
-        this.partnerIsShooting = false;
+        this.shootingPlayer = -1;
         for (let i: number = 0; i < GameSettings.players; i++) {
             this.hand[i] = [];
         }
@@ -554,6 +563,9 @@ class SceneController {
                 this.bidNumberCubes[bid.seat][bid.number-1].show();
                 this.bidSuitCubes[bid.seat][bid.trump].show();
             }
+            if (bid.shootNum > 0) {
+                this.shootingPlayer = bid.seat;
+            }
         }
 
         console.log(this.bids);
@@ -639,19 +651,27 @@ class SceneController {
         let card3D: Card3D | null;
 
         if (this.gameState === GameState.WaitingForTransfersEnd) {
-            if (this.partnerIsShooting) {
-                this.gameState = GameState.SittingOut;
-                console.log("Game state -> Sitting out");
-
-                // If we're sitting out, throw away all our cards when the first card is played
-                for (let throwawayCard of this.hand[GameSettings.currentPlayer]) {
-                    throwawayCard.toggleGlow(false);
-                    setTimeout(() => {
-                        throwawayCard.dropCardAnimation(GameSettings.currentPlayer, this.scene, false);
-                    }, 1000);
-                }
+            if (this.shootingPlayer > -1                                                // if someone is shooting
+                && this.shootingPlayer !== GameSettings.currentPlayer                   // and it's not us
+                && this.isPartner(this.shootingPlayer, GameSettings.currentPlayer)) {   // and it's our partner
+                    this.gameState = GameState.SittingOut;                              // then we're sitting out
+                    console.log("Game state -> Sitting out");
             } else {
-                this.gameState = GameState.WaitingToPlay;
+                this.gameState = GameState.WaitingToPlay;                               // otherwise we're waiting to play
+                console.log("Game state -> Waiting to play");
+            }
+            // TO DO: fix dropping card for other players
+            // If we're sitting out, throw away all our cards when the first card is played
+            for (let i: number = 0; i < GameSettings.players; i++) {
+                // if the shooting player and player (i) are partners, throw away player (i)'s hand
+                if (i !== this.shootingPlayer && this.isPartner(this.shootingPlayer, i)) {
+                    for (let throwawayCard of this.hand[i]) {
+                        throwawayCard.toggleGlow(false);
+                        setTimeout(() => {
+                            throwawayCard.dropCardAnimation(i, this.scene, false);
+                        }, 1000);
+                    }
+                }
             }
         } else if (this.gameState === GameState.WaitingForThrowawaysEnd) {
             this.gameState = GameState.WaitingToPlay;
@@ -714,7 +734,6 @@ class SceneController {
             for (let card of this.hand[GameSettings.currentPlayer]) card.toggleGlow(true);
 
             this.gameState = GameState.ChoosingTransfer;
-            this.partnerIsShooting = true;
             console.log("Game state -> Choosing transfer");
         }
         else if (toSeat === GameSettings.currentPlayer) {
