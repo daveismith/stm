@@ -57,7 +57,7 @@ const Bidding: React.FC<IBiddingProps> = (props: IBiddingProps) => {
 
     if (currentBidder) {
         return (
-            <>
+            <div className="bidding">
                 <Grid
                     container
                     direction="row"
@@ -87,10 +87,10 @@ const Bidding: React.FC<IBiddingProps> = (props: IBiddingProps) => {
                 <Grid>
                     {bid}
                 </Grid>
-            </>
+            </div>
         );
     } else if (winningBid === null) {
-        return (<div>Not Bidding</div>)
+        return (<div className="bidding">Not Bidding</div>)
     } else {
         return (<div></div>)
     }

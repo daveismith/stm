@@ -21,8 +21,6 @@ const StyledTextBubble = styled.div`
 
 const TrumpView: React.FC<ITrumpViewProps> = (props: ITrumpViewProps) => {
     const currentBid = props.currentBid;
-    console.log('currentBid: ');
-    console.log(currentBid);
 
     return (  
         <StyledRoot>

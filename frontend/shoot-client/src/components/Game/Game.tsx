@@ -34,6 +34,7 @@ const Game: React.FC = () => {
             return <SelectSeat  />
         } else {
             return <GameBoard
+                clearing={gameState.clearing}
                 hand={gameState.hand}
                 seats={gameState.seats}
                 mySeat={gameState.mySeat}
