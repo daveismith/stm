@@ -37,6 +37,8 @@ class Card3D {
     static cardBaseRotation: Quaternion = Quaternion.RotationYawPitchRoll(-Math.PI / 2, 0, 0);
     card: ProtoCard;
     gameState: IGame;
+    playerIndex: number = -1;
+    handIndex: number = -1;
 
     constructor(scene: Scene, manager: GUI3DManager, rank: number, suit: number, gameState: IGame) {
         this.gameState = gameState;
@@ -684,8 +686,14 @@ class Card3D {
         const targetStack = CardStack3D.handStacks[player];
         const revealCards = player === GameSettings.currentPlayer;
 
-        console.log("player:" + player + ", card number: " + targetStack.cardsInStack);
-        console.log(SceneController.hand);
+        // Remove from old hand
+        if (this.playerIndex > -1 && this.handIndex > -1) {
+            SceneController.hand[this.playerIndex][this.handIndex] = null;
+        }
+
+        // Add to new hand
+        this.playerIndex = player;
+        this.handIndex = targetStack.cardsInStack;
         SceneController.hand[player][targetStack.cardsInStack] = this;
 
         targetStack.addToStack(this);
@@ -794,6 +802,7 @@ class Card3D {
     }
 
     static swapCards (sourceCardLocation: number[], destinationCardLocation: number[]) {
+        // TODO: Update hand indexes on swap
         // if the card is already in the correct spot, do nothing
         if (sourceCardLocation[0] === destinationCardLocation[0] && sourceCardLocation[1] === destinationCardLocation[1])
             return;

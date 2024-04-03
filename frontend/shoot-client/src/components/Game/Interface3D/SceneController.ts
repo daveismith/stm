@@ -51,7 +51,7 @@ class SceneController {
     static turnLight: PointLight;
     static seats: Seat3D[] = [];
     static bids: Bid[] = [];
-    static hand: Card3D[][] = [];
+    static hand: (Card3D | null) [][] = [];
     static currentBid: Bid | null = null;
     static gameState: GameState = GameState.ChoosingSeat;
     static gameStateEventTypeMap: number[][] = [];
@@ -616,7 +616,7 @@ class SceneController {
         let seat: number = playCardRequest.getSeat();
 
         if (seat === GameSettings.currentPlayer) {
-            for (let card of this.hand[GameSettings.currentPlayer]) card.toggleGlow(true);
+            for (let card of this.hand[GameSettings.currentPlayer]) if (card) card.toggleGlow(true);
             this.gameState = GameState.ChoosingPlay;
         }
     }
@@ -631,7 +631,7 @@ class SceneController {
 
             card && card.playCardAnimation(GameSettings.currentPlayer, this.scene, true);
 
-            for (let card of this.hand[GameSettings.currentPlayer]) card.toggleGlow(false);
+            for (let card of this.hand[GameSettings.currentPlayer]) if (card) card.toggleGlow(false);
 
             this.gameState = GameState.WaitingForTrickEnd;
         } else {
@@ -650,6 +650,21 @@ class SceneController {
         let card: Card | undefined;
         let card3D: Card3D | null;
 
+        if (this.shootingPlayer > -1 && this.gameState < GameState.WaitingToPlay) {
+            // If someone is sitting out, throw away all their cards when the first card is played
+            for (let i: number = 0; i < GameSettings.players; i++) {
+                // if the shooting player and player (i) are partners, throw away player (i)'s hand
+                if (i !== this.shootingPlayer && this.isPartner(this.shootingPlayer, i)) {
+                    for (let throwawayCard of this.hand[i]) {
+                        if (throwawayCard) throwawayCard.toggleGlow(false);
+                        setTimeout(() => {
+                            if (throwawayCard) throwawayCard.dropCardAnimation(i, this.scene, false);
+                        }, 1000);
+                    }
+                }
+            }
+        }
+
         if (this.gameState === GameState.WaitingForTransfersEnd) {
             if (this.shootingPlayer > -1                                                // if someone is shooting
                 && this.shootingPlayer !== GameSettings.currentPlayer                   // and it's not us
@@ -659,19 +674,6 @@ class SceneController {
             } else {
                 this.gameState = GameState.WaitingToPlay;                               // otherwise we're waiting to play
                 console.log("Game state -> Waiting to play");
-            }
-            // TO DO: fix dropping card for other players
-            // If we're sitting out, throw away all our cards when the first card is played
-            for (let i: number = 0; i < GameSettings.players; i++) {
-                // if the shooting player and player (i) are partners, throw away player (i)'s hand
-                if (i !== this.shootingPlayer && this.isPartner(this.shootingPlayer, i)) {
-                    for (let throwawayCard of this.hand[i]) {
-                        throwawayCard.toggleGlow(false);
-                        setTimeout(() => {
-                            throwawayCard.dropCardAnimation(i, this.scene, false);
-                        }, 1000);
-                    }
-                }
             }
         } else if (this.gameState === GameState.WaitingForThrowawaysEnd) {
             this.gameState = GameState.WaitingToPlay;
@@ -731,7 +733,7 @@ class SceneController {
             this.transferRecipient = toSeat;
 
             console.log("hand length:" + this.hand.length);
-            for (let card of this.hand[GameSettings.currentPlayer]) card.toggleGlow(true);
+            for (let card of this.hand[GameSettings.currentPlayer]) if (card) card.toggleGlow(true);
 
             this.gameState = GameState.ChoosingTransfer;
             console.log("Game state -> Choosing transfer");
@@ -756,7 +758,7 @@ class SceneController {
 
             card && card.playCardAnimation(fromSeat, this.scene, false);
 
-            for (let card of this.hand[GameSettings.currentPlayer]) card.toggleGlow(false);
+            for (let card of this.hand[GameSettings.currentPlayer]) if (card) card.toggleGlow(false);
 
             this.awaitingAnimation = true;
             setTimeout(() => {
@@ -831,7 +833,7 @@ class SceneController {
     }
 
     static throwawayRequestListener() {
-        for (let card of this.hand[GameSettings.currentPlayer]) card.toggleGlow(true);
+        for (let card of this.hand[GameSettings.currentPlayer]) if (card) card.toggleGlow(true);
         this.gameState = GameState.ChoosingThrowaway;
         console.log("Game state -> Choosing throwaway.");
     }
@@ -846,15 +848,10 @@ class SceneController {
 
             card && card.playCardAnimation(GameSettings.currentPlayer, this.scene, false);
 
-            for (let card of this.hand[GameSettings.currentPlayer]) card.toggleGlow(false);
+            for (let card of this.hand[GameSettings.currentPlayer]) if (card) card.toggleGlow(false);
 
-            if (finished) {
-                this.gameState = GameState.WaitingToPlay;
-                console.log("Game state -> Waiting to play.");
-            } else {
-                this.gameState = GameState.WaitingForThrowawaysEnd;
-                console.log("Game state -> Waiting for throwaways to end.");
-            }
+            this.gameState = GameState.WaitingForThrowawaysEnd;
+            console.log("Game state -> Waiting for throwaways to end.");
         } else {
             console.log("Error Throwing Away Card");
         }
