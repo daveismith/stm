@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { useHistory } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import styled from 'styled-components';
 import { Button, Card, Grid } from "@material-ui/core";
 import { makeStyles } from '@material-ui/core/styles';
@@ -24,11 +24,11 @@ const CreateGame: React.FC = () => {
     const classes = useStyles();
     const [ appState ] = useApp();
     const { gameId, createGame }  = appState;
-    const history = useHistory();
+    const navigate = useNavigate();
 
     useEffect(() => {
         if (gameId) {
-            history.push('/game/' + appState.gameId);
+            navigate('/game/' + appState.gameId);
         }
     });
 

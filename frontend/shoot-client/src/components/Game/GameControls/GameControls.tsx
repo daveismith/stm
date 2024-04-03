@@ -9,7 +9,7 @@ import { Bid } from "../Models/Bid";
 interface IGameControlsProps {
     score: number[],
     tricks: number[],
-    winningBid: Bid | null
+    winningBid: Bid | null,
 }
 
 const GameControls: React.FC<IGameControlsProps> = (props: IGameControlsProps) => {

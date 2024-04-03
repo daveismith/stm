@@ -133,12 +133,16 @@ function delay(duration: number) {
       setTimeout(resolve, duration);
     });
   }
+  
+interface Props {
+children: React.ReactNode;
+}
 
-export const GameProvider: React.FC = ({ children }) => {
+export const GameProvider: React.FC<Props> = ({ children }) => {
     const [ appState ] = useApp();
     const [ state, setState ] = useState(cleanInitialState);
     const [ queue, setQueue ] = useState<INotificationQueue>(cleanInitialQueue);
-    const { id } = useParams<ParamTypes>();
+    const { id } = useParams();
 
     const { joinGame } = appState;
 

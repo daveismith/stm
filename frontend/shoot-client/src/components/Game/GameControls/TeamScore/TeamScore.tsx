@@ -8,6 +8,7 @@ interface ITeamScoreProps {
     t1Color: string;
     t2Text: string;
     t2Color: string;
+    children: React.ReactNode;
 }
 
 const StyledRoot = styled.div`

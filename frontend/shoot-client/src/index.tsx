@@ -1,23 +1,20 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
+
 import App from './components/App/App';
 import reportWebVitals from './reportWebVitals';
 import { AppProvider } from "./components/App/App.context";
-import { HashRouter } from "react-router-dom";
 import { enableMapSet } from "immer";
 import './index.css';
 
 // Immer - enable support for Map and Set
 enableMapSet();
 
-ReactDOM.render(
+const container = document.getElementById('root');
+const root = createRoot(container!); // createRoot(container!) if you use TypeScript
+root.render(
     <AppProvider>
-      <HashRouter>
-        <App />
-      </HashRouter>
-    </AppProvider>,
-  document.getElementById('root')
-);
+      <App />
+    </AppProvider>);
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))

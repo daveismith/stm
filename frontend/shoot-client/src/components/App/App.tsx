@@ -1,26 +1,29 @@
 import React from 'react';
-import { Switch,  Route, Redirect } from "react-router";
+import { Route, Routes, Navigate } from "react-router";
 import { HashRouter } from "react-router-dom";
 import CreateGame from "../CreateGame/CreateGame";
 import Game from "../Game/Game";
 import './App.css';
 import { GameProvider } from '../Game/Game.context';
+import { ThemeProvider, createTheme, makeStyles } from '@material-ui/core/styles';
+
+const theme = createTheme();
 
 const App: React.FC = () => {
   return (
-    <div className="App">
+    <ThemeProvider theme={theme}>
+      <div className="App">
       <HashRouter>
-        <Switch>
-          <Route exact path={"/create"} component= { CreateGame } />
-          <Route exact path={"/game/:id"}>
-            <GameProvider>
-              <Game />
-            </GameProvider>
+        <Routes>
+          <Route path="/">
+            <Route path={"create"} element={<CreateGame /> } />
+            <Route path={"/game/:id"} element={<GameProvider><Game /></GameProvider>} />
+            <Route index path="*" element={<Navigate to="create" replace={true} /> } />
           </Route>
-          <Redirect to={{pathname: "/create"}} />
-        </Switch>
+        </Routes>
       </HashRouter>
-    </div>
+      </div>
+    </ThemeProvider>
   );
 }
 

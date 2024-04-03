@@ -84,9 +84,7 @@ const Bidding: React.FC<IBiddingProps> = (props: IBiddingProps) => {
                             onClick={() => onClick()}
                         >{ submit_pass ? 'Pass' : 'Place Bid' }</Button>
                 </Grid>
-                <Grid>
-                    {bid}
-                </Grid>
+
             </div>
         );
     } else if (winningBid === null) {
@@ -95,5 +93,9 @@ const Bidding: React.FC<IBiddingProps> = (props: IBiddingProps) => {
         return (<div></div>)
     }
 };
+
+//<Grid>
+//    {bid}
+//</Grid>
 
 export default Bidding;

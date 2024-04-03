@@ -40,7 +40,11 @@ const initialState: IApp = {
 
 const AppContext: React.Context<AppContextType> = createContext<AppContextType>([{ ...initialState }]);
 
-export const AppProvider: React.FC = ({ children }) => {
+interface Props {
+    children: React.ReactNode;
+  }
+
+export const AppProvider: React.FC<Props> = ({ children }) => {
     const contextValue = useState(initialState);
     const [ appState, setState ] = contextValue;
     const [connection, setConnection] = useState<ShootServerClient | undefined>(undefined);
