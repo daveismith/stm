@@ -802,7 +802,6 @@ class Card3D {
     }
 
     static swapCards (sourceCardLocation: number[], destinationCardLocation: number[]) {
-        // TODO: Update hand indexes on swap
         // if the card is already in the correct spot, do nothing
         if (sourceCardLocation[0] === destinationCardLocation[0] && sourceCardLocation[1] === destinationCardLocation[1])
             return;
@@ -814,6 +813,7 @@ class Card3D {
         let sourceQuaternion: Quaternion | null = null;
         let sourceParent: Nullable<Node> = null;
         let sourceCardStack: CardStack3D | null = null;
+        let sourceIndexInHand: number;
 
         let destinationPlayer: number;
         let destinationIndexInStack: number;
@@ -822,6 +822,7 @@ class Card3D {
         let destinationQuaternion: Quaternion | null = null;
         let destinationParent: Nullable<Node> = null;
         let destinationCardStack: CardStack3D | null = null;
+        let destinationIndexInHand: number;
 
         sourcePlayer = sourceCardLocation[0];
         sourceIndexInStack = sourceCardLocation[1];
@@ -832,6 +833,7 @@ class Card3D {
             sourcePosition = sourceCard.mesh.position;
             sourceQuaternion = sourceCard.mesh.rotationQuaternion;
             sourceParent = sourceCard.mesh.parent;
+            sourceIndexInHand = sourceCard.handIndex;
         }
         else throw new Error('error swapping cards: problem with sourceCard');
 
@@ -844,6 +846,7 @@ class Card3D {
             destinationPosition = destinationCard.mesh.position;
             destinationQuaternion = destinationCard.mesh.rotationQuaternion;
             destinationParent = destinationCard.mesh.parent;
+            destinationIndexInHand = destinationCard.handIndex;
         }
         else throw new Error('error swapping cards: problem with destinationCard');
 
@@ -853,14 +856,20 @@ class Card3D {
             sourceCard.mesh.parent = destinationParent;
             sourceCard.cardStack = destinationCardStack;
             sourceCard.positionInStack = destinationIndexInStack;
+            sourceCard.playerIndex = destinationPlayer;
+            sourceCard.handIndex = destinationIndexInHand;
             sourceCardStack.index[sourceIndexInStack] = destinationCard;
+            SceneController.hand[sourcePlayer][sourceIndexInHand] = destinationCard;
 
             destinationCard.mesh.position = sourcePosition;
             destinationCard.mesh.rotationQuaternion = sourceQuaternion;
             destinationCard.mesh.parent = sourceParent;
             destinationCard.cardStack = sourceCardStack;
             destinationCard.positionInStack = sourceIndexInStack;
+            destinationCard.playerIndex = sourcePlayer;
+            destinationCard.handIndex = sourceIndexInHand;
             destinationCardStack.index[destinationIndexInStack] = sourceCard;
+            SceneController.hand[destinationPlayer][destinationIndexInHand] = sourceCard;
         }
         else throw new Error('error swapping cards: problem with swap');
     }
