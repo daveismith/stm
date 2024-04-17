@@ -48,7 +48,10 @@ class Card3D {
 
         var faceUV = new Array(6);
 
-        // Use rank-2 below because we're not playing with 7s and 8s.
+        // Map the card backs.
+        faceUV[4] = new Vector4(0 / 1024, 512 / 1024, 341 / 1024, 1024 / 1024);
+
+        // Map the card fronts.  Use rank-2 below because we're not playing with 7s and 8s.
         faceUV[5] = new Vector4((rank-2) * 128 / 1024, suit * 128 / 1024, (rank-2) * 128 / 1024 + 77 / 1024, suit * 128 / 1024 + 115 / 1024);
     
         this.mesh = MeshBuilder.CreateBox("card", {
