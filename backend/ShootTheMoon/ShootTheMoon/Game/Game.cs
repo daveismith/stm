@@ -590,8 +590,9 @@ namespace ShootTheMoon.Game
             PlayedCard playedCard = new PlayedCard(card, Convert.ToUInt16(PlayedCards.Count), seat);
 
             // Validate Card Is Valid For The Player
-            Suit leadSuit = (LeadCard != null) ? LeadCard.Card.Suit : null;
-            if (!playedCard.isValidWithHand(CurrentPlayer.Hand, leadSuit, CurrentTrump)) {
+            //Suit leadSuit = (LeadCard != null) ? LeadCard.Card.Suit : null;
+            //TODO: Update this logic to handle the left (ie, Jack of Hearts is Trump when Trump is Diamonds)
+            if (!playedCard.isValidWithHand(CurrentPlayer.Hand, LeadCard?.Card, CurrentTrump)) {
                 Log.Debug("{0}: {1} played a card that is invalid", Name, client.Name);
                 return false;
             }
@@ -604,7 +605,7 @@ namespace ShootTheMoon.Game
                 LeadCard = playedCard;
             }
 
-            bool winner = playedCard.winsAgainst(HighCard, LeadCard.Card.Suit, CurrentTrump);
+            bool winner = playedCard.winsAgainst(HighCard, LeadCard.Card, CurrentTrump);
             Log.Debug("{5}: {0} {1} {2} (lead: {3}, current trump: {4})", card, (winner ? "beats" : "is beaten by"), (HighCard == null) ? "null" : HighCard.Card, LeadCard.Card.Suit.LongName, CurrentTrump.Name, Name);
 
             if (HighCard == null || winner) {
