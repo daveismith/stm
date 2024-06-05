@@ -31,7 +31,7 @@ namespace ShootTheMoon.Game
             Seat = seat;
         }
 
-        public bool isValidWithHand(List<Card> hand, Suit lead, Trump trump) {
+        public bool isValidWithHand(List<Card> hand, Card lead, Trump trump) {
             // Rules for card validation are:
             // 1. Card must be in your hand
             // 2. Player must follow lead if they have it.
@@ -41,13 +41,14 @@ namespace ShootTheMoon.Game
                 return false;
             }
 
-            if (this.Card.EffectiveSuit(trump) == lead) {
+            Suit leadSuit = lead == null ? this.Card.EffectiveSuit(trump) : lead.EffectiveSuit(trump);
+            if (this.Card.EffectiveSuit(trump) == leadSuit) {
                 // The card lead is in the hand and follows the lead
                 return true;
             }
 
             foreach (Card card in hand) {
-                if (card.EffectiveSuit(trump) == lead) {
+                if (card.EffectiveSuit(trump) == leadSuit) {
                     // The player can follow suit but is not doing so
                     return false;
                 }
@@ -78,13 +79,13 @@ namespace ShootTheMoon.Game
             return score;
         }
 
-        public bool winsAgainst(PlayedCard otherCard, Suit lead, Trump trump) {
+        public bool winsAgainst(PlayedCard otherCard, Card lead, Trump trump) {
             if (otherCard == null) {
                 return true;
             }
 
-            int valueA = this.cardScore(lead, trump);
-            int valueB = otherCard.cardScore(lead, trump);
+            int valueA = this.cardScore(lead.EffectiveSuit(trump), trump);
+            int valueB = otherCard.cardScore(lead.EffectiveSuit(trump), trump);
 
             // Check Higher Value, If Equal, first ordered card wins
             if (valueA > valueB) {

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Google.Protobuf;
 using Grpc.Core;
 using ShootTheMoon.Game;
 using ShootTheMoon.Utils;
@@ -69,6 +70,7 @@ namespace ShootTheMoon.Network
         private readonly object idLock = new object();
         private const string GAME_ID = "x-game-id";
         private const string CLIENT_TOKEN = "x-game-token";
+        private static JsonFormatter formatter = new JsonFormatter(JsonFormatter.Settings.Default.WithFormatDefaultValues(true));
 
         public virtual void OnCompleted() {
             // Nothing To Do Here
@@ -177,7 +179,8 @@ namespace ShootTheMoon.Network
             while (!sent)
             {
                 try {
-                    Log.Debug("{0}-{1}-{2}:{3}", client.Name, notification.Sequence, retriesAttempted, notification.ToString());
+                    string s = formatter.Format(notification);
+                    Log.Debug("{0}-{1}-{2}:{3}", client.Name, notification.Sequence, retriesAttempted, s);
                     await client.WriteAsync(notification);
                     sent = true;
                 }
