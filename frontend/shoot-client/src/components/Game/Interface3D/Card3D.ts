@@ -777,7 +777,7 @@ class Card3D {
 
                 for (let j: number = 0; j < cardStack.index.length; j++) {
                     potentialMatch = cardStack.index[j];
-                    console.log("checking source card " + j + ": " +  + potentialMatch?.card.getRank() + potentialMatch?.card.getSuit());
+                    console.log("checking source card " + j + ": " + potentialMatch?.card.getRank() + potentialMatch?.card.getSuit());
 
                     if (potentialMatch && potentialMatch.equals(targetCard)) {
                         return [i, j];

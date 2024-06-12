@@ -1,6 +1,6 @@
 import React from "react";
 import { useGame } from "../../Game.context";
-import { ToggleButton, ToggleButtonGroup } from "@material-ui/lab";
+import { ToggleButton, ToggleButtonGroup } from "@mui/material";
 import styled from 'styled-components';
 
 const StyledRoot = styled.div`

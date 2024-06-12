@@ -5,25 +5,25 @@ import CreateGame from "../CreateGame/CreateGame";
 import Game from "../Game/Game";
 import './App.css';
 import { GameProvider } from '../Game/Game.context';
-import { ThemeProvider, createTheme, makeStyles } from '@material-ui/core/styles';
+import { ThemeProvider, StyledEngineProvider, createTheme } from '@mui/material/styles';
 
 const theme = createTheme();
 
 const App: React.FC = () => {
   return (
-    <ThemeProvider theme={theme}>
-      <div className="App">
-      <HashRouter>
-        <Routes>
-          <Route path="/">
-            <Route path={"create"} element={<CreateGame /> } />
-            <Route path={"/game/:id"} element={<GameProvider><Game /></GameProvider>} />
-            <Route index path="*" element={<Navigate to="create" replace={true} /> } />
-          </Route>
-        </Routes>
-      </HashRouter>
-      </div>
-    </ThemeProvider>
+    <StyledEngineProvider injectFirst>
+      <ThemeProvider theme={theme}>
+        <div className="App">
+        <HashRouter>
+          <Routes>
+              <Route path={"/create"} element={<CreateGame /> } />
+              <Route path={"/game/:id"} element={<GameProvider><Game /></GameProvider>} />
+              <Route path="*" element={<Navigate replace to="create" /> } />
+          </Routes>
+        </HashRouter>
+        </div>
+      </ThemeProvider>
+    </StyledEngineProvider>
   );
 }
 

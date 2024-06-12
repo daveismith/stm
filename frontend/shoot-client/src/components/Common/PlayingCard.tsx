@@ -1,5 +1,5 @@
 import React from "react";
-import { Card as CardView } from "@material-ui/core";
+import { Card as CardView } from "@mui/material";
 import styled from 'styled-components';
 import { Card } from "../Game/Models/Card";
 

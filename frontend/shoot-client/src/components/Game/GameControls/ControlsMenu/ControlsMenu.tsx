@@ -1,6 +1,6 @@
 import React from "react";
-import { AppBar, IconButton, Toolbar, Typography } from "@material-ui/core";
-import MenuIcon from '@material-ui/icons/Menu';
+import { AppBar, IconButton, Toolbar, Typography } from "@mui/material";
+import MenuIcon from '@mui/icons-material/Menu';
 import styled from 'styled-components';
 
 const StyledRoot = styled.div`
@@ -8,7 +8,7 @@ const StyledRoot = styled.div`
 `;
 
 const ControlsMenu: React.FC = () => {
-    return (  
+    return (
         <StyledRoot>
             <AppBar position="static" style={{ background: '#202020' }}>
             <Toolbar>

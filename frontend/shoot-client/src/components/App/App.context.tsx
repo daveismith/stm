@@ -94,7 +94,6 @@ export const AppProvider: React.FC<Props> = ({ children }) => {
         console.log('got stream: ' + newState.joined);
         console.log('newState');
         console.log(newState);
-        setState(newState);
 
         newState.stream.on('error', function(err) {
             console.log('stream error');
@@ -127,6 +126,8 @@ export const AppProvider: React.FC<Props> = ({ children }) => {
         // stream end signal
             console.log("stream end received");
         });        
+
+        setState(newState);
 
         console.log('joinGame ' + gameId);
         return newState.stream !== undefined;
