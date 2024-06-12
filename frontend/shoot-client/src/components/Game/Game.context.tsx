@@ -15,7 +15,8 @@ import { Notification,
     PlayedCard,
     TransferRequest,
     Transfer,
-    ThrowawayResponse
+    ThrowawayResponse,
+    TransferComplete
 } from '../../proto/shoot_pb';
 import { Card } from "./Models/Card";
 import { Seat } from "./Models/Seat";
@@ -267,6 +268,10 @@ export const GameProvider: React.FC = ({ children }) => {
                         console.log('incorrect To seat.');
                     }
                 }));
+            } else if (notification.hasTransferComplete()) {
+                console.log('transfer complete');
+                const transferComplete: TransferComplete = notification.getTransferComplete()!;
+
             } else if (notification.hasThrowawayRequest()) {
                 console.log('throwaway request');
                 // Nothing to read from Request
@@ -504,7 +509,7 @@ export const GameProvider: React.FC = ({ children }) => {
         request.setCard(requestCard);
 
         appState.connection.transferCard(request, appState.metadata).then((value: StatusResponse) => {
-            eventEmitter.emit('transferResponse', card, value.getSuccess());
+            eventEmitter.emit('transferResponse', from, to, card, value.getSuccess());
             console.log('transfer card result: ' + value.getSuccess());
             if (value.getSuccess()) {
                 setState(produce(draft => {
@@ -531,9 +536,8 @@ export const GameProvider: React.FC = ({ children }) => {
 
         const request: ProtoCard = cardToProto(card);
 
-
         appState.connection.throwawayCard(request, appState.metadata).then((value: ThrowawayResponse) => {
-            eventEmitter.emit('throwawayResponse', card, value);
+            eventEmitter.emit('throwawayResponse', value.getFinished(), card, true);
             console.log('throwaway card result: ' + value);
                 setState(produce(draft => {
                     draft.throwingAway = !value.getFinished();
@@ -543,7 +547,7 @@ export const GameProvider: React.FC = ({ children }) => {
                 }));
             return value.getFinished();
         }).catch((reason: any) => { 
-            eventEmitter.emit('throwawayResponse', card, false);
+            eventEmitter.emit('throwawayResponse', false, card, false);
             console.log('throwaway card failed: ' + (reason as grpcWeb.Error).message);
             return false;
         });

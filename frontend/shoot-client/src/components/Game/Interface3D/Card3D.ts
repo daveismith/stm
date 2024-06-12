@@ -37,6 +37,8 @@ class Card3D {
     static cardBaseRotation: Quaternion = Quaternion.RotationYawPitchRoll(-Math.PI / 2, 0, 0);
     card: ProtoCard;
     gameState: IGame;
+    playerIndex: number = -1;
+    handIndex: number = -1;
 
     constructor(scene: Scene, manager: GUI3DManager, rank: number, suit: number, gameState: IGame) {
         this.gameState = gameState;
@@ -46,7 +48,10 @@ class Card3D {
 
         var faceUV = new Array(6);
 
-        // Use rank-2 below because we're not playing with 7s and 8s.
+        // Map the card backs.
+        faceUV[4] = new Vector4(0 / 1024, 512 / 1024, 341 / 1024, 1024 / 1024);
+
+        // Map the card fronts.  Use rank-2 below because we're not playing with 7s and 8s.
         faceUV[5] = new Vector4((rank-2) * 128 / 1024, suit * 128 / 1024, (rank-2) * 128 / 1024 + 77 / 1024, suit * 128 / 1024 + 115 / 1024);
     
         this.mesh = MeshBuilder.CreateBox("card", {
@@ -600,14 +605,44 @@ class Card3D {
         }
     }
 
-    playCardAnimation (player: number, scene: Scene) {
+    playCardAnimation (player: number, scene: Scene, faceUp: boolean) {
         const targetStack = CardStack3D.playMatStacks[player];
         targetStack.addToStack(this);
+
+        const flip: number = faceUp ? 1 : 0; // If 1, flip card face up.  Otherwise keep it face down.
 
         const rotationDriftFactor = new Vector3(0, 0.1, 0);
         const rotationDrift = new Vector3(gaussianRandom(), gaussianRandom(), gaussianRandom());
         const rotations = new Vector3(
-            -Math.PI + 2 * Math.PI * rotationDriftFactor.x * rotationDrift.x, // -Math.PI to flip card over.
+            -Math.PI * flip + 2 * Math.PI * rotationDriftFactor.x * rotationDrift.x, // -Math.PI to flip card over.
+            2 * Math.PI * rotationDriftFactor.y * rotationDrift.y,
+            2 * Math.PI * rotationDriftFactor.z * rotationDrift.z
+        )
+        const rotationQuaternion = baseRotationQuaternion(player).multiply(Quaternion.RotationYawPitchRoll(rotations.y, rotations.x, rotations.z));
+    
+        const stackHeightCompensation = new Vector3(0, targetStack.cardsInStack * CardStack3D.cardStackSpacing, 0);
+        const positionDriftFactor = new Vector3(0.3, 0, 0.3);
+        const positionDrift = new Vector3(
+            gaussianRandom() * positionDriftFactor.x,
+            gaussianRandom() * positionDriftFactor.y,
+            gaussianRandom() * positionDriftFactor.z
+        );
+        const position = targetStack.position.add(stackHeightCompensation).add(positionDrift);
+
+        this.mesh.setParent(null);
+            
+        this.animateCardSlide(position, rotationQuaternion, 0, 0, 1, 0.25, scene);
+    }
+
+    dropCardAnimation (player: number, scene: Scene, faceUp: boolean) {
+        const targetStack = CardStack3D.playMatStacks[player];
+
+        const flip: number = faceUp ? 1 : 0; // If 1, flip card face up.  Otherwise keep it face down.
+
+        const rotationDriftFactor = new Vector3(0, 0.1, 0);
+        const rotationDrift = new Vector3(gaussianRandom(), gaussianRandom(), gaussianRandom());
+        const rotations = new Vector3(
+            -Math.PI * flip + 2 * Math.PI * rotationDriftFactor.x * rotationDrift.x, // -Math.PI to flip card over.
             2 * Math.PI * rotationDriftFactor.y * rotationDrift.y,
             2 * Math.PI * rotationDriftFactor.z * rotationDrift.z
         )
@@ -629,38 +664,11 @@ class Card3D {
 
     transferCard () {
         SceneController.currentCard = this;
-        console.log("attempting to transfer card: " + this.card.getRank() + this.card.getSuit());
+        console.log("attempting to transfer card: " + this.card.getRank() + this.card.getSuit() + " to " + SceneController.transferRecipient);
         if (this.gameState.transferCard) {
             this.gameState.transferCard(GameSettings.currentPlayer, SceneController.transferRecipient, cardFromProto(this.card));
             SceneController.awaitingServerResponse = true;
         }
-    }
-
-    transferCardAnimation (player: number, scene: Scene) {
-        const targetStack = CardStack3D.playMatStacks[player];
-        targetStack.addToStack(this);
-
-        const rotationDriftFactor = new Vector3(0, 0.1, 0);
-        const rotationDrift = new Vector3(gaussianRandom(), gaussianRandom(), gaussianRandom());
-        const rotations = new Vector3(
-            -Math.PI + 2 * Math.PI * rotationDriftFactor.x * rotationDrift.x, // -Math.PI to flip card over.
-            2 * Math.PI * rotationDriftFactor.y * rotationDrift.y,
-            2 * Math.PI * rotationDriftFactor.z * rotationDrift.z
-        )
-        const rotationQuaternion = baseRotationQuaternion(player).multiply(Quaternion.RotationYawPitchRoll(rotations.y, rotations.x, rotations.z));
-    
-        const stackHeightCompensation = new Vector3(0, targetStack.cardsInStack * CardStack3D.cardStackSpacing, 0);
-        const positionDriftFactor = new Vector3(0.3, 0, 0.3);
-        const positionDrift = new Vector3(
-            gaussianRandom() * positionDriftFactor.x,
-            gaussianRandom() * positionDriftFactor.y,
-            gaussianRandom() * positionDriftFactor.z
-        );
-        const position = targetStack.position.add(stackHeightCompensation).add(positionDrift);
-
-        this.mesh.setParent(null);
-            
-        this.animateCardSlide(position, rotationQuaternion, 0, 0, 1, 0.25, scene);
     }
 
     throwAwayCard () {
@@ -672,33 +680,6 @@ class Card3D {
         }
     }
 
-    throwAwayCardAnimation (player: number, scene: Scene) {
-        const targetStack = CardStack3D.playMatStacks[player];
-        targetStack.addToStack(this);
-
-        const rotationDriftFactor = new Vector3(0, 0.1, 0);
-        const rotationDrift = new Vector3(gaussianRandom(), gaussianRandom(), gaussianRandom());
-        const rotations = new Vector3(
-            -Math.PI + 2 * Math.PI * rotationDriftFactor.x * rotationDrift.x, // -Math.PI to flip card over.
-            2 * Math.PI * rotationDriftFactor.y * rotationDrift.y,
-            2 * Math.PI * rotationDriftFactor.z * rotationDrift.z
-        )
-        const rotationQuaternion = baseRotationQuaternion(player).multiply(Quaternion.RotationYawPitchRoll(rotations.y, rotations.x, rotations.z));
-    
-        const stackHeightCompensation = new Vector3(0, targetStack.cardsInStack * CardStack3D.cardStackSpacing, 0);
-        const positionDriftFactor = new Vector3(0.3, 0, 0.3);
-        const positionDrift = new Vector3(
-            gaussianRandom() * positionDriftFactor.x,
-            gaussianRandom() * positionDriftFactor.y,
-            gaussianRandom() * positionDriftFactor.z
-        );
-        const position = targetStack.position.add(stackHeightCompensation).add(positionDrift);
-
-        this.mesh.setParent(null);
-            
-        this.animateCardSlide(position, rotationQuaternion, 0, 0, 1, 0.25, scene);
-    }
-
     equals (comparator: ProtoCard) {
         return (this.card.getRank() ?? 0) === (comparator.getRank() ?? 0)
             && (this.card.getSuit() ?? 0) === (comparator.getSuit() ?? 0);
@@ -708,9 +689,17 @@ class Card3D {
         const targetStack = CardStack3D.handStacks[player];
         const revealCards = player === GameSettings.currentPlayer;
 
-        targetStack.addToStack(this);
+        // Remove from old hand
+        if (this.playerIndex > -1 && this.handIndex > -1) {
+            SceneController.hand[this.playerIndex][this.handIndex] = null;
+        }
 
-        SceneController.hand[SceneController.hand.length] = this;
+        // Add to new hand
+        this.playerIndex = player;
+        this.handIndex = targetStack.cardsInStack;
+        SceneController.hand[player][targetStack.cardsInStack] = this;
+
+        targetStack.addToStack(this);
 
         this.animateCardToHand(player, 1, scene, revealCards);
     }
@@ -827,6 +816,7 @@ class Card3D {
         let sourceQuaternion: Quaternion | null = null;
         let sourceParent: Nullable<Node> = null;
         let sourceCardStack: CardStack3D | null = null;
+        let sourceIndexInHand: number;
 
         let destinationPlayer: number;
         let destinationIndexInStack: number;
@@ -835,6 +825,7 @@ class Card3D {
         let destinationQuaternion: Quaternion | null = null;
         let destinationParent: Nullable<Node> = null;
         let destinationCardStack: CardStack3D | null = null;
+        let destinationIndexInHand: number;
 
         sourcePlayer = sourceCardLocation[0];
         sourceIndexInStack = sourceCardLocation[1];
@@ -845,6 +836,7 @@ class Card3D {
             sourcePosition = sourceCard.mesh.position;
             sourceQuaternion = sourceCard.mesh.rotationQuaternion;
             sourceParent = sourceCard.mesh.parent;
+            sourceIndexInHand = sourceCard.handIndex;
         }
         else throw new Error('error swapping cards: problem with sourceCard');
 
@@ -857,6 +849,7 @@ class Card3D {
             destinationPosition = destinationCard.mesh.position;
             destinationQuaternion = destinationCard.mesh.rotationQuaternion;
             destinationParent = destinationCard.mesh.parent;
+            destinationIndexInHand = destinationCard.handIndex;
         }
         else throw new Error('error swapping cards: problem with destinationCard');
 
@@ -866,14 +859,20 @@ class Card3D {
             sourceCard.mesh.parent = destinationParent;
             sourceCard.cardStack = destinationCardStack;
             sourceCard.positionInStack = destinationIndexInStack;
+            sourceCard.playerIndex = destinationPlayer;
+            sourceCard.handIndex = destinationIndexInHand;
             sourceCardStack.index[sourceIndexInStack] = destinationCard;
+            SceneController.hand[sourcePlayer][sourceIndexInHand] = destinationCard;
 
             destinationCard.mesh.position = sourcePosition;
             destinationCard.mesh.rotationQuaternion = sourceQuaternion;
             destinationCard.mesh.parent = sourceParent;
             destinationCard.cardStack = sourceCardStack;
             destinationCard.positionInStack = sourceIndexInStack;
+            destinationCard.playerIndex = sourcePlayer;
+            destinationCard.handIndex = sourceIndexInHand;
             destinationCardStack.index[destinationIndexInStack] = sourceCard;
+            SceneController.hand[destinationPlayer][destinationIndexInHand] = sourceCard;
         }
         else throw new Error('error swapping cards: problem with swap');
     }

@@ -58,6 +58,14 @@ class GameEvent3D {
                 this.eventEmitter.emit("transferRequest", this.notification.getTransferRequest());
                 break;
             }
+            case Notification.NotificationCase.TRANSFER: {
+                this.eventEmitter.emit("transfer", this.notification.getTransfer());
+                break;
+            }
+            case Notification.NotificationCase.TRANSFER_COMPLETE: {
+                this.eventEmitter.emit("transferComplete", this.notification.getTransferComplete());
+                break;
+            }
             case Notification.NotificationCase.THROWAWAY_REQUEST: {
                 this.eventEmitter.emit("throwawayRequest", this.notification.getThrowawayRequest());
                 break;

@@ -36,6 +36,7 @@ enum GameState {
     WaitingToPlay = 100,
     ChoosingPlay = 101,
     WaitingForTrickEnd = 102,
+    SittingOut = 103,
     WaitingForGameEnd = 1000
 }
 
@@ -50,7 +51,7 @@ class SceneController {
     static turnLight: PointLight;
     static seats: Seat3D[] = [];
     static bids: Bid[] = [];
-    static hand: Card3D[] = [];
+    static hand: (Card3D | null) [][] = [];
     static currentBid: Bid | null = null;
     static gameState: GameState = GameState.ChoosingSeat;
     static gameStateEventTypeMap: number[][] = [];
@@ -64,6 +65,7 @@ class SceneController {
     static awaitingAnimation: boolean = false;
     static clientIn3DMode: boolean = false;
     static transferRecipient: number = -1;
+    static shootingPlayer: number = -1;
 
     static initialize () {
         this.gameStateEventTypeMap = [];
@@ -135,8 +137,17 @@ class SceneController {
         this.gameStateEventTypeMap[GameState.ChoosingTransfer] = [];
         this.gameStateEventTypeMap[GameState.ChoosingTransfer][Notification.NotificationCase.TRANSFER_COMPLETE] = 1;
 
+        this.gameStateEventTypeMap[GameState.WaitingForTransfer] = [];
+        this.gameStateEventTypeMap[GameState.WaitingForTransfer][Notification.NotificationCase.TRANSFER] = 1;
+
         this.gameStateEventTypeMap[GameState.WaitingForTransfersEnd] = [];
         this.gameStateEventTypeMap[GameState.WaitingForTransfersEnd][Notification.NotificationCase.TRANSFER_COMPLETE] = 1;
+        this.gameStateEventTypeMap[GameState.WaitingForTransfersEnd][Notification.NotificationCase.THROWAWAY_REQUEST] = 1;
+        this.gameStateEventTypeMap[GameState.WaitingForTransfersEnd][Notification.NotificationCase.PLAYED_CARDS] = 1;
+
+        this.gameStateEventTypeMap[GameState.WaitingForThrowawaysEnd] = [];
+        this.gameStateEventTypeMap[GameState.WaitingForThrowawaysEnd][Notification.NotificationCase.PLAY_CARD_REQUEST] = 1;
+        this.gameStateEventTypeMap[GameState.WaitingForThrowawaysEnd][Notification.NotificationCase.PLAYED_CARDS] = 1;
 
         this.gameStateEventTypeMap[GameState.WaitingToPlay] = [];
         this.gameStateEventTypeMap[GameState.WaitingToPlay][Notification.NotificationCase.PLAY_CARD_REQUEST] = 1;
@@ -152,6 +163,21 @@ class SceneController {
         this.gameStateEventTypeMap[GameState.WaitingForTrickEnd][Notification.NotificationCase.PLAYED_CARDS] = 1;
         this.gameStateEventTypeMap[GameState.WaitingForTrickEnd][Notification.NotificationCase.TRICKS] = 1;
         this.gameStateEventTypeMap[GameState.WaitingForTrickEnd][Notification.NotificationCase.SCORES] = 1;
+
+        this.gameStateEventTypeMap[GameState.SittingOut] = [];
+        this.gameStateEventTypeMap[GameState.SittingOut][Notification.NotificationCase.PLAYED_CARDS] = 1;
+        this.gameStateEventTypeMap[GameState.SittingOut][Notification.NotificationCase.TRICKS] = 1;
+        this.gameStateEventTypeMap[GameState.SittingOut][Notification.NotificationCase.SCORES] = 1;
+        this.gameStateEventTypeMap[GameState.SittingOut][Notification.NotificationCase.PLAY_CARD_REQUEST] = 1;
+    }
+
+    static isPartner (seat1: number, seat2: number) {
+        // if the seats in question are both odd or both even then they are partners.
+        if ((seat1 + seat2) % 2 === 0) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     static addNewEvent (newEvent: GameEvent3D) {
@@ -402,9 +428,12 @@ class SceneController {
     }
 
     static handListener (hand: Hand) {
-        this.hand = [];
         this.currentCard = null;
         this.currentCardsInTrick = [];
+        this.shootingPlayer = -1;
+        for (let i: number = 0; i < GameSettings.players; i++) {
+            this.hand[i] = [];
+        }
 
         CardStack3D.arrangeDeck(hand.getHandList());
 
@@ -534,6 +563,9 @@ class SceneController {
                 this.bidNumberCubes[bid.seat][bid.number-1].show();
                 this.bidSuitCubes[bid.seat][bid.trump].show();
             }
+            if (bid.shootNum > 0) {
+                this.shootingPlayer = bid.seat;
+            }
         }
 
         console.log(this.bids);
@@ -584,7 +616,7 @@ class SceneController {
         let seat: number = playCardRequest.getSeat();
 
         if (seat === GameSettings.currentPlayer) {
-            for (let card of this.hand) card.toggleGlow(true);
+            for (let card of this.hand[GameSettings.currentPlayer]) if (card) card.toggleGlow(true);
             this.gameState = GameState.ChoosingPlay;
         }
     }
@@ -597,9 +629,9 @@ class SceneController {
         if (success) {
             let card: Card3D | null = this.currentCard;
 
-            card && card.playCardAnimation(GameSettings.currentPlayer, this.scene);
+            card && card.playCardAnimation(GameSettings.currentPlayer, this.scene, true);
 
-            for (let card of this.hand) card.toggleGlow(false);
+            for (let card of this.hand[GameSettings.currentPlayer]) if (card) card.toggleGlow(false);
 
             this.gameState = GameState.WaitingForTrickEnd;
         } else {
@@ -618,9 +650,38 @@ class SceneController {
         let card: Card | undefined;
         let card3D: Card3D | null;
 
+        if (this.shootingPlayer > -1 && this.gameState < GameState.WaitingToPlay) {
+            // If someone is sitting out, throw away all their cards when the first card is played
+            for (let i: number = 0; i < GameSettings.players; i++) {
+                // if the shooting player and player (i) are partners, throw away player (i)'s hand
+                if (i !== this.shootingPlayer && this.isPartner(this.shootingPlayer, i)) {
+                    for (let throwawayCard of this.hand[i]) {
+                        if (throwawayCard) throwawayCard.toggleGlow(false);
+                        setTimeout(() => {
+                            if (throwawayCard) throwawayCard.dropCardAnimation(i, this.scene, false);
+                        }, 1000);
+                    }
+                }
+            }
+        }
+
+        if (this.gameState === GameState.WaitingForTransfersEnd) {
+            if (this.shootingPlayer > -1                                                // if someone is shooting
+                && this.shootingPlayer !== GameSettings.currentPlayer                   // and it's not us
+                && this.isPartner(this.shootingPlayer, GameSettings.currentPlayer)) {   // and it's our partner
+                    this.gameState = GameState.SittingOut;                              // then we're sitting out
+                    console.log("Game state -> Sitting out");
+            } else {
+                this.gameState = GameState.WaitingToPlay;                               // otherwise we're waiting to play
+                console.log("Game state -> Waiting to play");
+            }
+        } else if (this.gameState === GameState.WaitingForThrowawaysEnd) {
+            this.gameState = GameState.WaitingToPlay;
+        }
+
         function animate(card3D: Card3D, seat: number) {
             setTimeout(() => {
-                card3D && card3D.playCardAnimation(seat, SceneController.scene);
+                card3D && card3D.playCardAnimation(seat, SceneController.scene, true);
                 SceneController.awaitingAnimation = false;
             }, 1000);
         }
@@ -637,9 +698,9 @@ class SceneController {
              // Skip if this card has already been played in the UI
              // Skip if it's our card, let it be handled by playCardResponseListener 
             if (!this.currentCardsInTrick[order] && card && seat !== GameSettings.currentPlayer) {
-                console.log("order: " + order + ", seat: " + seat + ", card: " + card);
-                console.log("searching for " + card.getRank() + card.getSuit());
-                console.log(CardStack3D.fanStacks[seat].index);
+                //console.log("order: " + order + ", seat: " + seat + ", card: " + card);
+                //console.log("searching for " + card.getRank() + card.getSuit());
+                //console.log(CardStack3D.fanStacks[seat].index);
                 sourceCardLocation = Card3D.findCardInHands(card);
                 if (!sourceCardLocation) throw new Error("could not find source card to swap");
 
@@ -660,10 +721,6 @@ class SceneController {
                 if (card3D) {
                     this.awaitingAnimation = true;
                     animate(card3D, seat);
-                    // setTimeout(() => {
-                    //     card3D && card3D.playCardAnimation(seat, this.scene);
-                    //     this.awaitingAnimation = false;
-                    // }, 1000);
                  
                     this.currentCardsInTrick[order] = card3D;
                 }
@@ -675,11 +732,15 @@ class SceneController {
         if (fromSeat === GameSettings.currentPlayer) {
             this.transferRecipient = toSeat;
 
-            for (let card of this.hand) card.toggleGlow(true);
+            console.log("hand length:" + this.hand.length);
+            for (let card of this.hand[GameSettings.currentPlayer]) if (card) card.toggleGlow(true);
 
             this.gameState = GameState.ChoosingTransfer;
-
             console.log("Game state -> Choosing transfer");
+        }
+        else if (toSeat === GameSettings.currentPlayer) {
+            this.gameState = GameState.WaitingForTransfer;
+            console.log("Game state -> Waiting for transfer");
         }
         else {
             this.gameState = GameState.WaitingForTransfersEnd;
@@ -695,11 +756,19 @@ class SceneController {
         if (success) {
             let card: Card3D | null = this.currentCard;
 
-            card && card.transferCardAnimation(GameSettings.currentPlayer, this.scene);
+            card && card.playCardAnimation(fromSeat, this.scene, false);
 
-            for (let card of this.hand) card.toggleGlow(false);
+            for (let card of this.hand[GameSettings.currentPlayer]) if (card) card.toggleGlow(false);
+
+            this.awaitingAnimation = true;
+            setTimeout(() => {
+                card && card.pickUpCard(toSeat, this.scene);
+                card && card.fanCard(toSeat, this.scene);
+                this.awaitingAnimation = false;
+            }, 1000);
 
             this.gameState = GameState.WaitingForTransfersEnd;
+            console.log("Game state -> Waiting for transfers to end.");
         } else {
             console.log("Error Transferring Card");
         }
@@ -707,9 +776,66 @@ class SceneController {
         this.awaitingServerResponse = false;
     }
 
+    // animate card traveling from one to the other
+    static transferCompleteListener(fromSeat: number, toSeat: number) {
+         // If the player is involved in the transfer, it's handled elsewhere.
+        if (GameSettings.currentPlayer === fromSeat || GameSettings.currentPlayer === toSeat) return;
+
+        let sourceCardStack: CardStack3D = CardStack3D.fanStacks[fromSeat];
+        let card: Card3D | null = sourceCardStack.index[sourceCardStack.cardsInStack-1];
+
+        card && card.playCardAnimation(fromSeat, this.scene, false);
+
+        this.awaitingAnimation = true;
+        setTimeout(() => {
+            card && card.pickUpCard(toSeat, this.scene);
+            card && card.fanCard(toSeat, this.scene);
+            this.awaitingAnimation = false;
+        }, 1000);
+    }
+
+    static transferListener(fromSeat: number, card: Card | undefined) {
+        // Handle the transfer for the destination player
+        let card3D: Card3D | null;
+        let sourceCardLocation: number[] | null;
+        let destinationCardLocation: number[] | null = null;
+
+        if (card) {
+            sourceCardLocation = Card3D.findCardInHands(card);
+
+            if (!sourceCardLocation) throw new Error("could not find source card to swap");
+
+            for (let j: number = 0; j < CardStack3D.fanStacks[fromSeat].index.length; j++) {
+                if (CardStack3D.fanStacks[fromSeat].index[j]) {
+                    destinationCardLocation = [fromSeat, j];
+                    break;
+                }
+            }
+            if (!destinationCardLocation) throw new Error("could not find destination card to swap");
+
+            // find the actual card and swap it into the right spot before transferring it
+            if (sourceCardLocation && destinationCardLocation) Card3D.swapCards(sourceCardLocation, destinationCardLocation);
+            else throw new Error("could not find cards to swap");
+
+            card3D = CardStack3D.fanStacks[fromSeat].index[destinationCardLocation[1]];
+    
+            card3D && card3D.playCardAnimation(fromSeat, this.scene, false);
+    
+            this.awaitingAnimation = true;
+            setTimeout(() => {
+                card3D && card3D.pickUpCard(GameSettings.currentPlayer, this.scene);
+                card3D && card3D.fanCard(GameSettings.currentPlayer, this.scene);
+                this.awaitingAnimation = false;
+                this.gameState = GameState.WaitingForTransfersEnd;
+                console.log("Game state -> Waiting for transfers to end.");
+            }, 1000);
+        }
+    }
+
     static throwawayRequestListener() {
-        for (let card of this.hand) card.toggleGlow(true);
+        for (let card of this.hand[GameSettings.currentPlayer]) if (card) card.toggleGlow(true);
         this.gameState = GameState.ChoosingThrowaway;
+        console.log("Game state -> Choosing throwaway.");
     }
 
     static throwawayResponseListener(finished: boolean, cardRemoved: Card, success: boolean) {
@@ -720,11 +846,12 @@ class SceneController {
         if (success) {
             let card: Card3D | null = this.currentCard;
 
-            card && card.throwAwayCardAnimation(GameSettings.currentPlayer, this.scene);
+            card && card.playCardAnimation(GameSettings.currentPlayer, this.scene, false);
 
-            for (let card of this.hand) card.toggleGlow(false);
+            for (let card of this.hand[GameSettings.currentPlayer]) if (card) card.toggleGlow(false);
 
             this.gameState = GameState.WaitingForThrowawaysEnd;
+            console.log("Game state -> Waiting for throwaways to end.");
         } else {
             console.log("Error Throwing Away Card");
         }
