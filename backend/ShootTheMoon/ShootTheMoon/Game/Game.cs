@@ -4,6 +4,8 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
 using Serilog;
+using ShootTheMoon.Network.Proto;
+using Grpc.Net.Client;
 
 namespace ShootTheMoon.Game
 {
@@ -52,7 +54,7 @@ namespace ShootTheMoon.Game
         public ImmutableList<Client> Clients { get; private set; }
         public Client[] Players { get; private set; }
 
-        public bool AllPlayersReady { get { return Array.TrueForAll(Players, value => { return value != null && value.Ready; }); } }
+        public bool AllPlayersReady { get { return Array.TrueForAll(Players, value => { return value == null || value.Ready; }); } }
 
         public List<int> Score { get; set; }
         public int Dealer { get; set; }
@@ -146,6 +148,7 @@ namespace ShootTheMoon.Game
             switch (State) {
                 case GameState.AWAITING_PLAYERS:
                     if (AllPlayersReady) {
+                        // count seats -- if not full, add bots
                         await EnterState(GameState.DEALING);
                     }
                     break;
@@ -369,6 +372,21 @@ namespace ShootTheMoon.Game
                 await PublishEvent(new GameEvent(GameEventType.ClientUpdate, this));
             }
         }
+
+        public async Task AddBot() {
+            GrpcChannel channel = GrpcChannel.ForAddress("https://localhost:8001");
+            ShootServer.ShootServerClient grpcClient = new ShootServer.ShootServerClient(channel);
+            Bot client = new Bot(grpcClient);
+
+            await this.AddClient(client);
+
+            for (uint i = 0; i < NumPlayers; i++) {
+                if (Players[i] == null) {
+                    await this.TakeSeat(i, client);
+                }
+            }
+        }
+
         public async Task<bool> TakeSeat(uint? seat, Client client) {
             bool changed = false;
             bool success = false;
