@@ -34,10 +34,11 @@ const NameDialog: React.FC = () => {
                         defaultValue={name}
                         autoFocus
                         fullWidth
+                        variant="standard"
                     />
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={storeName} color="primary">
+                    <Button onClick={storeName} color="inherit">
                         Ok
                     </Button>
                 </DialogActions>

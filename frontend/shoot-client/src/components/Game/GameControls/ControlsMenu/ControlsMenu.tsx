@@ -12,10 +12,10 @@ const ControlsMenu: React.FC = () => {
         <StyledRoot>
             <AppBar position="static" style={{ background: '#202020' }}>
             <Toolbar>
-                <IconButton edge="start" color="inherit" aria-label="menu">
+                <IconButton edge="start" color="primary" aria-label="menu" size="large">
                 <MenuIcon />
                 </IconButton>
-                <Typography variant="h6">
+                <Typography variant="h6" color="primary">
                     SHOOT THE MOON
                 </Typography>
             </Toolbar>

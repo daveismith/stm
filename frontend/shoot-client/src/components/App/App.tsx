@@ -5,9 +5,23 @@ import CreateGame from "../CreateGame/CreateGame";
 import Game from "../Game/Game";
 import './App.css';
 import { GameProvider } from '../Game/Game.context';
-import { ThemeProvider, StyledEngineProvider, createTheme } from '@mui/material/styles';
+import { ThemeProvider, Theme, StyledEngineProvider, createTheme, adaptV4Theme } from '@mui/material/styles';
+import { grey } from '@mui/material/colors';
 
-const theme = createTheme();
+
+/*declare module '@mui/styles/defaultTheme' {
+  // eslint-disable-next-line @typescript-eslint/no-empty-interface
+  interface DefaultTheme extends Theme {}
+}*/
+
+
+const theme = createTheme({
+ palette: {
+    primary: {
+      main: grey[300],
+    }
+  }
+});
 
 const App: React.FC = () => {
   return (

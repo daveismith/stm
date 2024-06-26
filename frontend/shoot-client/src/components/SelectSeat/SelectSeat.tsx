@@ -1,7 +1,5 @@
 import React from "react";
 import styled from 'styled-components';
-//import { makeStyles } from '@material-ui/core/styles';
-//import { styled as makeStyles } from "@mui/system";
 import { tss } from "tss-react/mui";
 import { Button, Card, FormControlLabel, Grid, Switch, Typography } from "@mui/material";
 import "./SelectSeat.css";

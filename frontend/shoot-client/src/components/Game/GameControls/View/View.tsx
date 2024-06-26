@@ -14,7 +14,7 @@ const StyledButtonGroup = styled.div`
 `;
 
 const StyledButton = styled(ToggleButton)({
-    '& span': {
+    '&': {
         color: 'white'
     }
 });
@@ -33,7 +33,7 @@ const View: React.FC = () => {
                 VIEW
             </div>
             <StyledButtonGroup>
-                <ToggleButtonGroup onChange={viewChange} value={gameState.sceneView ? "3D" : "2D"} exclusive >
+                <ToggleButtonGroup onChange={viewChange} color="primary" value={gameState.sceneView ? "3D" : "2D"} exclusive >
 					<StyledButton value="2D" >2D</StyledButton>
                     <StyledButton value="3D" >3D</StyledButton>
                 </ToggleButtonGroup>
