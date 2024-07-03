@@ -1,0 +1,50 @@
+.game {
+    height: 100%;
+}
+
+.scene {
+    height: 100%;
+    width: 100%;
+}
+
+.row {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: 100%;
+    height: 100%;
+}
+
+.column-1 {
+    display: flex;
+    flex-direction: column;
+    flex-basis: 100%;
+    flex: 1;
+    background-color: #363636;
+}
+
+.column-3 {
+    display: flex;
+    flex-direction: column;
+    flex-basis: 100%;
+    flex: 3;
+}
+
+.playArea {
+    /*border: 3px solid green;
+    background: rgba(255, 0, 0, 0.25);*/
+    position: absolute;
+    top: 5em;
+    bottom: 10em;
+    left: 0;
+    right: 25%;
+    z-index: 0;
+}
+
+.bidding {
+    margin: auto;
+    transform: translate(-50%, -50%);
+    position: relative;
+    top: 50%;
+    left: 50%;
+}

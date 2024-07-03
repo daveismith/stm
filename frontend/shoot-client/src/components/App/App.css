@@ -1,0 +1,63 @@
+html, body, #root, .App {
+  height: 100%;
+}
+
+.App {
+  text-align: center;
+}
+
+.card {
+  margin: 0px;
+  padding: 0;
+}
+
+@keyframes shrinkOut {
+  from {opacity:1; width: 100%;}
+  to {opacity:0; width: 0%;}
+}
+
+.card.illegal {
+  opacity: 0.65;
+  transition-property: opacity;
+  transition-timing-function: ease-in-out;
+  transition-duration: 0.5s;
+}
+
+.card.clickable {
+  transition-timing-function: ease-in-out;
+  transition-duration: 0.5s;
+}
+
+.card.clickable:hover {
+  padding-top: 0em;
+  transform: scale(1.2);
+  transition-timing-function: ease-in-out;
+}
+
+.card.remove {
+  width: 0;
+  margin: 0;
+  opacity: 0;
+  transform: scale(1.2);
+  transition-property: width, margin;
+  transition-timing-function: ease-in-out;
+  transition-duration: 0.5s;
+  animation-fill-mode: forwards;
+}
+
+.card.fade {
+  opacity: 0;
+  transition-property: opacity;
+  transition-timing-function: ease-in-out;
+  transition-duration: 0.5s;
+  animation-fill-mode: forwards;
+  background-color: red;
+}
+
+.turn-indicator {
+  height: 1.5em;
+  line-height: 1.5em;
+  vertical-align: center;
+  margin-top: 0em;
+  margin-bottom: 0.5em
+}

@@ -1,0 +1,28 @@
+version: "3"
+services: 
+  shoot-backend:
+    container_name: "shoot-backend"
+    build:
+      context: "./backend/ShootTheMoon"
+      dockerfile: "ShootTheMoon/Dockerfile"
+    ports: 
+      - "8000:80"
+    environment:
+      Serilog__MinimumLevel: "Debug"
+  shoot-proxy:
+    container_name: "shoot-proxy"
+    depends_on: 
+      - shoot-backend
+    build:
+      context: "./proxy"
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+  shoot-frontend:
+    container_name: "shoot-frontend"
+    build:
+        context: "./frontend/shoot-client"
+        dockerfile: Dockerfile
+    ports:
+      - "80:80"
+      - "8001:80"
