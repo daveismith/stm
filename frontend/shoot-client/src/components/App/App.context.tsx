@@ -40,7 +40,11 @@ const initialState: IApp = {
 
 const AppContext: React.Context<AppContextType> = createContext<AppContextType>([{ ...initialState }]);
 
-export const AppProvider: React.FC = ({ children }) => {
+interface Props {
+    children: React.ReactNode;
+  }
+
+export const AppProvider: React.FC<Props> = ({ children }) => {
     const contextValue = useState(initialState);
     const [ appState, setState ] = contextValue;
     const [connection, setConnection] = useState<ShootServerClient | undefined>(undefined);
@@ -90,7 +94,6 @@ export const AppProvider: React.FC = ({ children }) => {
         console.log('got stream: ' + newState.joined);
         console.log('newState');
         console.log(newState);
-        setState(newState);
 
         newState.stream.on('error', function(err) {
             console.log('stream error');
@@ -123,6 +126,8 @@ export const AppProvider: React.FC = ({ children }) => {
         // stream end signal
             console.log("stream end received");
         });        
+
+        setState(newState);
 
         console.log('joinGame ' + gameId);
         return newState.stream !== undefined;

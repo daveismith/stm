@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useGame } from "../Game.context";
-import { Dialog, DialogContent, DialogActions, TextField, Button } from "@material-ui/core";
+import { Dialog, DialogContent, DialogActions, TextField, Button } from "@mui/material";
 
 const NameDialog: React.FC = () => {
 
@@ -34,10 +34,11 @@ const NameDialog: React.FC = () => {
                         defaultValue={name}
                         autoFocus
                         fullWidth
+                        variant="standard"
                     />
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={storeName} color="primary">
+                    <Button onClick={storeName} color="inherit">
                         Ok
                     </Button>
                 </DialogActions>

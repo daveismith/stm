@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, Grid } from "@material-ui/core";
+import { Button, Grid } from "@mui/material";
 import { useGame } from "../Game.context";
 import BidTricksSelector  from "./BidTricksSelector";
 import BidTrumpSelector  from "./BidTrumpSelector";
@@ -15,7 +15,7 @@ interface IBiddingProps {
 }
 
 const Bidding: React.FC<IBiddingProps> = (props: IBiddingProps) => {
-    const classes = useStyles();
+    const { classes } = useStyles();
     const [ gameState ] = useGame();
     const { createBid, mySeat, currentBidder, winningBid } = gameState;
 
@@ -61,7 +61,7 @@ const Bidding: React.FC<IBiddingProps> = (props: IBiddingProps) => {
                 <Grid
                     container
                     direction="row"
-                    justify="center"
+                    justifyContent="center"
                     alignItems="center"
                 >
                     <BidTricksSelector highBid={highBid} bidTricksSelected={bidTricksSelected}/>
@@ -69,7 +69,7 @@ const Bidding: React.FC<IBiddingProps> = (props: IBiddingProps) => {
                 <Grid
                     container
                     direction="row"
-                    justify="center"
+                    justifyContent="center"
                     alignItems="center"
                 >
                     <BidTrumpSelector bidTrumpSelected = {bidTrumpSelected}/> 
@@ -84,9 +84,7 @@ const Bidding: React.FC<IBiddingProps> = (props: IBiddingProps) => {
                             onClick={() => onClick()}
                         >{ submit_pass ? 'Pass' : 'Place Bid' }</Button>
                 </Grid>
-                <Grid>
-                    {bid}
-                </Grid>
+
             </div>
         );
     } else if (winningBid === null) {
@@ -95,5 +93,9 @@ const Bidding: React.FC<IBiddingProps> = (props: IBiddingProps) => {
         return (<div></div>)
     }
 };
+
+//<Grid>
+//    {bid}
+//</Grid>
 
 export default Bidding;

@@ -1,7 +1,7 @@
 import React from "react";
-import { Button, ButtonGroup } from "@material-ui/core";
+import { Button, ButtonGroup } from "@mui/material";
 import styled from 'styled-components';
-import { makeStyles } from '@material-ui/core/styles';
+import { tss } from "tss-react/mui";
 
 export interface IButtonGroupItem {
     value: string;
@@ -19,7 +19,7 @@ const StyledDiv = styled.span`
     margin: 10px;
 `;
 
-export const useStyles = makeStyles({
+export const useStyles = tss.create({
     root: {
       background: '#363636',
       borderRadius: 30,
@@ -27,23 +27,21 @@ export const useStyles = makeStyles({
       height: 48,
       padding: 10,
       fontSize: '1.5rem',
-      '&$disabled': {
-        color: '#606060',
-      },
-      '&$outlined': {
-        background: "#a9a9a9",
-        border: 0,
-        margin: 0,
-        padding: 10,
-      },
     },
     groupedOutlined: {
         "&:first-child": {
           marginLeft: 0,
         },
     },
-    disabled: {},
-    outlined: {},
+    disabled: {
+        color: '#606060',
+    },
+    outlined: {
+        background: "#a9a9a9",
+        border: 0,
+        margin: 0,
+        padding: 10,
+    },
     label: {
         height: 10,
     }
@@ -51,7 +49,7 @@ export const useStyles = makeStyles({
 
 const ButtonGroupSelector: React.FC<IButtonGroupSelectorProps> = (props: IButtonGroupSelectorProps) => {
 
-    const classes = useStyles();
+    const {classes} = useStyles();
     const { name, items, selected, onClick } = props;
 
     return (  

@@ -1,7 +1,7 @@
 import React from "react";
 import styled from 'styled-components';
-import { Button, Card, FormControlLabel, Grid, Switch, Typography } from "@material-ui/core";
-import { makeStyles } from '@material-ui/core/styles';
+import { tss } from "tss-react/mui";
+import { Button, Card, FormControlLabel, Grid, Switch, Typography } from "@mui/material";
 import "./SelectSeat.css";
 import { useGame } from "../Game/Game.context";
 
@@ -13,7 +13,7 @@ const StyledDiv = styled.div`
     height: 100%;
 `;
 
-const useStyles = makeStyles({
+const useStyles = tss.create({
     card: {
         padding: "32px",
     },
@@ -43,7 +43,7 @@ const Ready: React.FC<{seat: Seat}> = ({seat}) => {
 }
 
 const SeatEntry: React.FC<{seat: Seat}> = ({seat}) => {
-    const classes = useStyles();
+    const { classes } = useStyles();
     const [ gameState ] = useGame();
     const { takeSeat }  = gameState;
 
@@ -68,11 +68,13 @@ const SeatEntry: React.FC<{seat: Seat}> = ({seat}) => {
 }
 
 const SelectSeat: React.FC = () => {
-    const classes = useStyles();
+    const { classes } = useStyles();
     const [ gameState ] = useGame();
     const { seats } = gameState;
     
     const orderedSeats: Array<Seat> = Array.from(seats.values()).sort((s1,s2) => (s1 as Seat).index - (s2 as Seat).index) as Array<Seat>;
+    console.log(orderedSeats);
+    console.log(seats);
 
     return (  
         <StyledDiv>
@@ -81,7 +83,7 @@ const SelectSeat: React.FC = () => {
                 spacing={0}
                 direction="column"
                 alignItems="center"
-                justify="center"
+                justifyContent="center"
                 style={{ minHeight: '100vh' }}
             >
                 <Card className={classes.card}>

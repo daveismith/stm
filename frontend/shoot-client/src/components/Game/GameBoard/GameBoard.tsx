@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Grid } from "@material-ui/core";
+import { Grid } from "@mui/material";
 import { ClearingItem, useGame } from "../../Game/Game.context";
 import PlayingCard from "../../Common/PlayingCard";
 import TextBubble from "../../Common/TextBubble"
@@ -98,14 +98,14 @@ const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
             <Grid
                 container
                 direction="row"
-                justify="center"
+                justifyContent="center"
                 alignItems="flex-start"
             >
                 {orderedSeats.map((seat, index) => (
                 <Grid
                     item
                     direction="column"
-                    justify="center"
+                    justifyContent="center"
                     alignItems="flex-start"
                     key={index}
                 >

@@ -1,8 +1,9 @@
 import React, { useEffect } from "react";
-import { useHistory } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import styled from 'styled-components';
-import { Button, Card, Grid } from "@material-ui/core";
-import { makeStyles } from '@material-ui/core/styles';
+import { Button, Card, Grid } from "@mui/material";
+import { tss } from "tss-react/mui";
+
 import { useApp } from "../App/App.context";
 import "./CreateGame.css";
 
@@ -11,7 +12,7 @@ const StyledDiv = styled.div`
     height: 100%;
 `;
 
-const useStyles = makeStyles({
+const useStyles = tss.create({
     card: {
         padding: "32px",
     },
@@ -21,14 +22,14 @@ const useStyles = makeStyles({
 });
 
 const CreateGame: React.FC = () => {
-    const classes = useStyles();
+    const { classes } = useStyles();
     const [ appState ] = useApp();
     const { gameId, createGame }  = appState;
-    const history = useHistory();
+    const navigate = useNavigate();
 
     useEffect(() => {
         if (gameId) {
-            history.push('/game/' + appState.gameId);
+            navigate('/game/' + appState.gameId);
         }
     });
 
@@ -39,7 +40,7 @@ const CreateGame: React.FC = () => {
                 spacing={0}
                 direction="column"
                 alignItems="center"
-                justify="center"
+                justifyContent="center"
                 style={{ minHeight: '100vh' }}
             >
                 <Card className={classes.card}>

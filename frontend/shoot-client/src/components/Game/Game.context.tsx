@@ -133,12 +133,16 @@ function delay(duration: number) {
       setTimeout(resolve, duration);
     });
   }
+  
+interface Props {
+children: React.ReactNode;
+}
 
-export const GameProvider: React.FC = ({ children }) => {
+export const GameProvider: React.FC<Props> = ({ children }) => {
     const [ appState ] = useApp();
     const [ state, setState ] = useState(cleanInitialState);
     const [ queue, setQueue ] = useState<INotificationQueue>(cleanInitialQueue);
-    const { id } = useParams<ParamTypes>();
+    const { id } = useParams();
 
     const { joinGame } = appState;
 
@@ -372,7 +376,7 @@ export const GameProvider: React.FC = ({ children }) => {
             entries: old.entries.filter((e) => processed.indexOf(e) === -1),
             running: running
         }));
-    }, [queue])
+    }, [queue, state.eventEmitter, state.playedCards.size])
 
     // Function To Take A Seat
     const takeSeat = async (seat: number) => {
@@ -452,7 +456,7 @@ export const GameProvider: React.FC = ({ children }) => {
             return value.getSuccess();
         }).catch((reason: any) => { 
             eventEmitter.emit('createBidResponse', tricks, shootNum, trump, seat, false);
-            console.log('bid failed: ' + (reason as grpcWeb.Error).message);
+            console.log('bid failed: ' + (reason as grpcWeb.RpcError).message);
             return false;
         });
     };
@@ -487,7 +491,7 @@ export const GameProvider: React.FC = ({ children }) => {
             return value.getSuccess();
         }).catch((reason: any) => { 
             eventEmitter.emit('playCardResponse', card, false);
-            console.log('play card failed: ' + (reason as grpcWeb.Error).message);
+            console.log('play card failed: ' + (reason as grpcWeb.RpcError).message);
             
             // re-enable queue
             setQueue(q => ({ ...q, running: true }));
@@ -522,7 +526,7 @@ export const GameProvider: React.FC = ({ children }) => {
             return value.getSuccess();
         }).catch((reason: any) => { 
             eventEmitter.emit('transferResponse', card, false);
-            console.log('transfer card failed: ' + (reason as grpcWeb.Error).message);
+            console.log('transfer card failed: ' + (reason as grpcWeb.RpcError).message);
             return false;
         });
     };
@@ -548,7 +552,7 @@ export const GameProvider: React.FC = ({ children }) => {
             return value.getFinished();
         }).catch((reason: any) => { 
             eventEmitter.emit('throwawayResponse', false, card, false);
-            console.log('throwaway card failed: ' + (reason as grpcWeb.Error).message);
+            console.log('throwaway card failed: ' + (reason as grpcWeb.RpcError).message);
             return false;
         });
     };
@@ -605,7 +609,7 @@ export const GameProvider: React.FC = ({ children }) => {
             draft.transferCard = transferCard;
             draft.throwAwayCard = throwAwayCard;
             draft.validToPlay = validToPlay;
-        })); 
+        }));
     }, [appState.joined]);
 
     useEffect(() => {
