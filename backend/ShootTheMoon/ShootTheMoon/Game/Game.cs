@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Serilog;
 using ShootTheMoon.Network.Proto;
 using Grpc.Net.Client;
+using Grpc.Core;
 
 namespace ShootTheMoon.Game
 {
@@ -378,13 +379,21 @@ namespace ShootTheMoon.Game
             ShootServer.ShootServerClient grpcClient = new ShootServer.ShootServerClient(channel);
             Bot client = new Bot(grpcClient);
 
-            await this.AddClient(client);
+            JoinGameRequest joinGameRequest = new JoinGameRequest();
+            joinGameRequest.Uuid = this.Uuid;
+            joinGameRequest.Name = "Bot";
 
-            for (uint i = 0; i < NumPlayers; i++) {
-                if (Players[i] == null) {
-                    await this.TakeSeat(i, client);
-                }
-            }
+            AsyncServerStreamingCall<Notification> response = await Task.Run(() => grpcClient.JoinGame(joinGameRequest));
+
+            // response.ResponseStream.ForEachAsync
+
+            // await this.AddClient(client);
+
+            // for (uint i = 0; i < NumPlayers; i++) {
+            //     if (Players[i] == null) {
+            //         await this.TakeSeat(i, client);
+            //     }
+            // }
         }
 
         public async Task<bool> TakeSeat(uint? seat, Client client) {
