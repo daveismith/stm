@@ -5,7 +5,7 @@ import CreateGame from "../CreateGame/CreateGame";
 import Game from "../Game/Game";
 import './App.css';
 import { GameProvider } from '../Game/Game.context';
-import { ThemeProvider, Theme, StyledEngineProvider, createTheme, adaptV4Theme } from '@mui/material/styles';
+import { ThemeProvider, StyledEngineProvider, createTheme } from '@mui/material/styles';
 import { grey } from '@mui/material/colors';
 
 

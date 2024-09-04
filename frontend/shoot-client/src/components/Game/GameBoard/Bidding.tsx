@@ -19,12 +19,7 @@ const Bidding: React.FC<IBiddingProps> = (props: IBiddingProps) => {
     const [ gameState ] = useGame();
     const { createBid, mySeat, currentBidder, winningBid } = gameState;
 
-    const { highBid, bids, bidTricksSelected, bidTrumpSelected } = props;
-
-    const bid = (index: number) => {
-        const bid = bids.get(index);
-        return bid ? <div>{bid.number} {Bid.trumpString(bid.trump)}</div> : <div>No Bid</div>;
-    }
+    const { highBid, bidTricksSelected, bidTrumpSelected } = props;
 
     const submit_pass = bidTricksSelected == null && bidTrumpSelected == null;
     const submit_enabled = (bidTricksSelected != null && bidTrumpSelected != null) || submit_pass;
