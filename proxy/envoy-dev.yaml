@@ -43,6 +43,7 @@ static_resources:
   - name: game_service
     connect_timeout: 0.25s
     type: logical_dns
+    dns_lookup_family: V4_ONLY
     http2_protocol_options: {}
     lb_policy: round_robin
     load_assignment:
