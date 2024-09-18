@@ -3,7 +3,8 @@ name: Create and publish a Docker image
 on:
   # Triggers the workflow on push request on the main branch for changes in the specified paths.
   release:
-    - created
+    types:
+      - created
 
 env:
   REGISTRY: ghcr.io
