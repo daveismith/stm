@@ -55,7 +55,7 @@ namespace ShootTheMoon.Game
         public ImmutableList<Client> Clients { get; private set; }
         public Client[] Players { get; private set; }
 
-        public bool AllPlayersReady { get { return Array.TrueForAll(Players, value => { return value == null || value.Ready; }); } }
+        public bool AllPlayersReady { get { return (NumPlayersPresent > 0) && Array.TrueForAll(Players, value => { return value == null || value.Ready; }); } }
 
         public List<int> Score { get; set; }
         public int Dealer { get; set; }
@@ -78,6 +78,8 @@ namespace ShootTheMoon.Game
 
         public GameState State { get; private set; }
 
+        public int NumPlayersPresent { get; private set; }
+
         public Game(GameSettings gameSettings, int aDealer = -1)
         {
             Uuid = Guid.NewGuid().ToString();
@@ -93,6 +95,7 @@ namespace ShootTheMoon.Game
             OutstandingTransfers = new List<Client>();
             PlayedCards = new List<PlayedCard>();
             SkipSeats = new List<uint>();
+            NumPlayersPresent = 0;
 
             if (aDealer < 0 || aDealer >= Players.Length)
             {
@@ -148,8 +151,13 @@ namespace ShootTheMoon.Game
             // Implements The Game State Machine
             switch (State) {
                 case GameState.AWAITING_PLAYERS:
-                    if (AllPlayersReady) {
+                    bool addBots = AllPlayersReady;
+                    int humanPlayers = NumPlayersPresent;
+                    if (humanPlayers > 0 && addBots) {
                         // count seats -- if not full, add bots
+                        for (int i = 0; i < NumPlayers - humanPlayers; i++) {
+                            await AddBot();
+                        }
                         await EnterState(GameState.DEALING);
                     }
                     break;
@@ -384,16 +392,14 @@ namespace ShootTheMoon.Game
             joinGameRequest.Name = "Bot";
 
             AsyncServerStreamingCall<Notification> response = await Task.Run(() => grpcClient.JoinGame(joinGameRequest));
+            client.NotificationStream = response;
 
-            // response.ResponseStream.ForEachAsync
-
-            // await this.AddClient(client);
-
-            // for (uint i = 0; i < NumPlayers; i++) {
-            //     if (Players[i] == null) {
-            //         await this.TakeSeat(i, client);
-            //     }
-            // }
+            for (uint i = 0; i < NumPlayers; i++) {
+                if (Players[i] == null) {
+                    await TakeSeat(i, client);
+                    break;
+                }
+            }
         }
 
         public async Task<bool> TakeSeat(uint? seat, Client client) {
@@ -422,6 +428,7 @@ namespace ShootTheMoon.Game
             if (changed) {
                 GameEvent seatTaken = new GameEvent(GameEventType.SeatListUpdate, this);
                 await PublishEvent(seatTaken);
+                NumPlayersPresent++;
             }
 
             return success;
