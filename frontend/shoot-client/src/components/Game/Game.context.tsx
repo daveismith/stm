@@ -372,7 +372,7 @@ export const GameProvider: React.FC = ({ children }) => {
             entries: old.entries.filter((e) => processed.indexOf(e) === -1),
             running: running
         }));
-    }, [queue])
+    }, [queue, state.eventEmitter, state.playedCards.size])
 
     // Function To Take A Seat
     const takeSeat = async (seat: number) => {
