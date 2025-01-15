@@ -1,15 +1,15 @@
 {
-    "name": "grpc",
+    "name": "proto",
     "version": "1.0.0",
     "private": true,
     "scripts": {
       "build": "node ./webpack.build.js"
     },
     "dependencies": {
-      "google-protobuf": "3.21.0",
-      "grpc-web": "1.4.2"
+      "google-protobuf": "3.21.4",
+      "grpc-web": "1.5.0"
     },
     "devDependencies": {
-      "webpack": "5.76.0"
+      "webpack": "5.97.1"
     }
   }
