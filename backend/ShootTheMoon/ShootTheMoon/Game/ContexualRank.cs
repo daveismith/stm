@@ -1,23 +1,36 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace ShootTheMoon.Game
 {
-    public class ContexualRank
+    public class ContextualRank
     {
-        public static readonly List<ContexualRank> ContextualRanks = new List<ContexualRank>
-        {
-            new ContexualRank {Ranking = 9, Name = "Nine" },
-            new ContexualRank {Ranking = 10, Name = "Ten" },
-            new ContexualRank {Ranking = 11, Name = "Jack" },
-            new ContexualRank {Ranking = 12, Name = "Queen" },
-            new ContexualRank {Ranking = 13, Name = "King" },
-            new ContexualRank {Ranking = 14, Name = "Ace" },
-            new ContexualRank {Ranking = 15, Name = "Left" },
-            new ContexualRank {Ranking = 16, Name = "Right" }
-        };
+        // public static readonly List<ContextualRank> ContextualRanks = new List<ContextualRank>
+        // {
+        //     new ContextualRank {Ranking = 9, Name = "Nine" },
+        //     new ContextualRank {Ranking = 10, Name = "Ten" },
+        //     new ContextualRank {Ranking = 11, Name = "Jack" },
+        //     new ContextualRank {Ranking = 12, Name = "Queen" },
+        //     new ContextualRank {Ranking = 13, Name = "King" },
+        //     new ContextualRank {Ranking = 14, Name = "Ace" },
+        //     new ContextualRank {Ranking = 15, Name = "Left" },
+        //     new ContextualRank {Ranking = 16, Name = "Right" }
+        // };
+
+        public static readonly ContextualRank NINE = new ContextualRank {Ranking = 9, Name = "Nine" };
+
+        public static readonly ContextualRank TEN = new ContextualRank {Ranking = 10, Name = "Ten" };
+
+        public static readonly ContextualRank JACK = new ContextualRank {Ranking = 11, Name = "Jack" };
+
+        public static readonly ContextualRank QUEEN = new ContextualRank {Ranking = 12, Name = "Queen" };
+
+        public static readonly ContextualRank KING = new ContextualRank {Ranking = 13, Name = "King" };
+
+        public static readonly ContextualRank ACE = new ContextualRank {Ranking = 14, Name = "Ace" };
+
+        public static readonly ContextualRank LEFT = new ContextualRank {Ranking = 15, Name = "Left" };
+
+        public static readonly ContextualRank RIGHT = new ContextualRank {Ranking = 16, Name = "Right" };
 
         public int Ranking { get; set; }
         public string Name { get; set; }

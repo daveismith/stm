@@ -12,7 +12,7 @@ namespace ShootTheMoon.Game
             #if DEBUG
             { "TWOPLAYER", new GameSettings {NumPlayersPerTeam = 1, NumDuplicateCards = 1, ScoreNeededToWin = 51} },
             #endif
-            { "FOURPLAYER", new GameSettings {NumPlayersPerTeam = 2, NumDuplicateCards = 1, ScoreNeededToWin = 51} },
+            { "FOURPLAYER", new GameSettings {NumPlayersPerTeam = 2, NumDuplicateCards = 2, ScoreNeededToWin = 51} }, // To do: revert?
             { "SIXPLAYER", new GameSettings {NumPlayersPerTeam = 3, NumDuplicateCards = 2, ScoreNeededToWin = 51} },
             { "EIGHTPLAYER", new GameSettings {NumPlayersPerTeam = 4, NumDuplicateCards = 3, ScoreNeededToWin = 51} }
         };

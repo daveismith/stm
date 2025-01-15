@@ -22,5 +22,24 @@ namespace ShootTheMoon.Game
 
         public string ShortName { get; set; }
         public string LongName { get; set; }
+
+        public override bool Equals(Object o)
+        {
+            if (this == o)
+            {
+                return true;
+            }
+            if (!(o.GetType() == typeof(Suit)))
+            {
+                return false;
+            }
+            Suit s = (Suit)o;
+            return ShortName == s.ShortName;
+        }
+
+        public override int GetHashCode()
+        {
+            return ShortName.GetHashCode();
+        }
     }
 }
