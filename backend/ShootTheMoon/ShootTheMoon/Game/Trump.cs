@@ -29,5 +29,9 @@ namespace ShootTheMoon.Game
 
         public Suit SameColour { get; private set; }
 
+        public bool isSuit() {
+            return Suit != null;
+        }
+
     }
 }
