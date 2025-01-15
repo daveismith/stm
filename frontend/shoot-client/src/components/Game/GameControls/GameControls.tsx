@@ -28,8 +28,7 @@ const GameControls: React.FC<IGameControlsProps> = (props: IGameControlsProps) =
                         t1Color={"green"}
                         t2Text={score[1].toString()}
                         t2Color={"blue"}
-                    >
-                    </TeamScore>
+                    />
                 </div>
                 <div className="row-1"> 
                     <TeamScore 
@@ -38,8 +37,7 @@ const GameControls: React.FC<IGameControlsProps> = (props: IGameControlsProps) =
                         t1Color={"green"}
                         t2Text={tricks[1].toString()}
                         t2Color={"blue"}
-                    >
-                    </TeamScore>
+                    />
                 </div>
                 <div className="row-1">
                     <TrumpView currentBid={winningBid} />
