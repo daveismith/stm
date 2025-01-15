@@ -23,7 +23,7 @@ import {
 import { GameSettings } from "./GameSettings3D";
 import { CardStack3D } from "./CardStack3D";
 import { baseRotation, baseRotationQuaternion, gaussianRandom } from "./SceneFunctions";
-import { Card as ProtoCard } from "../../../proto/shoot_pb";
+import { Card as ProtoCard } from "grpc/shoot_pb";
 
 import cardTextures from "./resources/images/cards.png";
 import { GameState, SceneController } from "./SceneController";

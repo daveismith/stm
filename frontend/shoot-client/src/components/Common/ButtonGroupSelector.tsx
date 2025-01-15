@@ -29,7 +29,7 @@ export const useStyles = tss.create({
       fontSize: '1.5rem',
     },
     groupedOutlined: {
-        "&:first-child": {
+        "&:first-of-type": {
           marginLeft: 0,
         },
     },

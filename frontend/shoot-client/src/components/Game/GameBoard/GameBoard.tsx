@@ -104,7 +104,6 @@ const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
                 {orderedSeats.map((seat, index) => (
                 <Grid
                     item
-                    direction="column"
                     justifyContent="center"
                     alignItems="flex-start"
                     key={index}

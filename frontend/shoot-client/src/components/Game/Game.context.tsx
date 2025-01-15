@@ -17,7 +17,7 @@ import { Notification,
     Transfer,
     ThrowawayResponse,
     TransferComplete
-} from '../../proto/shoot_pb';
+} from 'grpc/shoot_pb';
 import { Card } from "./Models/Card";
 import { Seat } from "./Models/Seat";
 import { Bid } from "./Models/Bid";

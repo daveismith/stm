@@ -1,5 +1,5 @@
 import { EventEmitter3D } from "./EventEmitter3D";
-import { Notification, SeatDetails, Bid as BidDetails } from "../../../proto/shoot_pb";
+import { Notification, SeatDetails, Bid as BidDetails } from "grpc/shoot_pb";
 
 class GameEvent3D {
     notification: Notification;
