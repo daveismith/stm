@@ -17,7 +17,7 @@ namespace ShootTheMoon.Game
 
         public int id;
 
-        private Dictionary<Trump, Double> trumpScores = new Dictionary<Trump, double>();
+        private Dictionary<Trump, double> trumpScores = new Dictionary<Trump, double>();
         private Bid firstPartnerBid;
         private Bid secondPartnerBid;
         private Dictionary<Suit, List<Card>> sortedHand;
@@ -34,6 +34,14 @@ namespace ShootTheMoon.Game
         private const bool DEBUG_MODE_PLAYING = false;
         private const bool TRACK_BOT_STATS = false;
 
+        private enum Status
+        {
+            LOGIN_SCREEN, LOBBY, LOOKING_FOR_SEAT, PREGAME_READY, PREGAME_NOT_READY, CHOOSING_BID, WAITING_FOR_BID, CHOOSING_TRANSFER_CARDS,
+            WAITING_FOR_TRANSFER, THROWING_AWAY_CARDS, WAITING_FOR_THROWAWAY, CHOOSING_CARD, WAITING_FOR_PLAY, SITTING_OUT, LOGGED_OUT, OBSERVING,
+            POSTGAME_READY, POSTGAME_NOT_READY
+        };
+
+
         private static List<string> possibleNames;
 
         private static int nextBot = 0;
@@ -43,6 +51,14 @@ namespace ShootTheMoon.Game
         const int TRANSFER_DELAY = 500;
         const int THROWAWAY_DELAY = 500;
 
+        private Game game = null;
+
+        private string name = string.Empty;
+
+        private List<Card> hand = null;
+
+        private Status status = Status.LOGIN_SCREEN;
+
         static Bot()
         {
             possibleNames = new List<string>(new string[] { "Alexander", "Genghis Khan", "Hannibal", "Louis IX", "Charlemagne", "Ivan III" });
@@ -50,13 +66,11 @@ namespace ShootTheMoon.Game
 
         public Bot(Game initGame, BotProfile initProfile)
         {
-            human = false;
             id = Bot.nextBot++;
             game = initGame;
             name = getRandomName();
             status = Status.PREGAME_READY;
             profile = initProfile;
-            inactivityTimer = new Timer(InactivityTimeout);
         }
 
         /// <summary>
@@ -71,44 +85,44 @@ namespace ShootTheMoon.Game
             hand = newHand;
         }
 
-        public void adjustForContext(Status newStatus)
+        private void adjustForContext(Status newStatus)
         {
             finalBreakdown = new HandBreakdown();
             status = newStatus;
 
-            if (game.currentTrump == null) sortedHand = sortHandIntoSuits(Trump.HIGH);
-            else sortedHand = sortHandIntoSuits(game.currentTrump);
+            if (game.CurrentTrump == null) sortedHand = sortHandIntoSuits(Trump.High);
+            else sortedHand = sortHandIntoSuits(game.CurrentTrump);
 
-            switch (status)
-            {
-                case Status.CHOOSING_BID:
-                    game.currentPlayer = this;
-                    requestBid();
-                    break;
+            // switch (status)
+            // {
+            //     case Status.CHOOSING_BID:
+            //         game.CurrentPlayer = this;
+            //         requestBid();
+            //         break;
 
-                case Status.WAITING_FOR_PLAY:
-                    initializeTrick();
-                    break;
+            //     case Status.WAITING_FOR_PLAY:
+            //         initializeTrick();
+            //         break;
 
-                case Status.CHOOSING_CARD:
-                    initializeTrick();
-                    game.currentPlayer = this;
-                    sendMessageToClient("<REQUESTCARD>" + position);
-                    break;
+            //     case Status.CHOOSING_CARD:
+            //         initializeTrick();
+            //         game.CurrentPlayer = this;
+            //         sendMessageToClient("<REQUESTCARD>" + position);
+            //         break;
 
-                case Status.CHOOSING_TRANSFER_CARDS:
-                    //game.currentPlayer = this;
-                    sendMessageToClient("<REQUESTTRANSFER>" + position.ToString() + game.highBid.bidder.position.ToString());
-                    break;
+            //     case Status.CHOOSING_TRANSFER_CARDS:
+            //         //game.CurrentPlayer = this;
+            //         sendMessageToClient("<REQUESTTRANSFER>" + position.ToString() + game.highBid.bidder.position.ToString());
+            //         break;
 
-                case Status.THROWING_AWAY_CARDS:
-                    game.currentPlayer = this;
-                    sendMessageToClient("<REQUESTTHROWAWAY>" + position);
-                    break;
+            //     case Status.THROWING_AWAY_CARDS:
+            //         game.CurrentPlayer = this;
+            //         sendMessageToClient("<REQUESTTHROWAWAY>" + position);
+            //         break;
 
-                default:
-                    break;
-            }
+            //     default:
+            //         break;
+            // }
         }
 
         private string getRandomName()
@@ -117,11 +131,11 @@ namespace ShootTheMoon.Game
             int index;
 
             List<string> names = new List<string>(possibleNames);
-            foreach (Client player in game.players)
+            foreach (Client player in game.Players)
             {
                 if (player != null && player.GetType() == typeof(Bot))
                 {
-                    names.Remove(player.name);
+                    names.Remove(player.Name);
                 }
             }
 
@@ -134,7 +148,7 @@ namespace ShootTheMoon.Game
         /// For statistics collection purposes only.  Doesn't take into account trump, unlike countVoidSuits.
         /// </summary>
         /// <returns>number of void suits</returns>
-        public int getNumVoids()
+        private int getNumVoids()
         {
             int result = 0;
             foreach (Suit suit in sortedHand.Keys)
@@ -150,7 +164,7 @@ namespace ShootTheMoon.Game
         /// <summary>
         /// initialize round variables
         /// </summary>
-        public void initializeRound()
+        private void initializeRound()
         {
             trumpScores.Clear();
             highCards.Clear();
@@ -162,7 +176,7 @@ namespace ShootTheMoon.Game
             breakdowns.Clear();
         }
 
-        public void endRound()
+        private void endRound()
         {
             // if (TRACK_BOT_STATS)
             // {
@@ -176,7 +190,7 @@ namespace ShootTheMoon.Game
             // }
         }
 
-        public void endTrick()
+        private void endTrick()
         {
             // if (TRACK_BOT_STATS)
             // {
@@ -193,12 +207,12 @@ namespace ShootTheMoon.Game
             Bid bid;
             int playerIndex;
 
-            switch (notification.GetType())
+            switch (notification.NotificationCase)
             {
-                case "NEWHAND":
+                case Notification.NotificationOneofCase.Hand:
                     string cardShortName;
                     hand.Clear();
-
+                    
                     while (content != string.Empty)
                     {
                         cardShortName = content.Substring(0, 2);
@@ -207,7 +221,7 @@ namespace ShootTheMoon.Game
                         hand.Add(card);
                     }
                     break;
-                case "REQUESTBID":
+                case Notification.NotificationOneofCase.BidRequest:
                     playerIndex = int.Parse(content.Substring(0, 1));
                     if (playerIndex == position)
                     {
@@ -215,7 +229,7 @@ namespace ShootTheMoon.Game
                         sendMessageToServer("<BID>" + bid.ToString());
                     }
                     break;
-                case "CONFIRMBID":
+                case Notification.NotificationOneofCase.BidList:
                     playerIndex = int.Parse(content.Substring(0, 1));
                     content = content.Substring(1);
 
@@ -233,8 +247,8 @@ namespace ShootTheMoon.Game
                         }
                     }
                     break;
-                case "CONFIRMTRUMP":
-                    sortedHand = sortHandIntoSuits(game.currentTrump);
+                case Notification.NotificationOneofCase.TrumpUpdate:
+                    sortedHand = sortHandIntoSuits(game.CurrentTrump);
 
                     if (TRACK_BOT_STATS)
                     {
@@ -243,16 +257,16 @@ namespace ShootTheMoon.Game
                         else finalBreakdown.wonBid = 'N';
                     }
                     break;
-                case "REQUESTCARD":
+                case Notification.NotificationOneofCase.PlayCardRequest:
                     playerIndex = int.Parse(content);
                     if (playerIndex == position)
                     {
-                        card = decideCard(Rules.getLegalCards(hand, game.leadCard, game.currentTrump));
+                        card = decideCard(Rules.getLegalCards(hand, game.leadCard, game.CurrentTrump));
                         sendMessageToServer("<PLAYCARD>" + card.ToString());
                     }
                     break;
 
-                case "REQUESTTRANSFER":
+                case Notification.NotificationOneofCase.TransferRequest:
                     playerIndex = int.Parse(content.Substring(0, 1));
                     if (playerIndex == position)
                     {
@@ -263,13 +277,13 @@ namespace ShootTheMoon.Game
                     }
                     break;
 
-                case "CONFIRMTRANSFER":
+                case Notification.NotificationOneofCase.TransferComplete:
                     playerIndex = int.Parse(content.Substring(0, 1));
                     if (playerIndex == position) // check if giving away a card
                     {
                         card = Card.FromString(content.Substring(2, 2));
                         //hand.Remove(card); // already taken care of by server
-                        sortedHand[card.getContextualSuit(game.currentTrump)].Remove(card);
+                        sortedHand[card.getContextualSuit(game.CurrentTrump)].Remove(card);
                     }
                     else
                     {
@@ -278,12 +292,12 @@ namespace ShootTheMoon.Game
                         {
                             card = Card.FromString(content.Substring(2, 2));
                             //hand.Add(card); // already taken care of by server
-                            sortedHand[card.getContextualSuit(game.currentTrump)].Add(card);
+                            sortedHand[card.getContextualSuit(game.CurrentTrump)].Add(card);
                         }
                     }
                     break;
 
-                case "REQUESTTHROWAWAY":
+                case Notification.NotificationOneofCase.ThrowawayRequest:
                     playerIndex = int.Parse(content.Substring(0, 1));
                     if (playerIndex == position) // throw away a card
                     {
@@ -293,33 +307,29 @@ namespace ShootTheMoon.Game
                     }
                     break;
 
-                case "CONFIRMTHROWAWAY":
-                    playerIndex = int.Parse(content.Substring(0, 1));
-                    bool finished = int.Parse(content.Substring(1, 1)) == 1;
+                // case "CONFIRMTHROWAWAY":
+                //     playerIndex = int.Parse(content.Substring(0, 1));
+                //     bool finished = int.Parse(content.Substring(1, 1)) == 1;
 
-                    if (content.Length > 2 && playerIndex == position) // these two predicates should be equivalent
-                    {
-                        // server sent us the card info
-                        card = Card.FromString(content.Substring(2, 2));
-                        //hand.Remove(card); // taken care of by the server
-                        sortedHand[card.getContextualSuit(game.currentTrump)].Remove(card);
-                    }
+                //     if (content.Length > 2 && playerIndex == position) // these two predicates should be equivalent
+                //     {
+                //         // server sent us the card info
+                //         card = Card.FromString(content.Substring(2, 2));
+                //         //hand.Remove(card); // taken care of by the server
+                //         sortedHand[card.getContextualSuit(game.CurrentTrump)].Remove(card);
+                //     }
 
-                    if (!finished) // throw away another card if not finished
-                    {
-                        card = pickLowestCard();
-                        sendMessageToServer("<THROWAWAYCARD>" + card.ToString());
-                    }
-                    break;
+                //     if (!finished) // throw away another card if not finished
+                //     {
+                //         card = pickLowestCard();
+                //         sendMessageToServer("<THROWAWAYCARD>" + card.ToString());
+                //     }
+                //     break;
 
                 default:
                     if (ServerMain.CONSOLE_OUTPUT_ON) System.Console.WriteLine("ER " + name + ":\t" + "Didn't understand message.");
                     break;
             }
-        }
-
-        public override void leaveGame()
-        {
         }
 
         #region Bidding Phase Methods
@@ -339,18 +349,18 @@ namespace ShootTheMoon.Game
                 printHand();
             }
 
-            foreach (Suit suit in Suit.allSuits)
+            foreach (Suit suit in Suit.Suits)
             {
                 highCards.Add(new Card(Rank.ACE, suit));
                 highCards.Add(new Card(Rank.ACE, suit));
             }
-            foreach (Suit suit in Suit.allSuits)
+            foreach (Suit suit in Suit.Suits)
             {
                 lowCards.Add(new Card(Rank.NINE, suit));
                 lowCards.Add(new Card(Rank.NINE, suit));
             }
 
-            foreach (Trump trump in Trump.allTrumps)
+            foreach (Trump trump in Trump.Trumps)
             {
                 if (TRACK_BOT_STATS)
                 {
@@ -365,7 +375,7 @@ namespace ShootTheMoon.Game
 
             if (firstPartnerBid != null && !firstPartnerBid.isPass())
             {
-                foreach (Trump trump in Trump.allTrumps)
+                foreach (Trump trump in Trump.Trumps)
                 {
                     applyBidBonus(firstPartnerBid, trump);
 
@@ -701,7 +711,7 @@ namespace ShootTheMoon.Game
         /// <returns>highest card in hand</returns>
         private Card pickHighestCard()
         {
-            Trump trump = game.currentTrump; // get what trump is
+            Trump trump = game.CurrentTrump; // get what trump is
             Suit suit = game.leadCard.getContextualSuit(trump); // start with the suit that was lead
             List<Card> cardsInSuit = sortedHand[suit]; // get cards that follow suit
 
@@ -740,7 +750,7 @@ namespace ShootTheMoon.Game
 
             if (game.leadCard != null)
             {
-                cardsInSuit = sortedHand[game.leadCard.getContextualSuit(game.currentTrump)]; // get cards that follow suit
+                cardsInSuit = sortedHand[game.leadCard.getContextualSuit(game.CurrentTrump)]; // get cards that follow suit
 
                 // must follow suit if able, so return the lowest card
                 if (cardsInSuit.Count > 0)
@@ -792,7 +802,7 @@ namespace ShootTheMoon.Game
         /// <returns>Dictionary containing scores for each suit</returns>
         private Dictionary<Suit, int> scoreSuitsForThrowaway()
         {
-            Trump trump = game.currentTrump;
+            Trump trump = game.CurrentTrump;
             List<Card> candidateSuit;
             Card highestCard;
             Dictionary<Suit, int> suitScores = new Dictionary<Suit, int>();
@@ -850,7 +860,7 @@ namespace ShootTheMoon.Game
         /// <returns>Dictionary containing score for each suit</returns>
         private Dictionary<Suit, int> scoreSuitsForLead()
         {
-            Trump trump = game.currentTrump;
+            Trump trump = game.CurrentTrump;
             List<Card> candidateSuit;
             Card candidate;
             Dictionary<Suit, int> suitScores = new Dictionary<Suit, int>();
@@ -1030,7 +1040,7 @@ namespace ShootTheMoon.Game
         /// <returns>a card that can minimally beat the currently winning card</returns>
         private Card findLowestWinningCard(List<Card> legalCards, Card cardToBeat)
         {
-            Trump trump = game.currentTrump;
+            Trump trump = game.CurrentTrump;
             Suit suitLead = game.leadCard.getContextualSuit(trump);
             Card chosenCard = null;
 
@@ -1050,11 +1060,11 @@ namespace ShootTheMoon.Game
         /// decide which card to play - highest level.
         /// </summary>
         /// <returns>the card chosen</returns>
-        public Card decideCard(List<Card> legalCards)
+        private Card decideCard(List<Card> legalCards)
         {
             bool isLeader = game.leadCard == null;
             Card cardToPlay = null;
-            Trump trump = game.currentTrump;
+            Trump trump = game.CurrentTrump;
 
             if (DEBUG_MODE_PLAYING)
             {
@@ -1182,7 +1192,7 @@ namespace ShootTheMoon.Game
         /// <returns>best card in hand</returns>
         private Card decideTransferCard()
         {
-            Trump trump = game.currentTrump;
+            Trump trump = game.CurrentTrump;
 
             Card transferCard = null;
             int candidateRank;
