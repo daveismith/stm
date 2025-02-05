@@ -14,14 +14,14 @@ namespace ShootTheMoon.Game
         public static Rank King = new Rank { Value = 13, ShortName = "K", LongName = "King" };
         public static Rank Ace = new Rank { Value = 14, ShortName = "A", LongName = "Ace" };
 
-        public static readonly List<Rank> Ranks = new List<Rank>
+        public static readonly Dictionary<int, Rank> Ranks = new Dictionary<int, Rank>
         {
-            Nine,
-            Ten,
-            Jack,
-            Queen,
-            King,
-            Ace
+            {2, Nine},
+            {3, Ten},
+            {4, Jack},
+            {5, Queen},
+            {6, King},
+            {7, Ace}
         };
 
         public int Value { get; set; }

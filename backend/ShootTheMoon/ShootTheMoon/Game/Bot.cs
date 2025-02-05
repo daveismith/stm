@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using Google.Protobuf.Collections;
 using Grpc.Core;
 using ShootTheMoon.Network.Proto;
 
@@ -203,31 +205,21 @@ namespace ShootTheMoon.Game
 
         private void processMessage(Notification notification)
         {
-            Card card;
-            Bid bid;
-            int playerIndex;
-
             switch (notification.NotificationCase)
             {
                 case Notification.NotificationOneofCase.Hand:
-                    string cardShortName;
+                    List<Network.Proto.Card> protoHand;
                     hand.Clear();
-                    
-                    while (content != string.Empty)
-                    {
-                        cardShortName = content.Substring(0, 2);
-                        content = content.Substring(2);
-                        card = Card.FromString(cardShortName);
-                        hand.Add(card);
+                    protoHand = notification.Hand.Hand_.ToList();
+                    foreach (Network.Proto.Card protoCard in protoHand) {
+                        hand.Add(Card.FromProto(protoCard));
                     }
+
                     break;
                 case Notification.NotificationOneofCase.BidRequest:
-                    playerIndex = int.Parse(content.Substring(0, 1));
-                    if (playerIndex == position)
-                    {
-                        bid = decideBid();
-                        sendMessageToServer("<BID>" + bid.ToString());
-                    }
+                    status = Status.CHOOSING_BID;
+                    Network.Proto.Bid bid = decideBid();
+                    _grpcClient.CreateBid(bid);
                     break;
                 case Notification.NotificationOneofCase.BidList:
                     playerIndex = int.Parse(content.Substring(0, 1));
@@ -337,7 +329,7 @@ namespace ShootTheMoon.Game
         /// decide what to bid based on cards and previous bids, etc.  highest level - utilizes evaluateTrump and applyBidBonus.
         /// </summary>
         /// <returns>Bot's bid</returns>
-        private Bid decideBid()
+        private Network.Proto.Bid decideBid()
         {
             Bid highBid = game.highBid;
             Trump bestTrump = null;
@@ -349,24 +341,24 @@ namespace ShootTheMoon.Game
                 printHand();
             }
 
-            foreach (Suit suit in Suit.Suits)
+            foreach (Suit suit in Suit.Suits.Values)
             {
-                highCards.Add(new Card(Rank.ACE, suit));
-                highCards.Add(new Card(Rank.ACE, suit));
+                highCards.Add(new Card(suit, Rank.Ace));
+                highCards.Add(new Card(suit, Rank.Ace));
             }
-            foreach (Suit suit in Suit.Suits)
+            foreach (Suit suit in Suit.Suits.Values)
             {
-                lowCards.Add(new Card(Rank.NINE, suit));
-                lowCards.Add(new Card(Rank.NINE, suit));
+                lowCards.Add(new Card(suit, Rank.Nine));
+                lowCards.Add(new Card(suit, Rank.Nine));
             }
 
             foreach (Trump trump in Trump.Trumps)
             {
-                if (TRACK_BOT_STATS)
-                {
-                    breakdowns.Add(trump, new HandBreakdown());
-                    breakdowns[trump].bidPosition = position;
-                }
+                // if (TRACK_BOT_STATS)
+                // {
+                //     breakdowns.Add(trump, new HandBreakdown());
+                //     breakdowns[trump].bidPosition = position;
+                // }
 
                 score = this.evaluateTrump(trump);
 
@@ -379,12 +371,12 @@ namespace ShootTheMoon.Game
                 {
                     applyBidBonus(firstPartnerBid, trump);
 
-                    if (TRACK_BOT_STATS)
-                    {
-                        breakdowns[trump].partner1TricksBid = firstPartnerBid.getNumber();
-                        if (!firstPartnerBid.isPass()) breakdowns[trump].partner1Trump = firstPartnerBid.getTrump().ToString();
-                        breakdowns[trump].partner1position = firstPartnerBid.bidder.position;
-                    }
+                    // if (TRACK_BOT_STATS)
+                    // {
+                    //     breakdowns[trump].partner1TricksBid = firstPartnerBid.getNumber();
+                    //     if (!firstPartnerBid.isPass()) breakdowns[trump].partner1Trump = firstPartnerBid.getTrump().ToString();
+                    //     breakdowns[trump].partner1position = firstPartnerBid.bidder.position;
+                    // }
                 }
             }
             if (secondPartnerBid != null && !secondPartnerBid.isPass())
@@ -406,7 +398,7 @@ namespace ShootTheMoon.Game
                 }
             }
 
-            foreach (Trump trump in Trump.allTrumps)
+            foreach (Trump trump in Trump.Trumps)
             {
                 // if last bidder and partner is winning the bid, no need to overbid.  this method is a little sloppy but it should work.
                 if (highBid != null && highBid.bidder.team == team && game.bids.Count == game.players.Length - 1)
