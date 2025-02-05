@@ -12,12 +12,12 @@ namespace ShootTheMoon.Game
         public static Suit Clubs = new Suit {ShortName = "C", LongName = "Clubs" };
         public static Suit Diamonds = new Suit {ShortName = "D", LongName = "Diamonds" };
 
-        public static readonly List<Suit> Suits = new List<Suit>
+        public static readonly Dictionary<int, Suit> Suits = new Dictionary<int, Suit>
         {
-            Spades,
-            Hearts,
-            Clubs,
-            Diamonds
+            {0, Spades},
+            {1, Hearts},
+            {2, Diamonds},
+            {3, Clubs}
         };
 
         public string ShortName { get; set; }
