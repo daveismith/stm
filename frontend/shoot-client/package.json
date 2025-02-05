@@ -25,7 +25,7 @@
     "proto": "file:src/proto",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^6.28.2",
+    "react-router": "^7.1.5",
     "styled-components": "^6.1.14",
     "tss-react": "^4.9.14",
     "web-vitals": "^1.1.0"
@@ -56,7 +56,6 @@
   },
   "devDependencies": {
     "@originjs/vite-plugin-commonjs": "^1.0.3",
-    "@types/react-router-dom": "^5.3.3",
     "@types/styled-components": "^5.1.34",
     "@vitejs/plugin-react": "^4.3.4",
     "cross-env": "^7.0.3",

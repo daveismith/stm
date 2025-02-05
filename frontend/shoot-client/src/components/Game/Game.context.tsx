@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { produce } from "immer";
-import { useParams } from "react-router-dom";
+import { useParams } from "react-router";
 import { useApp } from "../App/App.context";
 import * as grpcWeb from 'grpc-web';
 import { Notification, 
