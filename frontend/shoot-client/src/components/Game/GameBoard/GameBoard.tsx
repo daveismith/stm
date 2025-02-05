@@ -74,7 +74,7 @@ const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
     }
 
     const onCardClick = (card: Card, index: number) => {
-        if (!currentPlayer) {
+        if (!currentPlayer || !winningBid) {
             return; // not our turn
         }
 
@@ -134,7 +134,7 @@ const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
                             return <PlayingCard
                                 key={"playing_card_" + index} 
                                 card={card} 
-                                clickable={currentPlayer && !currentBidder && pendingCards.length === 0}
+                                clickable={winningBid !== null && currentPlayer && !currentBidder && pendingCards.length === 0}
                                 illegal={!validToPlay(card, leadCard, hand, winningBid?.trump)}
                                 remove={remove}
                                 onClick={() => onCardClick(card, index)}
