@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -20,6 +21,10 @@ namespace ShootTheMoon.Game
         public Card(Suit suit, Rank rank) {
             Suit = suit;
             Rank = rank;
+        }
+
+        public static Card FromProto(Network.Proto.Card card) {
+            return new Card(Suit.Suits[(int) card.Suit], Rank.Ranks[(int) card.Rank]);
         }
 
         public override bool Equals(object obj) => this.Equals(obj as Card);
