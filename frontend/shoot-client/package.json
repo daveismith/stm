@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@babylonjs/core": "4.2.0",
-    "@babylonjs/gui": "4.2.0",
-    "@babylonjs/loaders": "^4.2.0",
+    "@babylonjs/core": "^7.48.3",
+    "@babylonjs/gui": "^7.48.3",
+    "@babylonjs/loaders": "^7.48.3",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@mui/icons-material": "^6.4.4",
