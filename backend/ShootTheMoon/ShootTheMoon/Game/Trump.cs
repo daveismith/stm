@@ -15,13 +15,13 @@ namespace ShootTheMoon.Game
         public static Trump High = new Trump {Name = "High"};
         public static Trump Low = new Trump {Name = "Low"};
 
-        public static readonly List<Trump> Trumps = new List<Trump>{
-            Spades,
-            Hearts,
-            Clubs,
-            Diamonds,
-            High,
-            Low
+        public static readonly Dictionary<int, Trump> Trumps = new Dictionary<int, Trump>{
+            {0, Spades},
+            {1, Hearts},
+            {2, Diamonds},
+            {3, Clubs},
+            {4, Low},
+            {5, High}
         };
 
         public string Name { get; private set; }
@@ -31,6 +31,11 @@ namespace ShootTheMoon.Game
 
         public bool isSuit() {
             return Suit != null;
+        }
+
+        public static Trump fromProto(Network.Proto.Trump trump)
+        {
+            return Trumps[(int) trump];
         }
 
     }
