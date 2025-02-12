@@ -419,6 +419,7 @@ namespace ShootTheMoon.Game
                     Players[seat.Value] = client;
                     success = true;
                     changed = true;
+                    client.Seat = seat.Value;
                 }
             } else {
                 // Already Removed From Unoccupied Seat
