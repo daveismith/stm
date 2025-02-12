@@ -59,6 +59,8 @@ namespace ShootTheMoon.Game
 
         private List<Card> hand = null;
 
+        private Dictionary<uint, Bid> bids = null;
+
         private Status status = Status.LOGIN_SCREEN;
 
         static Bot()
@@ -218,24 +220,29 @@ namespace ShootTheMoon.Game
                     break;
                 case Notification.NotificationOneofCase.BidRequest:
                     status = Status.CHOOSING_BID;
-                    Network.Proto.Bid bid = decideBid();
-                    _grpcClient.CreateBid(bid);
+                    Network.Proto.Bid myBid = decideBid();
+                    _grpcClient.CreateBid(myBid);
                     break;
                 case Notification.NotificationOneofCase.BidList:
-                    playerIndex = int.Parse(content.Substring(0, 1));
-                    content = content.Substring(1);
+                    List<Network.Proto.Bid> protoBids;
+                    protoBids = notification.BidList.Bids.ToList();
+                    bids = new Dictionary<uint, Bid>();
 
-                    if (game.players[playerIndex].team == team && playerIndex != position)
+                    foreach (Network.Proto.Bid protoBid in protoBids)
                     {
-                        if (firstPartnerBid == null)
+                        bids.Add(protoBid.Seat, Bid.fromProto(protoBid));
+                        if (protoBid.Seat % 2 == Seat % 2 && protoBid.Seat != Seat)
                         {
-                            firstPartnerBid = Bid.FromString(content);
-                            firstPartnerBid.bidder = game.players[playerIndex];
-                        }
-                        else
-                        {
-                            secondPartnerBid = Bid.FromString(content);
-                            secondPartnerBid.bidder = game.players[playerIndex];
+                            if (firstPartnerBid == null)
+                            {
+                                firstPartnerBid = Bid.FromString(content);
+                                firstPartnerBid.bidder = game.players[playerIndex];
+                            }
+                            else
+                            {
+                                secondPartnerBid = Bid.FromString(content);
+                                secondPartnerBid.bidder = game.players[playerIndex];
+                            }
                         }
                     }
                     break;
