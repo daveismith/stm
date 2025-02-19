@@ -18,6 +18,35 @@ namespace ShootTheMoon.Game
             return Suit;
         }
 
+        public ContextualRank EffectiveRank(Trump trump) {
+            // if trump is a suit and the card is a Jack, we need to check if it's a
+            // left or a right
+            if (Rank.Equals(Rank.Jack) && trump.isSuit())
+            {
+                Suit trumpSuit = trump.Suit;
+
+                if (Suit.Equals(trumpSuit))
+                {
+                    return ContextualRank.RIGHT;
+                }
+                else if (Suit.Equals(trump.SameColour))
+                {
+                    return ContextualRank.LEFT;
+                }
+                else
+                {
+                    return ContextualRank.JACK;
+                }
+                // for all other cards we can just return the same rank as the
+                // original card
+            }
+            else
+            {
+                return ContextualRank.ContextualRanks[Rank.Value];
+            }
+
+        }
+
         public Card(Suit suit, Rank rank) {
             Suit = suit;
             Rank = rank;
