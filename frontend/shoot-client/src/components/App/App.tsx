@@ -1,6 +1,6 @@
 import React from 'react';
 import { Route, Routes, Navigate } from "react-router";
-import { HashRouter } from "react-router-dom";
+import { HashRouter } from "react-router";
 import CreateGame from "../CreateGame/CreateGame";
 import Game from "../Game/Game";
 import './App.css';

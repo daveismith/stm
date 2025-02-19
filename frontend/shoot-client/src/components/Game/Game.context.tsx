@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { produce } from "immer";
-import { useParams } from "react-router-dom";
+import { useParams } from "react-router";
 import { useApp } from "../App/App.context";
 import * as grpcWeb from 'grpc-web';
 import { Notification, 
@@ -17,7 +17,7 @@ import { Notification,
     Transfer,
     ThrowawayResponse,
     TransferComplete
-} from '../../proto/shoot_pb';
+} from 'proto/shoot_pb';
 import { Card } from "./Models/Card";
 import { Seat } from "./Models/Seat";
 import { Bid } from "./Models/Bid";

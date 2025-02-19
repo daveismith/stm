@@ -74,7 +74,7 @@ const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
     }
 
     const onCardClick = (card: Card, index: number) => {
-        if (!currentPlayer) {
+        if (!currentPlayer || !winningBid) {
             return; // not our turn
         }
 
@@ -104,7 +104,6 @@ const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
                 {orderedSeats.map((seat, index) => (
                 <Grid
                     item
-                    direction="column"
                     justifyContent="center"
                     alignItems="flex-start"
                     key={index}
@@ -135,7 +134,7 @@ const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
                             return <PlayingCard
                                 key={"playing_card_" + index} 
                                 card={card} 
-                                clickable={currentPlayer && !currentBidder && pendingCards.length === 0}
+                                clickable={winningBid !== null && currentPlayer && !currentBidder && pendingCards.length === 0}
                                 illegal={!validToPlay(card, leadCard, hand, winningBid?.trump)}
                                 remove={remove}
                                 onClick={() => onCardClick(card, index)}

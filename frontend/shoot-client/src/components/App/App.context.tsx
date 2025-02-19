@@ -1,12 +1,12 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import * as grpcWeb from 'grpc-web';
-import { ShootServerClient } from '../../proto/ShootServiceClientPb';
+import { ShootServerClient } from 'proto/ShootServiceClientPb';
 import {
     CreateGameRequest,
     CreateGameResponse, 
     JoinGameRequest,
     Notification
-} from '../../proto/shoot_pb';
+} from 'proto/shoot_pb';
 
 export interface IApp {
     connection?: ShootServerClient
