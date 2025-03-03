@@ -5,7 +5,7 @@
   "dependencies": {
     "@babylonjs/core": "^7.50.0",
     "@babylonjs/gui": "^7.50.0",
-    "@babylonjs/loaders": "^7.50.0",
+    "@babylonjs/loaders": "^7.51.2",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@mui/icons-material": "^6.4.5",
