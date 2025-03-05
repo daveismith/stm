@@ -56,6 +56,14 @@ namespace ShootTheMoon.Game
             return new Card(Suit.Suits[(int) card.Suit], Rank.Ranks[(int) card.Rank]);
         }
 
+        public static Network.Proto.Card ToProto(Card card)
+        {
+            Network.Proto.Card protoCard = new Network.Proto.Card();
+            protoCard.Rank = (Network.Proto.Card.Types.Rank) card.Rank.Index;
+            protoCard.Suit = (Network.Proto.Card.Types.Suit) card.Suit.Index;
+            return protoCard;
+        }
+
         public override bool Equals(object obj) => this.Equals(obj as Card);
 
         public bool Equals(Card p)
