@@ -9,3 +9,20 @@ updates:
     directory: "/frontend/shoot-client"
     schedule:
       interval: "weekly"
+    groups:
+      babylonjs-dependencies:
+        patterns:
+          - "@babylonjs/*"
+      mui-dependencies:
+        patterns:
+          - "@mui/*"
+      react-dependencies:
+        patterns:
+          - "react*"
+      types-dependencies:
+        patterns:
+          - "@types/*"
+      vite-dependencies:
+        patterns:
+          - "vite*"
+          - "@vitejs/*"
