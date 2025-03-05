@@ -8,12 +8,12 @@ namespace ShootTheMoon.Game
     public class Trump
     {
         
-        public static Trump Spades = new Trump {Name = Suit.Spades.LongName, Suit = Suit.Spades, SameColour = Suit.Clubs };
-        public static Trump Hearts = new Trump {Name = Suit.Hearts.LongName, Suit = Suit.Hearts, SameColour = Suit.Diamonds };
-        public static Trump Clubs = new Trump {Name = Suit.Clubs.LongName, Suit = Suit.Clubs, SameColour = Suit.Spades };
-        public static Trump Diamonds = new Trump {Name = Suit.Diamonds.LongName, Suit = Suit.Diamonds, SameColour = Suit.Hearts };
-        public static Trump High = new Trump {Name = "High"};
-        public static Trump Low = new Trump {Name = "Low"};
+        public static Trump Spades = new Trump {Index = 0, Name = Suit.Spades.LongName, Suit = Suit.Spades, SameColour = Suit.Clubs };
+        public static Trump Hearts = new Trump {Index = 1, Name = Suit.Hearts.LongName, Suit = Suit.Hearts, SameColour = Suit.Diamonds };
+        public static Trump Clubs = new Trump {Index = 3, Name = Suit.Clubs.LongName, Suit = Suit.Clubs, SameColour = Suit.Spades };
+        public static Trump Diamonds = new Trump {Index = 2, Name = Suit.Diamonds.LongName, Suit = Suit.Diamonds, SameColour = Suit.Hearts };
+        public static Trump High = new Trump {Index = 5, Name = "High"};
+        public static Trump Low = new Trump {Index = 4, Name = "Low"};
 
         public static readonly Dictionary<int, Trump> Trumps = new Dictionary<int, Trump>{
             {0, Spades},
@@ -23,6 +23,8 @@ namespace ShootTheMoon.Game
             {4, Low},
             {5, High}
         };
+
+        public int Index { get; private set; }
 
         public string Name { get; private set; }
         public Suit Suit { get; private set; }
@@ -38,5 +40,9 @@ namespace ShootTheMoon.Game
             return Trumps[(int) trump];
         }
 
+        public static Network.Proto.Trump toProto(Trump trump)
+        {
+            return (Network.Proto.Trump) trump.Index; 
+        }
     }
 }

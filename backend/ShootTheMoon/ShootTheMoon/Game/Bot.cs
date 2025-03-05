@@ -19,17 +19,17 @@ namespace ShootTheMoon.Game
 
         public int id;
 
-        private Dictionary<Trump, double> trumpScores = new Dictionary<Trump, double>();
-        private Bid firstPartnerBid;
-        private Bid secondPartnerBid;
-        private Dictionary<Suit, List<Card>> sortedHand;
-        private int loneAcesOrNines;
-        private List<Card> highCards = new List<Card>();
-        private List<Card> lowCards = new List<Card>();
-        private BotProfile profile;
+        private readonly Dictionary<Trump, double> TrumpScores = new Dictionary<Trump, double>();
+        private Bid FirstPartnerBid;
+        private Bid SecondPartnerBid;
+        private Dictionary<Suit, List<Card>> SortedHand;
+        private int LoneAcesOrNines;
+        private readonly List<Card> HighCards = new List<Card>();
+        private readonly List<Card> LowCards = new List<Card>();
+        private readonly BotProfile Profile;
 
-        private Dictionary<Trump, HandBreakdown> breakdowns = new Dictionary<Trump, HandBreakdown>();
-        private HandBreakdown finalBreakdown;
+        private readonly Dictionary<Trump, HandBreakdown> Breakdowns = new Dictionary<Trump, HandBreakdown>();
+        private HandBreakdown FinalBreakdown;
 
         private const bool HIGH_LOW_BIDDING_ENABLED = true;
         private const bool DEBUG_MODE_BIDDING = false;
@@ -44,39 +44,40 @@ namespace ShootTheMoon.Game
         };
 
 
-        private static List<string> possibleNames;
+        private static readonly List<string> PossibleNames;
 
-        private static int nextBot = 0;
+        private static int NextBot = 0;
 
         const int BID_DELAY = 500;
         const int CARD_DELAY = 500;
         const int TRANSFER_DELAY = 500;
         const int THROWAWAY_DELAY = 500;
 
-        private Game game = null;
+        private readonly Game Game = null;
 
-        private string name = string.Empty;
+        // private readonly string Name = string.Empty;
 
-        private List<Card> hand = null;
+        // private readonly List<Card> Hand = null;
 
-        private Dictionary<uint, Bid> bids = null;
+        private Dictionary<uint, Bid> Bids = null;
 
-        private Status status = Status.LOGIN_SCREEN;
+        private Status CurrentStatus = Status.LOGIN_SCREEN;
 
-        private CardCounter cardCounter = new CardCounter();
+        private readonly CardTracker Tracker = new CardTracker();
+
+        private uint Team { get { return Seat % 2; } }
 
         static Bot()
         {
-            possibleNames = new List<string>(new string[] { "Alexander", "Genghis Khan", "Hannibal", "Louis IX", "Charlemagne", "Ivan III" });
+            PossibleNames = new List<string>(new string[] { "Alexander", "Genghis Khan", "Hannibal", "Louis IX", "Charlemagne", "Ivan III" });
         }
 
         public Bot(Game initGame, BotProfile initProfile)
         {
-            id = Bot.nextBot++;
-            game = initGame;
-            name = GetRandomName();
-            status = Status.PREGAME_READY;
-            profile = initProfile;
+            id = Bot.NextBot++;
+            Game = initGame;
+            CurrentStatus = Status.PREGAME_READY;
+            Profile = initProfile;
         }
 
         /// <summary>
@@ -88,16 +89,21 @@ namespace ShootTheMoon.Game
             : this(initGame, initProfile)
         {
             InitializeRound();
-            hand = newHand;
+            Hand = newHand;
+        }
+
+        private static bool SameTeam(uint seatA, uint seatB)
+        {
+            return seatA % 2 == seatB % 2;
         }
 
         private void AdjustForContext(Status newStatus)
         {
-            finalBreakdown = new HandBreakdown();
-            status = newStatus;
+            FinalBreakdown = new HandBreakdown();
+            CurrentStatus = newStatus;
 
-            if (game.CurrentTrump == null) sortedHand = SortHandIntoSuits(Trump.High);
-            else sortedHand = SortHandIntoSuits(game.CurrentTrump);
+            if (Game.CurrentTrump == null) SortedHand = SortHandIntoSuits(Trump.High);
+            else SortedHand = SortHandIntoSuits(Game.CurrentTrump);
 
             // switch (status)
             // {
@@ -136,8 +142,8 @@ namespace ShootTheMoon.Game
             Random random = new Random();
             int index;
 
-            List<string> names = new List<string>(possibleNames);
-            foreach (Client player in game.Players)
+            List<string> names = new List<string>(PossibleNames);
+            foreach (Client player in Game.Players)
             {
                 if (player != null && player.GetType() == typeof(Bot))
                 {
@@ -157,9 +163,9 @@ namespace ShootTheMoon.Game
         private int GetNumVoids()
         {
             int result = 0;
-            foreach (Suit suit in sortedHand.Keys)
+            foreach (Suit suit in SortedHand.Keys)
             {
-                if (sortedHand[suit].Count == 0)
+                if (SortedHand[suit].Count == 0)
                 {
                     result++;
                 }
@@ -172,14 +178,14 @@ namespace ShootTheMoon.Game
         /// </summary>
         private void InitializeRound()
         {
-            trumpScores.Clear();
-            highCards.Clear();
-            lowCards.Clear();
-            loneAcesOrNines = 0;
-            firstPartnerBid = null;
-            secondPartnerBid = null;
-            sortedHand = SortHandIntoSuits(Trump.High);
-            breakdowns.Clear();
+            TrumpScores.Clear();
+            HighCards.Clear();
+            LowCards.Clear();
+            LoneAcesOrNines = 0;
+            FirstPartnerBid = null;
+            SecondPartnerBid = null;
+            SortedHand = SortHandIntoSuits(Trump.High);
+            Breakdowns.Clear();
         }
 
         private void EndRound()
@@ -213,43 +219,43 @@ namespace ShootTheMoon.Game
             {
                 case Notification.NotificationOneofCase.Hand:
                     List<Network.Proto.Card> protoHand;
-                    hand.Clear();
+                    Hand.Clear();
                     protoHand = notification.Hand.Hand_.ToList();
                     foreach (Network.Proto.Card protoCard in protoHand) {
-                        hand.Add(Card.FromProto(protoCard));
+                        Hand.Add(Card.FromProto(protoCard));
                     }
 
                     break;
                 case Notification.NotificationOneofCase.BidRequest:
-                    status = Status.CHOOSING_BID;
-                    Network.Proto.Bid myBid = DecideBid();
+                    CurrentStatus = Status.CHOOSING_BID;
+                    Network.Proto.Bid myBid = Bid.toProto(DecideBid());
                     _grpcClient.CreateBid(myBid);
                     break;
                 case Notification.NotificationOneofCase.BidList:
                     List<Network.Proto.Bid> protoBids;
                     protoBids = notification.BidList.Bids.ToList();
-                    bids = new Dictionary<uint, Bid>();
+                    Bids = new Dictionary<uint, Bid>();
                     Bid bid = null;
 
                     foreach (Network.Proto.Bid protoBid in protoBids)
                     {
                         bid = Bid.fromProto(protoBid);
-                        bids.Add(protoBid.Seat, bid);
-                        if (protoBid.Seat % 2 == Seat % 2 && protoBid.Seat != Seat)
+                        Bids.Add(protoBid.Seat, bid);
+                        if (SameTeam(protoBid.Seat, Seat) && protoBid.Seat != Seat)
                         {
-                            if (firstPartnerBid == null)
+                            if (FirstPartnerBid == null)
                             {
-                                firstPartnerBid = bid;
+                                FirstPartnerBid = bid;
                             }
                             else
                             {
-                                secondPartnerBid = bid;
+                                SecondPartnerBid = bid;
                             }
                         }
                     }
                     break;
                 case Notification.NotificationOneofCase.TrumpUpdate:
-                    sortedHand = SortHandIntoSuits(game.CurrentTrump);
+                    SortedHand = SortHandIntoSuits(Game.CurrentTrump);
 
                     // if (TRACK_BOT_STATS)
                     // {
@@ -263,17 +269,17 @@ namespace ShootTheMoon.Game
                     Card card = null;
                     if (seat == Seat)
                     {
-                        card = decideCard(Rules.getLegalCards(hand, game.leadCard, game.CurrentTrump));
-                        sendMessageToServer("<PLAYCARD>" + card.ToString());
+                        card = DecideCard(GetLegalCards(Hand, Game.LeadCard.Card, Game.CurrentTrump));
+                        _grpcClient.PlayCard(Card.ToProto(card));
                     }
                     break;
 
                 case Notification.NotificationOneofCase.TransferRequest:
-                    playerIndex = int.Parse(content.Substring(0, 1));
-                    if (playerIndex == position)
+                    uint transferToSeat = notification.TransferRequest.ToSeat;
+                    uint transferFromSeat = notification.TransferRequest.FromSeat;
+                    if (transferFromSeat == Seat)
                     {
-                        playerIndex = int.Parse(content.Substring(1, 1));
-                        card = decideTransferCard();
+                        card = DecideTransferCard();
                         if (card == null) card = PickLowestCard(); // TODO: This could be improved. Shouldn't happen often though.
                         sendMessageToServer("<TRANSFERCARD>" + playerIndex + card.ToString());
                     }
@@ -285,7 +291,7 @@ namespace ShootTheMoon.Game
                     {
                         card = Card.FromString(content.Substring(2, 2));
                         //hand.Remove(card); // already taken care of by server
-                        sortedHand[card.EffectiveSuit(game.CurrentTrump)].Remove(card);
+                        SortedHand[card.EffectiveSuit(Game.CurrentTrump)].Remove(card);
                     }
                     else
                     {
@@ -294,7 +300,7 @@ namespace ShootTheMoon.Game
                         {
                             card = Card.FromString(content.Substring(2, 2));
                             //hand.Add(card); // already taken care of by server
-                            sortedHand[card.EffectiveSuit(game.CurrentTrump)].Add(card);
+                            SortedHand[card.EffectiveSuit(Game.CurrentTrump)].Add(card);
                         }
                     }
                     break;
@@ -339,9 +345,9 @@ namespace ShootTheMoon.Game
         /// decide what to bid based on cards and previous bids, etc.  highest level - utilizes evaluateTrump and applyBidBonus.
         /// </summary>
         /// <returns>Bot's bid</returns>
-        private Network.Proto.Bid DecideBid()
+        private Bid DecideBid()
         {
-            Bid highBid = game.highBid;
+            Bid highBid = Game.CurrentBid;
             Trump bestTrump = null;
             double bestTrumpBid = 0;
             double score = 0;
@@ -353,13 +359,13 @@ namespace ShootTheMoon.Game
 
             foreach (Suit suit in Suit.Suits.Values)
             {
-                highCards.Add(new Card(suit, Rank.Ace));
-                highCards.Add(new Card(suit, Rank.Ace));
+                HighCards.Add(new Card(suit, Rank.Ace));
+                HighCards.Add(new Card(suit, Rank.Ace));
             }
             foreach (Suit suit in Suit.Suits.Values)
             {
-                lowCards.Add(new Card(suit, Rank.Nine));
-                lowCards.Add(new Card(suit, Rank.Nine));
+                LowCards.Add(new Card(suit, Rank.Nine));
+                LowCards.Add(new Card(suit, Rank.Nine));
             }
 
             foreach (Trump trump in Trump.Trumps.Values)
@@ -372,14 +378,14 @@ namespace ShootTheMoon.Game
 
                 score = this.EvaluateTrump(trump);
 
-                trumpScores.Add(trump, score);
+                TrumpScores.Add(trump, score);
             }
 
-            if (firstPartnerBid != null && !firstPartnerBid.isPass())
+            if (FirstPartnerBid != null && !FirstPartnerBid.isPass())
             {
                 foreach (Trump trump in Trump.Trumps.Values)
                 {
-                    applyBidBonus(firstPartnerBid, trump);
+                    ApplyBidBonus(FirstPartnerBid, trump);
 
                     // if (TRACK_BOT_STATS)
                     // {
@@ -389,15 +395,15 @@ namespace ShootTheMoon.Game
                     // }
                 }
             }
-            if (secondPartnerBid != null && !secondPartnerBid.isPass())
+            if (SecondPartnerBid != null && !SecondPartnerBid.isPass())
             {
-                if (!firstPartnerBid.isPass() && firstPartnerBid.Trump.Equals(secondPartnerBid.Trump))
+                if (!FirstPartnerBid.isPass() && FirstPartnerBid.Trump.Equals(SecondPartnerBid.Trump))
                 {
-                    trumpScores.Clear();
+                    TrumpScores.Clear();
                 }
                 foreach (Trump trump in Trump.Trumps.Values)
                 {
-                    applyBidBonus(secondPartnerBid, trump);
+                    ApplyBidBonus(SecondPartnerBid, trump);
 
                     // if (TRACK_BOT_STATS)
                     // {
@@ -411,27 +417,27 @@ namespace ShootTheMoon.Game
             foreach (Trump trump in Trump.Trumps.Values)
             {
                 // if last bidder and partner is winning the bid, no need to overbid.  this method is a little sloppy but it should work.
-                if (highBid != null && highBid.bidder.team == team && game.bids.Count == game.players.Length - 1)
+                if (highBid != null && SameTeam(highBid.Seat, Seat) && Game.Bids.Count == Game.Players.Length - 1)
                     score = 0;
                 else
-                    score = trumpScores[trump] * profile.getAggressionFactor();
+                    score = TrumpScores[trump] * Profile.getAggressionFactor();
 
-                if (score + loneAcesOrNines * profile.getOffsuitAceValue() >= profile.getBidThreshold())
+                if (score + LoneAcesOrNines * Profile.getOffsuitAceValue() >= Profile.getBidThreshold())
                 {
                     // if (DEBUG_MODE_BIDDING)
                     // {
                     //     System.Console.WriteLine("\tSCORE OF " + score + " GREATER THAN BID THRESHOLD: BID = " + profile.getBidThreshold());
                     // }
-                    score = profile.getBidThreshold();
+                    score = Profile.getBidThreshold();
                 }
-                else if (secondPartnerBid != null)
+                else if (SecondPartnerBid != null)
                 {
-                    score += loneAcesOrNines * profile.getOffsuitAceValue();
+                    score += LoneAcesOrNines * Profile.getOffsuitAceValue();
                 //     if (DEBUG_MODE_BIDDING)
                 //     {
                 //         System.Console.WriteLine("\tLAST BIDDER - LONE ACES/NINES BONUS: " + loneAcesOrNines);
                 //     }
-                // }
+                }
 
                 if (bestTrump == null || score > bestTrumpBid)
                 {
@@ -451,18 +457,18 @@ namespace ShootTheMoon.Game
 
             // Thread.Sleep(BID_DELAY);
 
-            if (bestTrumpBid >= profile.getShootThreshold())
+            if (bestTrumpBid >= Profile.getShootThreshold())
             {
-                return Bid.makeShootBid(game.NextShootNum, bestTrump);
+                return Bid.makeShootBid(Seat, (uint)Game.NextShootNum, bestTrump);
             }
 
-            if (highBid == null || highBid.isPass() || (int)bestTrumpBid > highBid.Number)
+            if (highBid == null || highBid.isPass() || (uint)bestTrumpBid > highBid.Number)
             {
                 // if (DEBUG_MODE_BIDDING)
                 // {
                 //     System.Console.WriteLine("Bid " + (int)bestTrumpBid + " " + bestTrump.ToString());
                 // }
-                return Bid.makeNormalBid((int)bestTrumpBid, bestTrump);
+                return Bid.makeNormalBid(Seat, (uint)bestTrumpBid, bestTrump);
             }
             else
             {
@@ -470,7 +476,7 @@ namespace ShootTheMoon.Game
                 // {
                 //     System.Console.WriteLine("Pass");
                 // }
-                return Bid.makePassBid();
+                return Bid.makePassBid(Seat);
             }
         }
 
@@ -486,17 +492,17 @@ namespace ShootTheMoon.Game
             double currentScore = 0;
             int scoreModifier = 0;
 
-            if (trumpScores.ContainsKey(contemplatedTrump))
+            if (TrumpScores.ContainsKey(contemplatedTrump))
             {
-                currentScore = trumpScores[contemplatedTrump];
+                currentScore = TrumpScores[contemplatedTrump];
             }
 
             if (partnerBid.isShoot()) partnerQty = 1;
 
-            scoreModifier += (int)(partnerQty * profile.getPartnerBidMultiplier(partnerTrump, contemplatedTrump));
+            scoreModifier += (int)(partnerQty * Profile.getPartnerBidMultiplier(partnerTrump, contemplatedTrump));
 
             currentScore += scoreModifier;
-            trumpScores[contemplatedTrump] = currentScore;
+            TrumpScores[contemplatedTrump] = currentScore;
             //trumpScores.Add(contemplatedTrump, currentScore);
         }
 
@@ -509,7 +515,7 @@ namespace ShootTheMoon.Game
         {
             double score = 0;
             //int trumpCount = 0;
-            sortedHand = SortHandIntoSuits(trump);
+            SortedHand = SortHandIntoSuits(trump);
 
             int voidSuits = CountVoidSuits(trump);
             // if (TRACK_BOT_STATS) breakdowns[trump].voidSuits = voidSuits;
@@ -519,9 +525,9 @@ namespace ShootTheMoon.Game
             //     System.Console.WriteLine("\nEvaluate " + trump.ToString() + ":");
             // }
 
-            if (trumpScores.ContainsKey(trump))
+            if (TrumpScores.ContainsKey(trump))
             {
-                score = trumpScores[trump];
+                score = TrumpScores[trump];
             }
             // if (DEBUG_MODE_BIDDING)
             // {
@@ -530,8 +536,8 @@ namespace ShootTheMoon.Game
 
             foreach (Suit suit in Suit.Suits.Values)
             {
-                loneAcesOrNines = 0;
-                foreach (Card card in sortedHand[suit])
+                LoneAcesOrNines = 0;
+                foreach (Card card in SortedHand[suit])
                 {
                     score += ScoreCard(trump, card);
                     //				if(trump.isSuit() && card.EffectiveSuit(trump).Equals(trump.Suit)){
@@ -545,7 +551,7 @@ namespace ShootTheMoon.Game
             //			System.Console.WriteLine("\tTRUMP QUANTITY BONUS: +" + trumpCount * TRUMP_COUNT_MULTIPLIER);
             //		}
 
-            score += profile.getVoidBonus(voidSuits);
+            score += Profile.getVoidBonus(voidSuits);
             // if (DEBUG_MODE_BIDDING)
             // {
             //     System.Console.WriteLine("\tVOID SUIT BONUS: +" + profile.getVoidBonus(voidSuits));
@@ -583,7 +589,7 @@ namespace ShootTheMoon.Game
             {
                 if (trump.Suit.Equals(cSuit))
                 {
-                    score = profile.getTrumpCardValue(cRank);
+                    score = Profile.getTrumpCardValue(cRank);
 
                     // if (TRACK_BOT_STATS)
                     // {
@@ -597,9 +603,9 @@ namespace ShootTheMoon.Game
                 {
                     if (cRank.Equals(ContextualRank.ACE))
                     {
-                        if (sortedHand[card.Suit].Count > 1) //make sure isn't lone Ace
+                        if (SortedHand[card.Suit].Count > 1) //make sure isn't lone Ace
                         {
-                            score = profile.getBestCardValue(trump, card.Suit);
+                            score = Profile.getBestCardValue(trump, card.Suit);
 
                             // if (TRACK_BOT_STATS)
                             // {
@@ -610,7 +616,7 @@ namespace ShootTheMoon.Game
                         }
                         else
                         {
-                            loneAcesOrNines++;
+                            LoneAcesOrNines++;
 
                             // if (TRACK_BOT_STATS) breakdowns[trump].loneAces++;
                         }
@@ -624,26 +630,26 @@ namespace ShootTheMoon.Game
                     /**
                      * This section is used to track how many high cards in a row the player has. (AAK, etc)
                      */
-                    if (highCards.Contains(card))
+                    if (HighCards.Contains(card))
                     {
-                        highCards.Remove(card);
-                        if (cRank.Equals(ContextualRank.ACE) && !(sortedHand[card.Suit].Count > 1)) // lone ace
+                        HighCards.Remove(card);
+                        if (cRank.Equals(ContextualRank.ACE) && !(SortedHand[card.Suit].Count > 1)) // lone ace
                         {
-                            loneAcesOrNines += 1;
+                            LoneAcesOrNines += 1;
 
                             // if (TRACK_BOT_STATS) breakdowns[trump].loneAces++;
                         }
                         else
                         {
-                            score = profile.getBestCardValue(trump, card.Suit);
+                            score = Profile.getBestCardValue(trump, card.Suit);
 
                             // if (TRACK_BOT_STATS) breakdowns[trump].runLength++;
                         }
-                        if (!highCards.Contains(card) && !card.Rank.Equals(Rank.Nine)) // refill high cards list
+                        if (!HighCards.Contains(card) && !card.Rank.Equals(Rank.Nine)) // refill high cards list
                         {
                             Card newCard = new Card(card.Suit, Rank.Ranks[card.Rank.Value - 1 - 9]);
-                            highCards.Add(newCard);
-                            highCards.Add(newCard);
+                            HighCards.Add(newCard);
+                            HighCards.Add(newCard);
                         }
                     }
                 }
@@ -652,26 +658,26 @@ namespace ShootTheMoon.Game
                     /**
                      * This section is used to track how many high cards in a row the player has. (AAK, etc)
                      */
-                    if (lowCards.Contains(card))
+                    if (LowCards.Contains(card))
                     {
-                        lowCards.Remove(card);
-                        if (cRank.Equals(ContextualRank.NINE) && !(sortedHand[card.Suit].Count > 1))
+                        LowCards.Remove(card);
+                        if (cRank.Equals(ContextualRank.NINE) && !(SortedHand[card.Suit].Count > 1))
                         {
-                            loneAcesOrNines += 1;
+                            LoneAcesOrNines += 1;
 
                             // if (TRACK_BOT_STATS) breakdowns[trump].loneAces++;
                         }
                         else
                         {
-                            score = profile.getBestCardValue(trump, card.Suit);
+                            score = Profile.getBestCardValue(trump, card.Suit);
 
                             // if (TRACK_BOT_STATS) breakdowns[trump].runLength++;
                         }
-                        if (!lowCards.Contains(card) && !card.Rank.Equals(Rank.ACE))
+                        if (!LowCards.Contains(card) && !card.Rank.Equals(Rank.Ace))
                         {
                             Card newCard = new Card(card.Suit, Rank.Ranks[card.Rank.Value + 1 - 9]);
-                            lowCards.Add(newCard);
-                            lowCards.Add(newCard);
+                            LowCards.Add(newCard);
+                            LowCards.Add(newCard);
                         }
                     }
                 }
@@ -694,9 +700,9 @@ namespace ShootTheMoon.Game
         {
             int voidCount = 0;
 
-            foreach (Suit suit in sortedHand.Keys)
+            foreach (Suit suit in SortedHand.Keys)
             {
-                if (sortedHand[suit].Count == 0 && contemplatedTrump.isSuit()
+                if (SortedHand[suit].Count == 0 && contemplatedTrump.isSuit()
                         && !suit.Equals(contemplatedTrump.Suit))
                 {
                     voidCount += 1;
@@ -713,9 +719,9 @@ namespace ShootTheMoon.Game
         /// <returns>highest card in hand</returns>
         private Card PickHighestCard()
         {
-            Trump trump = game.CurrentTrump; // get what trump is
-            Suit suit = game.leadCard.EffectiveSuit(trump); // start with the suit that was lead
-            List<Card> cardsInSuit = sortedHand[suit]; // get cards that follow suit
+            Trump trump = Game.CurrentTrump; // get what trump is
+            Suit suit = Game.LeadCard.Card.EffectiveSuit(trump); // start with the suit that was lead
+            List<Card> cardsInSuit = SortedHand[suit]; // get cards that follow suit
 
             // must follow suit if able, so return the highest card
             if (cardsInSuit.Count > 0)
@@ -724,10 +730,10 @@ namespace ShootTheMoon.Game
             }
 
             // doesn't need to follow suit, so return lowest trump if available
-            if (trump.isSuit() && !trump.Suit.Equals(suit) && sortedHand[trump.Suit].Count > 0)
+            if (trump.isSuit() && !trump.Suit.Equals(suit) && SortedHand[trump.Suit].Count > 0)
             {
                 suit = trump.Suit;
-                cardsInSuit = sortedHand[suit];
+                cardsInSuit = SortedHand[suit];
                 return cardsInSuit[cardsInSuit.Count - 1];
             }
 
@@ -750,9 +756,9 @@ namespace ShootTheMoon.Game
             Random random = new Random();
             int suitChooser;
 
-            if (game.leadCard != null)
+            if (Game.LeadCard != null)
             {
-                cardsInSuit = sortedHand[game.leadCard.EffectiveSuit(game.CurrentTrump)]; // get cards that follow suit
+                cardsInSuit = SortedHand[Game.LeadCard.Card.EffectiveSuit(Game.CurrentTrump)]; // get cards that follow suit
 
                 // must follow suit if able, so return the lowest card
                 if (cardsInSuit.Count > 0)
@@ -780,12 +786,12 @@ namespace ShootTheMoon.Game
 
             if (candidateSuits.Count == 1)
             { // there is a clear winner, so take from that suit
-                candidateCards = sortedHand[candidateSuits[0]];
+                candidateCards = SortedHand[candidateSuits[0]];
             }
             else
             {
                 suitChooser = Math.Abs(random.Next()) % candidateSuits.Count;
-                candidateCards = sortedHand[candidateSuits[suitChooser]];
+                candidateCards = SortedHand[candidateSuits[suitChooser]];
             }
 
             return candidateCards[candidateCards.Count - 1]; // return lowest card
@@ -804,7 +810,7 @@ namespace ShootTheMoon.Game
         /// <returns>Dictionary containing scores for each suit</returns>
         private Dictionary<Suit, int> ScoreSuitsForThrowaway()
         {
-            Trump trump = game.CurrentTrump;
+            Trump trump = Game.CurrentTrump;
             List<Card> candidateSuit;
             Card highestCard;
             Dictionary<Suit, int> suitScores = new Dictionary<Suit, int>();
@@ -812,7 +818,7 @@ namespace ShootTheMoon.Game
 
             foreach (Suit suit in Suit.Suits.Values)
             {
-                candidateSuit = sortedHand[suit];
+                candidateSuit = SortedHand[suit];
 
                 if (candidateSuit.Count == 0)
                 {
@@ -826,7 +832,7 @@ namespace ShootTheMoon.Game
                 {
                     highestCard = candidateSuit[0];
 
-                    if (cardCounter.IsHighest(highestCard))
+                    if (Tracker.IsHighest(highestCard))
                     {
                         if (candidateSuit.Count == 1) score = 3;
                         if (candidateSuit.Count == 2) score = 2;
@@ -862,7 +868,7 @@ namespace ShootTheMoon.Game
         /// <returns>Dictionary containing score for each suit</returns>
         private Dictionary<Suit, int> ScoreSuitsForLead()
         {
-            Trump trump = game.CurrentTrump;
+            Trump trump = Game.CurrentTrump;
             List<Card> candidateSuit;
             Card candidate;
             Dictionary<Suit, int> suitScores = new Dictionary<Suit, int>();
@@ -870,7 +876,7 @@ namespace ShootTheMoon.Game
 
             foreach (Suit suit in Suit.Suits.Values)
             {
-                candidateSuit = sortedHand[suit];
+                candidateSuit = SortedHand[suit];
 
                 if (candidateSuit.Count == 0)
                 {
@@ -882,7 +888,7 @@ namespace ShootTheMoon.Game
 
                     if (trump.isSuit() && suit.Equals(trump.Suit))
                     { // candidate suit is trump
-                        if (cardCounter.IsHighest(candidate))
+                        if (Tracker.IsHighest(candidate))
                         { // highest trump
                             score = 10;
                         }
@@ -893,11 +899,11 @@ namespace ShootTheMoon.Game
                     }
                     else
                     {
-                        if (cardCounter.IsHighest(candidate))
+                        if (Tracker.IsHighest(candidate))
                         { // is highest
                             if (trump.isSuit() && candidateSuit.Count == 1)
                             { // is lone
-                                if (!cardCounter.IsLone(candidate))
+                                if (!Tracker.IsLone(candidate))
                                 { // is unique
                                     if (trump.isSuit() && trump.SameColour.Equals(suit))
                                     { // is same colour
@@ -922,7 +928,7 @@ namespace ShootTheMoon.Game
                             }
                             else
                             { // is not lone
-                                if (!cardCounter.IsLone(candidate))
+                                if (!Tracker.IsLone(candidate))
                                 { // is unique
                                     if (trump.isSuit() && trump.SameColour.Equals(suit))
                                     { // is same colour
@@ -1000,12 +1006,12 @@ namespace ShootTheMoon.Game
 
             if (candidateSuits.Count == 1)
             { // there is a clear winner, so return the highest card in that suit
-                candidateCards = sortedHand[candidateSuits[0]];
+                candidateCards = SortedHand[candidateSuits[0]];
             }
             else
             {
                 suitChooser = Math.Abs(random.Next()) % candidateSuits.Count;
-                candidateCards = sortedHand[candidateSuits[suitChooser]];
+                candidateCards = SortedHand[candidateSuits[suitChooser]];
             }
 
             // if (DEBUG_MODE_PLAYING)
@@ -1021,7 +1027,7 @@ namespace ShootTheMoon.Game
         private void PrintSortedHand()
         {
             System.Console.WriteLine("Current Hand:");
-            foreach (List<Card> cards in sortedHand.Values)
+            foreach (List<Card> cards in SortedHand.Values)
             {
                 if (cards.Count > 0)
                 {
@@ -1042,8 +1048,8 @@ namespace ShootTheMoon.Game
         /// <returns>a card that can minimally beat the currently winning card</returns>
         private Card FindLowestWinningCard(List<Card> legalCards, Card cardToBeat)
         {
-            Trump trump = game.CurrentTrump;
-            Suit suitLead = game.leadCard.EffectiveSuit(trump);
+            Trump trump = Game.CurrentTrump;
+            Suit suitLead = Game.LeadCard.Card.EffectiveSuit(trump);
             Card chosenCard = null;
 
             foreach (Card card in legalCards)
@@ -1064,9 +1070,9 @@ namespace ShootTheMoon.Game
         /// <returns>the card chosen</returns>
         private Card DecideCard(List<Card> legalCards)
         {
-            bool isLeader = game.leadCard == null;
+            bool isLeader = Game.LeadCard == null;
             Card cardToPlay = null;
-            Trump trump = game.CurrentTrump;
+            Trump trump = Game.CurrentTrump;
 
             // if (DEBUG_MODE_PLAYING)
             // {
@@ -1084,27 +1090,26 @@ namespace ShootTheMoon.Game
             }
             else
             {
-                Suit leadSuit = game.leadCard.EffectiveSuit(trump);
-                Card winningCard = cardCounter.BestInCurrentTrick;
-                bool teamIsWinning = team == game.players[cardCounter.WinnerOfCurrentTrick.position].team;
-                bool winningCardIsHighestInSuit = cardCounter.isHighestExcluding(winningCard, sortedHand);
+                Card winningCard = Tracker.BestInCurrentTrick;
+                bool teamIsWinning = SameTeam(Seat, (uint)Tracker.WinnerOfCurrentTrick);
+                bool winningCardIsHighestInSuit = Tracker.IsHighestExcluding(winningCard, SortedHand);
                 if (teamIsWinning && (winningCardIsHighestInSuit || (trump.isSuit() && winningCard.EffectiveSuit(trump).Equals(trump.Suit))))
                 {
                     cardToPlay = PickLowestCard();
-                    if (DEBUG_MODE_PLAYING)
-                    {
-                        System.Console.WriteLine("throwing off - team is winning.");
-                    }
+                    // if (DEBUG_MODE_PLAYING)
+                    // {
+                    //     System.Console.WriteLine("throwing off - team is winning.");
+                    // }
                 }
                 else
                 {
-                    if (cardCounter.PlaysLast(this))
+                    if (Tracker.PlaysLast(Seat, Game.NumPlayers))
                     { // beat with lowest winning card
                         cardToPlay = FindLowestWinningCard(legalCards, winningCard);
-                        if (DEBUG_MODE_PLAYING)
-                        {
-                            System.Console.WriteLine("last player - using lowest winning card if possible...");
-                        }
+                        // if (DEBUG_MODE_PLAYING)
+                        // {
+                        //     System.Console.WriteLine("last player - using lowest winning card if possible...");
+                        // }
                     }
                     else
                     {
@@ -1114,7 +1119,7 @@ namespace ShootTheMoon.Game
                     {
                         cardToPlay = PickLowestCard();
                     }
-                    if (!IsCardBetter(winningCard, cardToPlay, trump, game.leadCard.EffectiveSuit(trump)))
+                    if (!IsCardBetter(winningCard, cardToPlay, trump, Game.LeadCard.Card.EffectiveSuit(trump)))
                     {
                         cardToPlay = PickLowestCard();
                         // if (DEBUG_MODE_PLAYING)
@@ -1134,7 +1139,7 @@ namespace ShootTheMoon.Game
 
             // Thread.Sleep(CARD_DELAY);
 
-            sortedHand[cardToPlay.EffectiveSuit(trump)].Remove(cardToPlay);
+            SortedHand[cardToPlay.EffectiveSuit(trump)].Remove(cardToPlay);
             return cardToPlay;
         }
 
@@ -1149,7 +1154,7 @@ namespace ShootTheMoon.Game
 
             foreach (Suit suit in Suit.Suits.Values)
             {
-                oneSuitsWorth = GetCardsOfContextualSuit(hand, suit, trump);
+                oneSuitsWorth = GetCardsOfContextualSuit(Hand, suit, trump);
                 oneSuitsWorth = SortSuit(oneSuitsWorth, trump);
                 result.Add(suit, oneSuitsWorth);
             }
@@ -1194,7 +1199,7 @@ namespace ShootTheMoon.Game
         /// <returns>best card in hand</returns>
         private Card DecideTransferCard()
         {
-            Trump trump = game.CurrentTrump;
+            Trump trump = Game.CurrentTrump;
 
             Card transferCard = null;
             int candidateRank;
@@ -1204,26 +1209,26 @@ namespace ShootTheMoon.Game
             {
                 Suit trumpSuit = trump.Suit;
 
-                if (sortedHand[trumpSuit].Count > 0) return sortedHand[trumpSuit][0]; // Bot has trump, so return highest
+                if (SortedHand[trumpSuit].Count > 0) return SortedHand[trumpSuit][0]; // Bot has trump, so return highest
             }
 
-            foreach (Suit suit in sortedHand.Keys)
+            foreach (Suit suit in SortedHand.Keys)
             {
-                cardsInSuit = sortedHand[suit].Count;
+                cardsInSuit = SortedHand[suit].Count;
 
                 if (cardsInSuit > 0)
                 {
-                    candidateRank = sortedHand[suit][0].Rank.Value;
+                    candidateRank = SortedHand[suit][0].Rank.Value;
 
                     if (trump.Equals(Trump.Low))
                     {
                         if (transferCard == null || candidateRank < transferCard.Rank.Value)
-                            transferCard = sortedHand[suit][0];
+                            transferCard = SortedHand[suit][0];
                     }
                     else
                     {
                         if (transferCard == null || candidateRank > transferCard.Rank.Value)
-                            transferCard = sortedHand[suit][0];
+                            transferCard = SortedHand[suit][0];
                     }
                 }
             }
@@ -1238,8 +1243,8 @@ namespace ShootTheMoon.Game
         /// </summary>
         protected void PrintHand()
         {
-            System.Console.WriteLine(name + "'s Hand:");
-            foreach (Card card in hand)
+            System.Console.WriteLine(Name + "'s Hand:");
+            foreach (Card card in Hand)
             {
                 System.Console.WriteLine(card.Rank.LongName + " of " + card.Suit);
             }
@@ -1533,7 +1538,7 @@ namespace ShootTheMoon.Game
             public string partner2Trump = string.Empty;
         }
 
-        private class CardCounter
+        private class CardTracker
         {
             public List<Card> CardsLeft = new List<Card>();
             public List<Card> CardsPlayed = new List<Card>();
@@ -1575,7 +1580,7 @@ namespace ShootTheMoon.Game
                 WinnerOfCurrentTrick = -1;
             }
 
-            public bool PlaysLast(int seat, int players)
+            public bool PlaysLast(uint seat, int players)
             {
                 return (seat + 1) % (players) == LeadPositionInCurrentTrick;
             }
