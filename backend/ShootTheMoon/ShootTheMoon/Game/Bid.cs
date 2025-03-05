@@ -36,6 +36,11 @@ namespace ShootTheMoon.Game
             return new Bid { Seat = bid.Seat, Number = bid.Tricks, ShootNumber = bid.ShootNum, Trump = Trump.fromProto(bid.Trump)};
         }
 
+        public static Network.Proto.Bid toProto(Bid bid)
+        {
+            return new Network.Proto.Bid { Seat = bid.Seat, Tricks = bid.Number, ShootNum = bid.ShootNumber, Trump = Trump.toProto(bid.Trump) };
+        }
+
         public bool isPass()
         {
             return Number == PASS_NUM;
