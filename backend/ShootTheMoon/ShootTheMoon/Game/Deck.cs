@@ -20,9 +20,9 @@ namespace ShootTheMoon.Game
 
                 for (int i = 0; i < numDuplicateCards; i++)
                 {
-                    foreach (var suit in Suit.Suits)
+                    foreach (var suit in Suit.Suits.Values)
                     {
-                        foreach (var rank in Rank.Ranks)
+                        foreach (var rank in Rank.Ranks.Values)
                         {
                             Cards.Add(new Card(suit, rank));
                         }
