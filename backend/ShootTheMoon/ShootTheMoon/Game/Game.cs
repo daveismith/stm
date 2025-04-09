@@ -393,6 +393,7 @@ namespace ShootTheMoon.Game
 
             AsyncServerStreamingCall<Notification> response = await Task.Run(() => grpcClient.JoinGame(joinGameRequest));
             client.NotificationStream = response;
+            await Task.Run(() => client.GetNotifications());
 
             for (uint i = 0; i < NumPlayers; i++) {
                 if (Players[i] == null) {
