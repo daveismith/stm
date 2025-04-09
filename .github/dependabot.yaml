@@ -16,6 +16,7 @@ updates:
       mui-dependencies:
         patterns:
           - "@mui/*"
+          - "tss-react"
       react-dependencies:
         patterns:
           - "react*"
