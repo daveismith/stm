@@ -42,10 +42,10 @@ namespace ShootTheMoon.Game
 
         protected BotProfile()
         {
-            foreach (Trump t1 in Trump.Trumps)
+            foreach (Trump t1 in Trump.Trumps.Values)
             {
                 Dictionary<Trump, double> temp = new Dictionary<Trump, double>();
-                foreach (Trump t2 in Trump.Trumps)
+                foreach (Trump t2 in Trump.Trumps.Values)
                 {
                     if (t1.isSuit() && t2.isSuit())
                     { // partner bid is a suit and I'm considering a suit
@@ -96,10 +96,10 @@ namespace ShootTheMoon.Game
             trumpCardValues.Add(ContextualRank.TEN, TRUMP_TEN_VALUE);
             trumpCardValues.Add(ContextualRank.NINE, TRUMP_NINE_VALUE);
 
-            foreach (Trump trump in Trump.Trumps)
+            foreach (Trump trump in Trump.Trumps.Values)
             {
                 Dictionary<Suit, double> temp = new Dictionary<Suit, double>();
-                foreach (Suit suit in Suit.Suits)
+                foreach (Suit suit in Suit.Suits.Values)
                 {
                     if (trump.isSuit())
                     {

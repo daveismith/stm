@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Google.Protobuf.Collections;
 using Grpc.Core;
 using ShootTheMoon.Network.Proto;
+using System.Threading.Tasks;
 
 namespace ShootTheMoon.Game
 {
@@ -90,6 +90,17 @@ namespace ShootTheMoon.Game
         {
             InitializeRound();
             Hand = newHand;
+        }
+
+        public async Task GetNotifications()
+        {        
+                AsyncServerStreamingCall<Notification> stream = NotificationStream;
+                while (await stream.ResponseStream.MoveNext())
+                {
+                    Console.WriteLine("BOT: Processing notification");
+                    Notification notification = stream.ResponseStream.Current;
+                    ProcessMessage(notification);
+                }
         }
 
         private static bool SameTeam(uint seatA, uint seatB)
@@ -215,9 +226,15 @@ namespace ShootTheMoon.Game
 
         private void ProcessMessage(Notification notification)
         {
+            uint seat;
+            uint fromSeat;
+            uint toSeat;
+            Card card;
+
             switch (notification.NotificationCase)
             {
                 case Notification.NotificationOneofCase.Hand:
+                    System.Console.WriteLine("BOT: RECEIVED HAND");
                     List<Network.Proto.Card> protoHand;
                     Hand.Clear();
                     protoHand = notification.Hand.Hand_.ToList();
@@ -227,11 +244,13 @@ namespace ShootTheMoon.Game
 
                     break;
                 case Notification.NotificationOneofCase.BidRequest:
+                    System.Console.WriteLine("BOT: RECEIVED BID REQUEST");
                     CurrentStatus = Status.CHOOSING_BID;
                     Network.Proto.Bid myBid = Bid.toProto(DecideBid());
                     _grpcClient.CreateBid(myBid);
                     break;
                 case Notification.NotificationOneofCase.BidList:
+                    System.Console.WriteLine("BOT: RECEIVED BID LIST");
                     List<Network.Proto.Bid> protoBids;
                     protoBids = notification.BidList.Bids.ToList();
                     Bids = new Dictionary<uint, Bid>();
@@ -265,8 +284,8 @@ namespace ShootTheMoon.Game
                     // }
                     break;
                 case Notification.NotificationOneofCase.PlayCardRequest:
-                    uint seat = notification.PlayCardRequest.Seat;
-                    Card card = null;
+                    seat = notification.PlayCardRequest.Seat;
+                    card = null;
                     if (seat == Seat)
                     {
                         card = DecideCard(GetLegalCards(Hand, Game.LeadCard.Card, Game.CurrentTrump));
@@ -275,44 +294,40 @@ namespace ShootTheMoon.Game
                     break;
 
                 case Notification.NotificationOneofCase.TransferRequest:
-                    uint transferToSeat = notification.TransferRequest.ToSeat;
-                    uint transferFromSeat = notification.TransferRequest.FromSeat;
-                    if (transferFromSeat == Seat)
+                    toSeat = notification.TransferRequest.ToSeat;
+                    fromSeat = notification.TransferRequest.FromSeat;
+                    if (fromSeat == Seat)
                     {
                         card = DecideTransferCard();
                         if (card == null) card = PickLowestCard(); // TODO: This could be improved. Shouldn't happen often though.
-                        sendMessageToServer("<TRANSFERCARD>" + playerIndex + card.ToString());
+                        Transfer transfer = new Transfer();
+                        transfer.FromSeat = fromSeat;
+                        transfer.ToSeat = toSeat;
+                        transfer.Card = Card.ToProto(card);
+                        _grpcClient.TransferCard(transfer);
                     }
                     break;
 
                 case Notification.NotificationOneofCase.TransferComplete:
-                    playerIndex = int.Parse(content.Substring(0, 1));
-                    if (playerIndex == position) // check if giving away a card
-                    {
-                        card = Card.FromString(content.Substring(2, 2));
-                        //hand.Remove(card); // already taken care of by server
-                        SortedHand[card.EffectiveSuit(Game.CurrentTrump)].Remove(card);
-                    }
-                    else
-                    {
-                        playerIndex = int.Parse(content.Substring(1, 1));
-                        if (playerIndex == position) // check if receiving a card
-                        {
-                            card = Card.FromString(content.Substring(2, 2));
-                            //hand.Add(card); // already taken care of by server
-                            SortedHand[card.EffectiveSuit(Game.CurrentTrump)].Add(card);
-                        }
-                    }
+                    fromSeat = notification.TransferComplete.FromSeat;
+                    toSeat = notification.TransferComplete.ToSeat;
+                    // if (fromSeat == Seat) // check if giving away a card
+                    // {
+                    //     SortedHand[card.EffectiveSuit(Game.CurrentTrump)].Remove(card);
+                    // }
+                    // else
+                    // {
+                    //     if (toSeat == Seat) // check if receiving a card
+                    //     {
+                    //         SortedHand[card.EffectiveSuit(Game.CurrentTrump)].Add(card);
+                    //     }
+                    // }
                     break;
 
                 case Notification.NotificationOneofCase.ThrowawayRequest:
-                    playerIndex = int.Parse(content.Substring(0, 1));
-                    if (playerIndex == position) // throw away a card
-                    {
                         card = PickLowestCard();
-                        System.Threading.Thread.Sleep(THROWAWAY_DELAY);
-                        sendMessageToServer("<THROWAWAYCARD>" + card.ToString());
-                    }
+                        // System.Threading.Thread.Sleep(THROWAWAY_DELAY);
+                        _grpcClient.ThrowawayCard(Card.ToProto(card));
                     break;
 
                 // case "CONFIRMTHROWAWAY":
