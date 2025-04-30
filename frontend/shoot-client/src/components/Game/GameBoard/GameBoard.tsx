@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Grid } from "@mui/material";
+import Grid from "@mui/material/GridLegacy";
 import { ClearingItem, useGame } from "../../Game/Game.context";
 import PlayingCard from "../../Common/PlayingCard";
 import TextBubble from "../../Common/TextBubble"
