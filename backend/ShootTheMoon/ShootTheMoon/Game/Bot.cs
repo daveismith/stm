@@ -94,13 +94,21 @@ namespace ShootTheMoon.Game
 
         public async Task GetNotifications()
         {        
-                AsyncServerStreamingCall<Notification> stream = NotificationStream;
-                while (await stream.ResponseStream.MoveNext())
-                {
-                    Console.WriteLine("BOT: Processing notification");
-                    Notification notification = stream.ResponseStream.Current;
-                    ProcessMessage(notification);
-                }
+            Console.WriteLine("BOT: Processing notifications");
+            // AsyncServerStreamingCall<Notification> stream = NotificationStream;
+            // while (await stream.ResponseStream.MoveNext())
+            // {
+                // Console.WriteLine("BOT: Processing notification");
+                // Notification notification = stream.ResponseStream.Current;
+                // ProcessMessage(notification);
+            // }
+            await foreach (var notification in NotificationStream.ResponseStream.ReadAllAsync())
+            {
+                Console.WriteLine("BOT: Processing notification");
+                ProcessMessage(notification);
+            }
+
+            Console.WriteLine("BOT: Done processing notifications");
         }
 
         private static bool SameTeam(uint seatA, uint seatB)
