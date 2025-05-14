@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import Grid from "@mui/material/GridLegacy";
+import Grid from "@mui/material/Grid";
 import { ClearingItem, useGame } from "../../Game/Game.context";
 import PlayingCard from "../../Common/PlayingCard";
 import TextBubble from "../../Common/TextBubble"
@@ -103,7 +103,6 @@ const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
             >
                 {orderedSeats.map((seat, index) => (
                 <Grid
-                    item
                     justifyContent="center"
                     alignItems="flex-start"
                     key={index}
