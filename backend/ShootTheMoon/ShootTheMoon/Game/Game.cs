@@ -54,6 +54,7 @@ namespace ShootTheMoon.Game
         //public int InProgress { get; set; }
         public ImmutableList<Client> Clients { get; private set; }
         public Client[] Players { get; private set; }
+        public List<Bot> Bots { get; private set; }
 
         public bool AllPlayersReady { get { return (NumPlayersPresent > 0) && Array.TrueForAll(Players, value => { return value == null || value.Ready; }); } }
 
@@ -96,6 +97,7 @@ namespace ShootTheMoon.Game
             PlayedCards = new List<PlayedCard>();
             SkipSeats = new List<uint>();
             NumPlayersPresent = 0;
+            Bots = new List<Bot>();
 
             if (aDealer < 0 || aDealer >= Players.Length)
             {
@@ -147,6 +149,14 @@ namespace ShootTheMoon.Game
         }
 
         private async Task Tick() {
+            List<Task> tasks = new List<Task>();
+            Console.WriteLine("Tick");
+
+            foreach (Bot bot in Bots) {
+                tasks.Add(Task.Run(() => bot.GetNotifications()));
+            }
+
+            await Task.WhenAll(tasks);
 
             // Implements The Game State Machine
             switch (State) {
@@ -386,14 +396,15 @@ namespace ShootTheMoon.Game
             GrpcChannel channel = GrpcChannel.ForAddress("https://localhost:8001");
             ShootServer.ShootServerClient grpcClient = new ShootServer.ShootServerClient(channel);
             Bot client = new Bot(grpcClient);
+            Bots.Add(client);
 
             JoinGameRequest joinGameRequest = new JoinGameRequest();
             joinGameRequest.Uuid = this.Uuid;
             joinGameRequest.Name = "Bot";
 
-            AsyncServerStreamingCall<Notification> response = await Task.Run(() => grpcClient.JoinGame(joinGameRequest));
+            AsyncServerStreamingCall<Notification> response = grpcClient.JoinGame(joinGameRequest);
             client.NotificationStream = response;
-            await Task.Run(() => client.GetNotifications());
+            // await Task.Run(() => client.GetNotifications());
 
             for (uint i = 0; i < NumPlayers; i++) {
                 if (Players[i] == null) {
