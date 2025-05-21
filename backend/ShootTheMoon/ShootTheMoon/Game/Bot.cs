@@ -4,6 +4,7 @@ using System.Linq;
 using Grpc.Core;
 using ShootTheMoon.Network.Proto;
 using System.Threading.Tasks;
+using Microsoft.Extensions.ObjectPool;
 
 namespace ShootTheMoon.Game
 {
@@ -102,12 +103,17 @@ namespace ShootTheMoon.Game
                 // Notification notification = stream.ResponseStream.Current;
                 // ProcessMessage(notification);
             // }
-            await foreach (var notification in NotificationStream.ResponseStream.ReadAllAsync())
-            {
-                Console.WriteLine("BOT: Processing notification");
-                ProcessMessage(notification);
+            //await foreach (var notification in NotificationStream.ResponseStream.ReadAllAsync())
+            try {
+                while (await NotificationStream.ResponseStream.MoveNext())
+                {
+                    Console.WriteLine("BOT: Processing notification");
+                    var notification = NotificationStream.ResponseStream.Current;
+                    ProcessMessage(notification);
+                }
+            } catch (RpcException ex) {
+                Console.WriteLine($"Error: {{Code: {ex.StatusCode}, Status: {ex.Status.Detail}}}");
             }
-
             Console.WriteLine("BOT: Done processing notifications");
         }
 
@@ -238,6 +244,8 @@ namespace ShootTheMoon.Game
             uint fromSeat;
             uint toSeat;
             Card card;
+
+            Console.WriteLine($"ProcessMessage: {notification}");
 
             switch (notification.NotificationCase)
             {
