@@ -1,0 +1,32 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace Bot
+{
+    public class Rank
+    {
+        public static Rank Nine = new Rank { Index = 2, Value = 9, ShortName = "9", LongName = "Nine" };
+        public static Rank Ten = new Rank { Index = 3, Value = 10, ShortName = "10", LongName = "Ten" };
+        public static Rank Jack = new Rank { Index = 4, Value = 11, ShortName = "J", LongName = "Jack" };
+        public static Rank Queen = new Rank { Index = 5, Value = 12, ShortName = "Q", LongName = "Queen" };
+        public static Rank King = new Rank { Index = 6, Value = 13, ShortName = "K", LongName = "King" };
+        public static Rank Ace = new Rank { Index = 7, Value = 14, ShortName = "A", LongName = "Ace" };
+
+        public static readonly Dictionary<int, Rank> Ranks = new Dictionary<int, Rank>
+        {
+            {2, Nine},
+            {3, Ten},
+            {4, Jack},
+            {5, Queen},
+            {6, King},
+            {7, Ace}
+        };
+
+        public int Index { get; set; }
+        public int Value { get; set; }
+        public string ShortName { get; set; }
+        public string LongName { get; set; }
+    }
+}
