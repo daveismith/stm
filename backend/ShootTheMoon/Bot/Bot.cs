@@ -6,6 +6,7 @@ using ShootTheMoon.Network.Proto;
 using System.Threading.Tasks;
 using Microsoft.Extensions.ObjectPool;
 using ShootTheMoon.Game;
+using Grpc.Net.Client;
 
 namespace Bot
 {
@@ -110,25 +111,43 @@ namespace Bot
             Hand = newHand;
         }
 
+        public void JoinGame(string uuid)
+        {
+            GrpcChannel channel = GrpcChannel.ForAddress("http://localhost:8080");
+            ShootServer.ShootServerClient grpcClient = new ShootServer.ShootServerClient(channel);
+
+            JoinGameRequest joinGameRequest = new JoinGameRequest();
+            joinGameRequest.Uuid = uuid;
+            joinGameRequest.Name = "Bot";
+
+            Console.WriteLine($"JoinGameRequest: {joinGameRequest}");
+
+            AsyncServerStreamingCall<Notification> response = grpcClient.JoinGame(joinGameRequest);
+            NotificationStream = response;
+        }
+
         public async Task GetNotifications()
-        {        
+        {
             Console.WriteLine("BOT: Processing notifications");
             // AsyncServerStreamingCall<Notification> stream = NotificationStream;
             // while (await stream.ResponseStream.MoveNext())
             // {
-                // Console.WriteLine("BOT: Processing notification");
-                // Notification notification = stream.ResponseStream.Current;
-                // ProcessMessage(notification);
+            // Console.WriteLine("BOT: Processing notification");
+            // Notification notification = stream.ResponseStream.Current;
+            // ProcessMessage(notification);
             // }
             //await foreach (var notification in NotificationStream.ResponseStream.ReadAllAsync())
-            try {
+            try
+            {
                 while (await NotificationStream.ResponseStream.MoveNext())
                 {
                     Console.WriteLine("BOT: Processing notification");
                     var notification = NotificationStream.ResponseStream.Current;
                     ProcessMessage(notification);
                 }
-            } catch (RpcException ex) {
+            }
+            catch (RpcException ex)
+            {
                 Console.WriteLine($"Error: {{Code: {ex.StatusCode}, Status: {ex.Status.Detail}}}");
             }
             Console.WriteLine("BOT: Done processing notifications");
