@@ -26,13 +26,11 @@ namespace Bot
 
         public uint Seat { get; set; }
 
+        public bool Seated { get; set; } = false;
+
         private ShootServer.ShootServerClient _grpcClient;
 
         public AsyncServerStreamingCall<Notification> NotificationStream  { get; set; }
-
-        public Bot(ShootServer.ShootServerClient grpcClient) {
-            _grpcClient = grpcClient;
-        }
 
         public int id;
 
@@ -115,6 +113,7 @@ namespace Bot
         {
             GrpcChannel channel = GrpcChannel.ForAddress("http://localhost:8080");
             ShootServer.ShootServerClient grpcClient = new ShootServer.ShootServerClient(channel);
+            _grpcClient = grpcClient;
 
             JoinGameRequest joinGameRequest = new JoinGameRequest();
             joinGameRequest.Uuid = uuid;
@@ -288,12 +287,14 @@ namespace Bot
                     }
 
                     break;
+
                 case Notification.NotificationOneofCase.BidRequest:
                     System.Console.WriteLine("BOT: RECEIVED BID REQUEST");
                     CurrentStatus = Status.CHOOSING_BID;
                     ShootTheMoon.Network.Proto.Bid myBid = Bid.toProto(DecideBid());
                     _grpcClient.CreateBid(myBid);
                     break;
+
                 case Notification.NotificationOneofCase.BidList:
                     System.Console.WriteLine("BOT: RECEIVED BID LIST");
                     List<ShootTheMoon.Network.Proto.Bid> protoBids;
@@ -318,6 +319,7 @@ namespace Bot
                         }
                     }
                     break;
+
                 case Notification.NotificationOneofCase.TrumpUpdate:
                     SortedHand = SortHandIntoSuits(Game.CurrentTrump);
 
@@ -328,6 +330,7 @@ namespace Bot
                     //     else finalBreakdown.wonBid = 'N';
                     // }
                     break;
+
                 case Notification.NotificationOneofCase.PlayCardRequest:
                     seat = notification.PlayCardRequest.Seat;
                     card = null;
@@ -336,6 +339,27 @@ namespace Bot
                         card = DecideCard(GetLegalCards(Hand, Card.FromProto(Game.LeadCard.Card), Game.CurrentTrump));
                         _grpcClient.PlayCard(Card.ToProto(card));
                     }
+                    break;
+
+                case Notification.NotificationOneofCase.SeatList:
+                    List<SeatDetails> seats = notification.SeatList.Seats.ToList();
+                    if (!Seated)
+                    {
+                        foreach (SeatDetails seatDetails in seats)
+                        {
+                            if (seatDetails.Empty)
+                            {
+                                TakeSeatRequest takeSeatRequest = new TakeSeatRequest();
+                                takeSeatRequest.Seat = seatDetails.Seat;
+                                StatusResponse statusResponse = _grpcClient.TakeSeat(takeSeatRequest);
+                                if (statusResponse.Success)
+                                {
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    
                     break;
 
                 case Notification.NotificationOneofCase.TransferRequest:
