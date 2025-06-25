@@ -400,36 +400,36 @@ namespace ShootTheMoon.Game
         }
 
         public async Task AddBot() {
-            GrpcChannel channel = GrpcChannel.ForAddress("http://localhost:8080");
-            ShootServer.ShootServerClient grpcClient = new ShootServer.ShootServerClient(channel);
-            Bot client = new Bot(grpcClient);
-            Bots.Add(client);
+            // GrpcChannel channel = GrpcChannel.ForAddress("http://localhost:8080");
+            // ShootServer.ShootServerClient grpcClient = new ShootServer.ShootServerClient(channel);
+            // Bot client = new Bot(grpcClient);
+            // Bots.Add(client);
 
-            JoinGameRequest joinGameRequest = new JoinGameRequest();
-            joinGameRequest.Uuid = this.Name;
-            joinGameRequest.Name = "Bot";
+            // JoinGameRequest joinGameRequest = new JoinGameRequest();
+            // joinGameRequest.Uuid = this.Name;
+            // joinGameRequest.Name = "Bot";
 
-            Console.WriteLine($"JoinGameRequest: {joinGameRequest}");
+            // Console.WriteLine($"JoinGameRequest: {joinGameRequest}");
 
-            AsyncServerStreamingCall<Notification> response = grpcClient.JoinGame(joinGameRequest);
-            client.NotificationStream = response;
-            // await Task.Run(() => client.GetNotifications());
-            var ct = Task.Run(() => client.GetNotifications());
+            // AsyncServerStreamingCall<Notification> response = grpcClient.JoinGame(joinGameRequest);
+            // client.NotificationStream = response;
+            // // await Task.Run(() => client.GetNotifications());
+            // var ct = Task.Run(() => client.GetNotifications());
 
-            // TODO: Move this to the Bot
-            for (uint i = 0; i < NumPlayers; i++) {
-                if (Players[i] == null) {
-                    TakeSeatRequest takeSeatRequest = new TakeSeatRequest();
-                    takeSeatRequest.Seat = i;
-                    try {
-                        var resp = grpcClient.TakeSeat(takeSeatRequest);
-                        Console.WriteLine($"TakeSeat response: {resp}");
-                    } catch (RpcException ex) {
-                        Console.WriteLine($"Error: {{Code: {ex.StatusCode}, Status: {ex.Status.Detail}}}");
-                    }
-                    break;
-                }
-            }
+            // // TODO: Move this to the Bot
+            // for (uint i = 0; i < NumPlayers; i++) {
+            //     if (Players[i] == null) {
+            //         TakeSeatRequest takeSeatRequest = new TakeSeatRequest();
+            //         takeSeatRequest.Seat = i;
+            //         try {
+            //             var resp = grpcClient.TakeSeat(takeSeatRequest);
+            //             Console.WriteLine($"TakeSeat response: {resp}");
+            //         } catch (RpcException ex) {
+            //             Console.WriteLine($"Error: {{Code: {ex.StatusCode}, Status: {ex.Status.Detail}}}");
+            //         }
+            //         break;
+            //     }
+            // }
         }
 
         public async Task<bool> TakeSeat(uint? seat, Client client) {
