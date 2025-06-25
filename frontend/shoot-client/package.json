@@ -24,7 +24,7 @@
     "react-router": "^7.6.2",
     "styled-components": "^6.1.19",
     "tss-react": "^4.9.18",
-    "web-vitals": "^5.0.2"
+    "web-vitals": "^5.0.3"
   },
   "scripts": {
     "start": "node ngrok.js && VITE_CJS_TRACE=true vite --port=8001",
