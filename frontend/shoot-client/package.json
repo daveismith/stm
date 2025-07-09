@@ -21,7 +21,7 @@
     "proto": "file:src/proto",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "react-router": "^7.6.2",
+    "react-router": "^7.6.3",
     "styled-components": "^6.1.19",
     "tss-react": "^4.9.18",
     "web-vitals": "^5.0.3"
