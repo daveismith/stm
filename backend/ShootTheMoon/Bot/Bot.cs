@@ -30,7 +30,9 @@ namespace Bot
 
         private ShootServer.ShootServerClient _grpcClient;
 
-        public AsyncServerStreamingCall<Notification> NotificationStream  { get; set; }
+        private Metadata _grpcMetadata;
+
+        public AsyncServerStreamingCall<Notification> NotificationStream { get; set; }
 
         public int id;
 
@@ -95,6 +97,7 @@ namespace Bot
             // Game = initGame;
             CurrentStatus = Status.PREGAME_READY;
             Profile = initProfile;
+            _grpcMetadata = new Metadata();
         }
 
         /// <summary>
@@ -118,6 +121,8 @@ namespace Bot
             JoinGameRequest joinGameRequest = new JoinGameRequest();
             joinGameRequest.Uuid = uuid;
             joinGameRequest.Name = "Bot";
+
+            _grpcMetadata.Add("x-game-id", uuid);
 
             Console.WriteLine($"JoinGameRequest: {joinGameRequest}");
 
@@ -277,6 +282,11 @@ namespace Bot
 
             switch (notification.NotificationCase)
             {
+                case Notification.NotificationOneofCase.JoinResponse:
+                    System.Console.WriteLine("BOT: Received Join Response");
+                    var token = notification.JoinResponse.Token;
+                    _grpcMetadata.Add("x-game-token", token);
+                    break;
                 case Notification.NotificationOneofCase.Hand:
                     System.Console.WriteLine("BOT: RECEIVED HAND");
                     List<ShootTheMoon.Network.Proto.Card> protoHand;
@@ -351,7 +361,7 @@ namespace Bot
                             {
                                 TakeSeatRequest takeSeatRequest = new TakeSeatRequest();
                                 takeSeatRequest.Seat = seatDetails.Seat;
-                                StatusResponse statusResponse = _grpcClient.TakeSeat(takeSeatRequest);
+                                StatusResponse statusResponse = _grpcClient.TakeSeat(takeSeatRequest, _grpcMetadata);
                                 if (statusResponse.Success)
                                 {
                                     break;
