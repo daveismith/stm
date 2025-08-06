@@ -244,6 +244,7 @@ namespace Bot
             SecondPartnerBid = null;
             SortedHand = SortHandIntoSuits(Trump.High);
             Breakdowns.Clear();
+            Game.CurrentBid = null;
         }
 
         private void EndRound()
@@ -286,6 +287,8 @@ namespace Bot
                     System.Console.WriteLine("BOT: Received Join Response");
                     var token = notification.JoinResponse.Token;
                     _grpcMetadata.Add("x-game-token", token);
+                    GameSettings gameSettings = GameSettings.GamePresets["TWOPLAYER"];
+                    Game = new Game(gameSettings);
                     break;
                 case Notification.NotificationOneofCase.Hand:
                     System.Console.WriteLine("BOT: RECEIVED HAND");
@@ -295,11 +298,13 @@ namespace Bot
                     foreach (ShootTheMoon.Network.Proto.Card protoCard in protoHand) {
                         Hand.Add(Card.FromProto(protoCard));
                     }
+                    InitializeRound();
 
                     break;
 
                 case Notification.NotificationOneofCase.BidRequest:
                     System.Console.WriteLine("BOT: RECEIVED BID REQUEST");
+                    //TODO: Make sure we've received a hand before choosing a bid
                     CurrentStatus = Status.CHOOSING_BID;
                     ShootTheMoon.Network.Proto.Bid myBid = Bid.toProto(DecideBid());
                     _grpcClient.CreateBid(myBid);
@@ -361,13 +366,18 @@ namespace Bot
                             {
                                 TakeSeatRequest takeSeatRequest = new TakeSeatRequest();
                                 takeSeatRequest.Seat = seatDetails.Seat;
-                                StatusResponse statusResponse = _grpcClient.TakeSeat(takeSeatRequest, _grpcMetadata);
-                                if (statusResponse.Success)
+                                StatusResponse takeSeatStatusResponse = _grpcClient.TakeSeat(takeSeatRequest, _grpcMetadata);
+                                if (takeSeatStatusResponse.Success)
                                 {
+                                    Seated = true;
                                     break;
                                 }
                             }
                         }
+
+                        SetReadyStatusRequest setReadyStatusRequest = new SetReadyStatusRequest();
+                        setReadyStatusRequest.Ready = true;
+                        StatusResponse setReadyStatusResponse = _grpcClient.SetReadyStatus(setReadyStatusRequest, _grpcMetadata);
                     }
                     
                     break;
