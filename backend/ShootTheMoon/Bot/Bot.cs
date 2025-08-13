@@ -22,7 +22,7 @@ namespace Bot
         private bool _human;
         public bool Human { get { return _human; } }
 
-        public List<Card> Hand { get; set; }
+        public List<Card> Hand { get; set; } = new List<Card>();
 
         public uint Seat { get; set; }
 
@@ -86,6 +86,8 @@ namespace Bot
 
         private Game Game { get; set; }
 
+        private Queue<Notification> notificationQueue = new Queue<Notification>();
+
         static Bot()
         {
             PossibleNames = new List<string>(new string[] { "Alexander", "Genghis Khan", "Hannibal", "Louis IX", "Charlemagne", "Ivan III" });
@@ -147,7 +149,8 @@ namespace Bot
                 {
                     Console.WriteLine("BOT: Processing notification");
                     var notification = NotificationStream.ResponseStream.Current;
-                    ProcessMessage(notification);
+                    notificationQueue.Enqueue(notification);
+                    ProcessMessage(notificationQueue.Dequeue());
                 }
             }
             catch (RpcException ex)
@@ -272,6 +275,14 @@ namespace Bot
             // }
         }
 
+        private void DeferNotification(Notification notification)
+        {
+            Console.WriteLine($"Deferring: {notification}");
+            Thread.Sleep(100);
+            notificationQueue.Enqueue(notification);
+            ProcessMessage(notificationQueue.Dequeue());
+        }
+
         private void ProcessMessage(Notification notification)
         {
             uint seat;
@@ -295,7 +306,8 @@ namespace Bot
                     List<ShootTheMoon.Network.Proto.Card> protoHand;
                     Hand.Clear();
                     protoHand = notification.Hand.Hand_.ToList();
-                    foreach (ShootTheMoon.Network.Proto.Card protoCard in protoHand) {
+                    foreach (ShootTheMoon.Network.Proto.Card protoCard in protoHand)
+                    {
                         Hand.Add(Card.FromProto(protoCard));
                     }
                     InitializeRound();
@@ -304,10 +316,15 @@ namespace Bot
 
                 case Notification.NotificationOneofCase.BidRequest:
                     System.Console.WriteLine("BOT: RECEIVED BID REQUEST");
-                    //TODO: Make sure we've received a hand before choosing a bid
+                    // Make sure we've received a hand before choosing a bid
+                    if (Hand == null)
+                    {
+                        DeferNotification(notification);
+                        break;
+                    }
                     CurrentStatus = Status.CHOOSING_BID;
                     ShootTheMoon.Network.Proto.Bid myBid = Bid.toProto(DecideBid());
-                    _grpcClient.CreateBid(myBid);
+                    _grpcClient.CreateBid(myBid, _grpcMetadata);
                     break;
 
                 case Notification.NotificationOneofCase.BidList:
@@ -352,7 +369,7 @@ namespace Bot
                     if (seat == Seat)
                     {
                         card = DecideCard(GetLegalCards(Hand, Card.FromProto(Game.LeadCard.Card), Game.CurrentTrump));
-                        _grpcClient.PlayCard(Card.ToProto(card));
+                        _grpcClient.PlayCard(Card.ToProto(card), _grpcMetadata);
                     }
                     break;
 
@@ -379,7 +396,7 @@ namespace Bot
                         setReadyStatusRequest.Ready = true;
                         StatusResponse setReadyStatusResponse = _grpcClient.SetReadyStatus(setReadyStatusRequest, _grpcMetadata);
                     }
-                    
+
                     break;
 
                 case Notification.NotificationOneofCase.TransferRequest:
@@ -393,7 +410,7 @@ namespace Bot
                         transfer.FromSeat = fromSeat;
                         transfer.ToSeat = toSeat;
                         transfer.Card = Card.ToProto(card);
-                        _grpcClient.TransferCard(transfer);
+                        _grpcClient.TransferCard(transfer, _grpcMetadata);
                     }
                     break;
 
@@ -414,9 +431,9 @@ namespace Bot
                     break;
 
                 case Notification.NotificationOneofCase.ThrowawayRequest:
-                        card = PickLowestCard();
-                        // System.Threading.Thread.Sleep(THROWAWAY_DELAY);
-                        _grpcClient.ThrowawayCard(Card.ToProto(card));
+                    card = PickLowestCard();
+                    // System.Threading.Thread.Sleep(THROWAWAY_DELAY);
+                    _grpcClient.ThrowawayCard(Card.ToProto(card), _grpcMetadata);
                     break;
 
                 // case "CONFIRMTHROWAWAY":
