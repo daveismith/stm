@@ -12,7 +12,7 @@ namespace Bot
         public Rank Rank { get; set; }
 
         public Suit EffectiveSuit(Trump trump) {
-            if (trump.SameColour != null && Suit == trump.SameColour && Rank == Rank.Jack) {
+            if (Suit == trump.SameColour && Rank == Rank.Jack) {
                 return trump.Suit;
             }
             return Suit;
