@@ -289,6 +289,7 @@ namespace Bot
             uint fromSeat;
             uint toSeat;
             Card card;
+            Card leadCard;
 
             Console.WriteLine($"ProcessMessage: {notification}");
 
@@ -353,6 +354,8 @@ namespace Bot
                     break;
 
                 case Notification.NotificationOneofCase.TrumpUpdate:
+                    Game.CurrentTrump = Trump.fromProto(notification.TrumpUpdate.Trump);
+                    Tracker.CurrentTrump = Game.CurrentTrump;
                     SortedHand = SortHandIntoSuits(Game.CurrentTrump);
 
                     // if (TRACK_BOT_STATS)
@@ -366,9 +369,11 @@ namespace Bot
                 case Notification.NotificationOneofCase.PlayCardRequest:
                     seat = notification.PlayCardRequest.Seat;
                     card = null;
+                    leadCard = null;
+                    if (Game.LeadCard != null) leadCard = Card.FromProto(Game.LeadCard.Card);
                     if (seat == Seat)
                     {
-                        card = DecideCard(GetLegalCards(Hand, Card.FromProto(Game.LeadCard.Card), Game.CurrentTrump));
+                        card = DecideCard(GetLegalCards(Hand, leadCard, Game.CurrentTrump));
                         _grpcClient.PlayCard(Card.ToProto(card), _grpcMetadata);
                     }
                     break;
@@ -387,6 +392,7 @@ namespace Bot
                                 if (takeSeatStatusResponse.Success)
                                 {
                                     Seated = true;
+                                    Seat = takeSeatRequest.Seat;
                                     break;
                                 }
                             }
