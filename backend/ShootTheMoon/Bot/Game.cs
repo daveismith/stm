@@ -43,8 +43,8 @@ namespace Bot
         public int CallingTeam { get; set; }
         public int[] Tricks { get; set; }
         public List<PlayedCard> PlayedCards { get; set; }
-        public PlayedCard HighCard { get; set; }
-        public PlayedCard LeadCard { get; set; }
+        public PlayedCard? HighCard { get; set; }
+        public PlayedCard? LeadCard { get; set; }
 
         public GameState State { get; private set; }
 
