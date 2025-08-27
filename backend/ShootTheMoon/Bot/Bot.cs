@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.ObjectPool;
 using ShootTheMoon.Game;
 using Grpc.Net.Client;
+using Google.Protobuf.Collections;
 
 namespace Bot
 {
@@ -355,7 +356,9 @@ namespace Bot
 
                 case Notification.NotificationOneofCase.TrumpUpdate:
                     Game.CurrentTrump = Trump.fromProto(notification.TrumpUpdate.Trump);
+                    Tracker.InitializeRound();
                     Tracker.CurrentTrump = Game.CurrentTrump;
+                    Tracker.AdjustForTrump(Game.CurrentTrump);
                     SortedHand = SortHandIntoSuits(Game.CurrentTrump);
 
                     // if (TRACK_BOT_STATS)
@@ -440,6 +443,17 @@ namespace Bot
                     card = PickLowestCard();
                     // System.Threading.Thread.Sleep(THROWAWAY_DELAY);
                     _grpcClient.ThrowawayCard(Card.ToProto(card), _grpcMetadata);
+                    break;
+
+                case Notification.NotificationOneofCase.PlayedCards:
+                    List<ShootTheMoon.Network.Proto.PlayedCard> playedCards = notification.PlayedCards.Cards.ToList();
+                    if (playedCards.Count == 0) Game.LeadCard = null;
+                    foreach (ShootTheMoon.Network.Proto.PlayedCard playedCard in playedCards)
+                    {
+                        if (playedCard.Order == 0) Game.LeadCard = playedCard;
+                        //TODO: check if this is adding duplicates
+                        Tracker.PlayCard(Card.FromProto(playedCard.Card), (int)playedCard.Seat);
+                    }
                     break;
 
                 // case "CONFIRMTHROWAWAY":
