@@ -53,13 +53,13 @@ namespace Bot
         }
 
         public static Card FromProto(ShootTheMoon.Network.Proto.Card card) {
-            return new Card(Suit.Suits[(int) card.Suit], Rank.Ranks[(int) card.Rank]);
+            return new Card(Suit.Suits[(int) card.Suit], Rank.Ranks[(int) card.Rank + 7]);
         }
 
         public static ShootTheMoon.Network.Proto.Card ToProto(Card card)
         {
             ShootTheMoon.Network.Proto.Card protoCard = new ShootTheMoon.Network.Proto.Card();
-            protoCard.Rank = (ShootTheMoon.Network.Proto.Card.Types.Rank) card.Rank.Index;
+            protoCard.Rank = (ShootTheMoon.Network.Proto.Card.Types.Rank) card.Rank.Value - 7;
             protoCard.Suit = (ShootTheMoon.Network.Proto.Card.Types.Suit) card.Suit.Index;
             return protoCard;
         }

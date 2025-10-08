@@ -107,10 +107,27 @@ namespace ShootTheMoon.Network
                 await DealUpdate(game);
             }
 
+            if ((info.Type & GameEventType.BidUpdate) == GameEventType.BidUpdate) {
+                // Send A Bit List Update To All Players
+                await BidListUpdate(game);
+            }
+
             if ((info.Type & GameEventType.RequestBid) == GameEventType.RequestBid) {
                 // Request A Bit From The Client Specified In info.Client
                 if (info.AdditionalData is Client) {
                     await RequestBid(game, (Client)info.AdditionalData);
+                }
+            }
+
+            if ((info.Type & GameEventType.TrumpUpdate) == GameEventType.TrumpUpdate) {
+                // Send A Trump Update
+                await TrumpUpdate(game);
+            }            
+
+            if ((info.Type & GameEventType.TransferCard) == GameEventType.TransferCard) {
+                // Send The Appropriate Updates To CurrentPlayer, and the rest of the players.
+                if (info.AdditionalData is Game.PlayedCard) {
+                    await TransferCard(game, (Game.PlayedCard)info.AdditionalData);
                 }
             }
 
@@ -121,29 +138,12 @@ namespace ShootTheMoon.Network
                 }
             }
 
-            if ((info.Type & GameEventType.TransferCard) == GameEventType.TransferCard) {
-                // Send The Appropriate Updates To CurrentPlayer, and the rest of the players.
-                if (info.AdditionalData is Game.PlayedCard) {
-                    await TransferCard(game, (Game.PlayedCard)info.AdditionalData);
-                }
-            }
-
             if ((info.Type & GameEventType.ThrowawayRequest) == GameEventType.ThrowawayRequest) {
                 // Send A Discard Request To Te Current Player
                 if (info.AdditionalData is Client) {
                     await ThrowawayRequest(game, (Client)info.AdditionalData);
                 }
             }
-
-            if ((info.Type & GameEventType.BidUpdate) == GameEventType.BidUpdate) {
-                // Send A Bit List Update To All Players
-                await BidListUpdate(game);
-            }
-
-            if ((info.Type & GameEventType.TrumpUpdate) == GameEventType.TrumpUpdate) {
-                // Send A Trump Update
-                await TrumpUpdate(game);
-            }            
 
             // Need to notify the client about the played cards before asking it to play any cards.
             if ((info.Type & GameEventType.PlayedCards) == GameEventType.PlayedCards) {
