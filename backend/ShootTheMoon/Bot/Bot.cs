@@ -351,6 +351,10 @@ namespace Bot
                                 SecondPartnerBid = bid;
                             }
                         }
+                        if (Game.CurrentBid == null || bid.Number > Game.CurrentBid.Number)
+                        {
+                            Game.CurrentBid = bid;
+                        }
                     }
                     break;
 
@@ -602,7 +606,7 @@ namespace Bot
             {
                 return Bid.makeShootBid(Seat, (uint)Game.NextShootNum, bestTrump);
             }
-
+            // TO DO: Fix server message order... getting bid request before bid list
             if (highBid == null || highBid.isPass() || (uint)bestTrumpBid > highBid.Number)
             {
                 // if (DEBUG_MODE_BIDDING)
@@ -1785,7 +1789,7 @@ namespace Bot
                         {
                             if (CurrentTrump.Equals(Trump.Low) && !cRank.Equals(ContextualRank.ACE))
                             { // trump is low
-                                newRank = Rank.Ranks[cRank.Ranking + 1 - 9];
+                                newRank = Rank.Ranks[cRank.Ranking + 1];
                                 newSuit = cSuit;
                             }
                             else if ((CurrentTrump.Equals(Trump.High) || !cSuit.Equals(CurrentTrump.Suit)) && !cRank.Equals(ContextualRank.NINE))
@@ -1796,7 +1800,7 @@ namespace Bot
                                 }
                                 else
                                 {
-                                    newRank = Rank.Ranks[cRank.Ranking - 1 - 9];
+                                    newRank = Rank.Ranks[cRank.Ranking - 1];
                                 }
                                 newSuit = cSuit;
                             }
