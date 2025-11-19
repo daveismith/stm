@@ -13,41 +13,35 @@ namespace Bot
 {
     public class Bot
     {
-        protected string _name;
+        protected string _name = string.Empty;
 
         public string Name { get { return _name; } }
 
-        private bool _ready;
-        public bool Ready { get { return _ready; } }
-
-        private bool _human;
-        public bool Human { get { return _human; } }
-
         public List<Card> Hand { get; set; } = new List<Card>();
 
-        public uint Seat { get; set; }
+        public uint Seat { get; set; } = 0;
 
         public bool Seated { get; set; } = false;
 
-        private ShootServer.ShootServerClient _grpcClient;
+        private ShootServer.ShootServerClient? _grpcClient;
 
-        private Metadata _grpcMetadata;
+        private Metadata _grpcMetadata = new Metadata();
 
-        public AsyncServerStreamingCall<Notification> NotificationStream { get; set; }
+        public AsyncServerStreamingCall<Notification>? NotificationStream { get; set; }
 
         public int id;
 
         private readonly Dictionary<Trump, double> TrumpScores = new Dictionary<Trump, double>();
-        private Bid FirstPartnerBid;
-        private Bid SecondPartnerBid;
-        private Dictionary<Suit, List<Card>> SortedHand;
+        private Bid? FirstPartnerBid;
+        private Bid? SecondPartnerBid;
+        private Dictionary<Suit, List<Card>>? SortedHand;
         private int LoneAcesOrNines;
         private readonly List<Card> HighCards = new List<Card>();
         private readonly List<Card> LowCards = new List<Card>();
         private readonly BotProfile Profile;
 
         private readonly Dictionary<Trump, HandBreakdown> Breakdowns = new Dictionary<Trump, HandBreakdown>();
-        private HandBreakdown FinalBreakdown;
+        private HandBreakdown? FinalBreakdown;
 
         private const bool HIGH_LOW_BIDDING_ENABLED = true;
         private const bool DEBUG_MODE_BIDDING = false;
@@ -77,7 +71,7 @@ namespace Bot
 
         // private readonly List<Card> Hand = null;
 
-        private Dictionary<uint, Bid> Bids = null;
+        private Dictionary<uint, Bid> Bids = new Dictionary<uint, Bid>();
 
         private Status CurrentStatus = Status.LOGIN_SCREEN;
 
@@ -85,7 +79,7 @@ namespace Bot
 
         private uint Team { get { return Seat % 2; } }
 
-        private Game Game { get; set; }
+        private Game? Game { get; set; }
 
         private Queue<Notification> notificationQueue = new Queue<Notification>();
 
@@ -144,21 +138,24 @@ namespace Bot
             // ProcessMessage(notification);
             // }
             //await foreach (var notification in NotificationStream.ResponseStream.ReadAllAsync())
-            try
+            if (NotificationStream is not null)
             {
-                while (await NotificationStream.ResponseStream.MoveNext())
+                try
                 {
-                    Console.WriteLine("BOT: Processing notification");
-                    var notification = NotificationStream.ResponseStream.Current;
-                    notificationQueue.Enqueue(notification);
-                    ProcessMessage(notificationQueue.Dequeue());
+                    while (await NotificationStream.ResponseStream.MoveNext())
+                    {
+                        Console.WriteLine("BOT: Processing notification");
+                        var notification = NotificationStream.ResponseStream.Current;
+                        notificationQueue.Enqueue(notification);
+                        ProcessMessage(notificationQueue.Dequeue());
+                    }
                 }
+                catch (RpcException ex)
+                {
+                    Console.WriteLine($"Error: {{Code: {ex.StatusCode}, Status: {ex.Status.Detail}}}");
+                }
+                Console.WriteLine("BOT: Done processing notifications");
             }
-            catch (RpcException ex)
-            {
-                Console.WriteLine($"Error: {{Code: {ex.StatusCode}, Status: {ex.Status.Detail}}}");
-            }
-            Console.WriteLine("BOT: Done processing notifications");
         }
 
         private static bool SameTeam(uint seatA, uint seatB)
@@ -171,8 +168,11 @@ namespace Bot
             FinalBreakdown = new HandBreakdown();
             CurrentStatus = newStatus;
 
-            if (Game.CurrentTrump == null) SortedHand = SortHandIntoSuits(Trump.High);
-            else SortedHand = SortHandIntoSuits(Game.CurrentTrump);
+            if (Game is not null)
+            {
+                if (Game.CurrentTrump == null) SortedHand = SortHandIntoSuits(Trump.High);
+                else SortedHand = SortHandIntoSuits(Game.CurrentTrump);
+            }
 
             // switch (status)
             // {
@@ -225,11 +225,14 @@ namespace Bot
         private int GetNumVoids()
         {
             int result = 0;
-            foreach (Suit suit in SortedHand.Keys)
+            if (SortedHand is not null)
             {
-                if (SortedHand[suit].Count == 0)
+                foreach (Suit suit in SortedHand.Keys)
                 {
-                    result++;
+                    if (SortedHand[suit].Count == 0)
+                    {
+                        result++;
+                    }
                 }
             }
             return result;
@@ -248,7 +251,10 @@ namespace Bot
             SecondPartnerBid = null;
             SortedHand = SortHandIntoSuits(Trump.High);
             Breakdowns.Clear();
-            Game.CurrentBid = null;
+            if (Game is not null)
+            {
+                Game.CurrentBid = null;
+            }
         }
 
         private void EndRound()
@@ -290,7 +296,7 @@ namespace Bot
             uint fromSeat;
             uint toSeat;
             Card card;
-            Card leadCard;
+            Card? leadCard;
 
             Console.WriteLine($"ProcessMessage: {notification}");
 
@@ -326,7 +332,10 @@ namespace Bot
                     }
                     CurrentStatus = Status.CHOOSING_BID;
                     ShootTheMoon.Network.Proto.Bid myBid = Bid.toProto(DecideBid());
-                    _grpcClient.CreateBid(myBid, _grpcMetadata);
+                    if (_grpcClient is not null)
+                    {
+                        _grpcClient.CreateBid(myBid, _grpcMetadata);
+                    }
                     break;
 
                 case Notification.NotificationOneofCase.BidList:
@@ -334,7 +343,7 @@ namespace Bot
                     List<ShootTheMoon.Network.Proto.Bid> protoBids;
                     protoBids = notification.BidList.Bids.ToList();
                     Bids = new Dictionary<uint, Bid>();
-                    Bid bid = null;
+                    Bid? bid = null;
 
                     foreach (ShootTheMoon.Network.Proto.Bid protoBid in protoBids)
                     {
@@ -351,19 +360,25 @@ namespace Bot
                                 SecondPartnerBid = bid;
                             }
                         }
-                        if (Game.CurrentBid == null || bid.Number > Game.CurrentBid.Number)
+                        if (Game is not null)
                         {
-                            Game.CurrentBid = bid;
+                            if (Game.CurrentBid == null || bid.Number > Game.CurrentBid.Number)
+                            {
+                                Game.CurrentBid = bid;
+                            }
                         }
                     }
                     break;
 
                 case Notification.NotificationOneofCase.TrumpUpdate:
-                    Game.CurrentTrump = Trump.fromProto(notification.TrumpUpdate.Trump);
-                    Tracker.InitializeRound();
-                    Tracker.CurrentTrump = Game.CurrentTrump;
-                    Tracker.AdjustForTrump(Game.CurrentTrump);
-                    SortedHand = SortHandIntoSuits(Game.CurrentTrump);
+                    if (Game is not null)
+                    {
+                        Game.CurrentTrump = Trump.fromProto(notification.TrumpUpdate.Trump);
+                        Tracker.InitializeRound();
+                        Tracker.CurrentTrump = Game.CurrentTrump;
+                        Tracker.AdjustForTrump(Game.CurrentTrump);
+                        SortedHand = SortHandIntoSuits(Game.CurrentTrump);
+                    }
 
                     // if (TRACK_BOT_STATS)
                     // {
@@ -375,19 +390,24 @@ namespace Bot
 
                 case Notification.NotificationOneofCase.PlayCardRequest:
                     seat = notification.PlayCardRequest.Seat;
-                    card = null;
                     leadCard = null;
-                    if (Game.LeadCard != null) leadCard = Card.FromProto(Game.LeadCard.Card);
-                    if (seat == Seat)
+                    if (Game is not null && _grpcClient is not null)
                     {
-                        card = DecideCard(GetLegalCards(Hand, leadCard, Game.CurrentTrump));
-                        _grpcClient.PlayCard(Card.ToProto(card), _grpcMetadata);
+                        if (Game.LeadCard != null)
+                        {
+                            leadCard = Card.FromProto(Game.LeadCard.Card);
+                        }
+                        if (seat == Seat && Game.CurrentTrump is not null)
+                        {
+                            card = DecideCard(GetLegalCards(Hand, leadCard, Game.CurrentTrump));
+                            _grpcClient.PlayCard(Card.ToProto(card), _grpcMetadata);
+                        }
                     }
                     break;
 
                 case Notification.NotificationOneofCase.SeatList:
                     List<SeatDetails> seats = notification.SeatList.Seats.ToList();
-                    if (!Seated)
+                    if (!Seated && _grpcClient is not null)
                     {
                         foreach (SeatDetails seatDetails in seats)
                         {
@@ -407,7 +427,7 @@ namespace Bot
 
                         SetReadyStatusRequest setReadyStatusRequest = new SetReadyStatusRequest();
                         setReadyStatusRequest.Ready = true;
-                        StatusResponse setReadyStatusResponse = _grpcClient.SetReadyStatus(setReadyStatusRequest, _grpcMetadata);
+                        _grpcClient.SetReadyStatus(setReadyStatusRequest, _grpcMetadata);
                     }
 
                     break;
@@ -415,10 +435,9 @@ namespace Bot
                 case Notification.NotificationOneofCase.TransferRequest:
                     toSeat = notification.TransferRequest.ToSeat;
                     fromSeat = notification.TransferRequest.FromSeat;
-                    if (fromSeat == Seat)
+                    if (fromSeat == Seat && _grpcClient is not null)
                     {
                         card = DecideTransferCard();
-                        if (card == null) card = PickLowestCard(); // TODO: This could be improved. Shouldn't happen often though.
                         Transfer transfer = new Transfer();
                         transfer.FromSeat = fromSeat;
                         transfer.ToSeat = toSeat;
@@ -446,17 +465,23 @@ namespace Bot
                 case Notification.NotificationOneofCase.ThrowawayRequest:
                     card = PickLowestCard();
                     // System.Threading.Thread.Sleep(THROWAWAY_DELAY);
-                    _grpcClient.ThrowawayCard(Card.ToProto(card), _grpcMetadata);
+                    if (_grpcClient is not null)
+                    {
+                        _grpcClient.ThrowawayCard(Card.ToProto(card), _grpcMetadata);
+                    }
                     break;
 
                 case Notification.NotificationOneofCase.PlayedCards:
                     List<ShootTheMoon.Network.Proto.PlayedCard> playedCards = notification.PlayedCards.Cards.ToList();
-                    if (playedCards.Count == 0) Game.LeadCard = null;
-                    foreach (ShootTheMoon.Network.Proto.PlayedCard playedCard in playedCards)
+                    if (Game is not null)
                     {
-                        if (playedCard.Order == 0) Game.LeadCard = playedCard;
-                        //TODO: check if this is adding duplicates
-                        Tracker.PlayCard(Card.FromProto(playedCard.Card), (int)playedCard.Seat);
+                        if (playedCards.Count == 0) Game.LeadCard = null;
+                        foreach (ShootTheMoon.Network.Proto.PlayedCard playedCard in playedCards)
+                        {
+                            if (playedCard.Order == 0) Game.LeadCard = playedCard;
+                            //TODO: check if this is adding duplicates
+                            Tracker.PlayCard(Card.FromProto(playedCard.Card), (int)playedCard.Seat);
+                        }
                     }
                     break;
 
@@ -492,10 +517,10 @@ namespace Bot
         /// <returns>Bot's bid</returns>
         private Bid DecideBid()
         {
-            Bid highBid = Game.CurrentBid;
-            Trump bestTrump = null;
+            Bid? highBid = Game?.CurrentBid;
+            Trump? bestTrump = null;
             double bestTrumpBid = 0;
-            double score = 0;
+            double score;
 
             // if (DEBUG_MODE_BIDDING)
             // {
@@ -540,9 +565,9 @@ namespace Bot
                     // }
                 }
             }
-            if (SecondPartnerBid != null && !SecondPartnerBid.isPass())
+            if (FirstPartnerBid != null && SecondPartnerBid != null && !SecondPartnerBid.isPass())
             {
-                if (!FirstPartnerBid.isPass() && FirstPartnerBid.Trump.Equals(SecondPartnerBid.Trump))
+                if (!FirstPartnerBid.isPass() && FirstPartnerBid.Trump != null && FirstPartnerBid.Trump.Equals(SecondPartnerBid.Trump))
                 {
                     TrumpScores.Clear();
                 }
@@ -562,7 +587,7 @@ namespace Bot
             foreach (Trump trump in Trump.Trumps.Values)
             {
                 // if last bidder and partner is winning the bid, no need to overbid.  this method is a little sloppy but it should work.
-                if (highBid != null && SameTeam(highBid.Seat, Seat) && Game.Bids.Count == Game.GameSettings.NumPlayers - 1)
+                if (Game != null && highBid != null && SameTeam(highBid.Seat, Seat) && Game.Bids.Count == Game.GameSettings.NumPlayers - 1)
                     score = 0;
                 else
                     score = TrumpScores[trump] * Profile.getAggressionFactor();
@@ -602,12 +627,12 @@ namespace Bot
 
             // Thread.Sleep(BID_DELAY);
 
-            if (bestTrumpBid >= Profile.getShootThreshold())
+            if (Game != null && bestTrump != null && bestTrumpBid >= Profile.getShootThreshold())
             {
                 return Bid.makeShootBid(Seat, (uint)Game.NextShootNum, bestTrump);
             }
             // TO DO: Fix server message order... getting bid request before bid list
-            if (highBid == null || highBid.isPass() || (uint)bestTrumpBid > highBid.Number)
+            if (bestTrump != null && (highBid == null || highBid.isPass() || (uint)bestTrumpBid > highBid.Number))
             {
                 // if (DEBUG_MODE_BIDDING)
                 // {
@@ -632,7 +657,7 @@ namespace Bot
         /// <param name="contemplatedTrump">trump being considered</param>
         private void ApplyBidBonus(Bid partnerBid, Trump contemplatedTrump)
         {
-            Trump partnerTrump = partnerBid.Trump;
+            Trump? partnerTrump = partnerBid.Trump;
             uint partnerQty = partnerBid.Number;
             double currentScore = 0;
             int scoreModifier = 0;
@@ -644,7 +669,10 @@ namespace Bot
 
             if (partnerBid.isShoot()) partnerQty = 1;
 
-            scoreModifier += (int)(partnerQty * Profile.getPartnerBidMultiplier(partnerTrump, contemplatedTrump));
+            if (partnerTrump is not null)
+            {
+                scoreModifier += (int)(partnerQty * Profile.getPartnerBidMultiplier(partnerTrump, contemplatedTrump));
+            }
 
             currentScore += scoreModifier;
             TrumpScores[contemplatedTrump] = currentScore;
@@ -730,99 +758,102 @@ namespace Bot
             Suit cSuit = card.EffectiveSuit(trump);
             double score = 0;
 
-            if (trump.isSuit())
+            if (SortedHand is not null)
             {
-                if (trump.Suit.Equals(cSuit))
+                if (trump.isSuit())
                 {
-                    score = Profile.getTrumpCardValue(cRank);
-
-                    // if (TRACK_BOT_STATS)
-                    // {
-                    //     if (cRank.Equals(ContextualRank.RIGHT)) breakdowns[trump].rightBowers++;
-                    //     else if (cRank.Equals(ContextualRank.LEFT)) breakdowns[trump].leftBowers++;
-                    //     else if (cRank.Equals(ContextualRank.ACE)) breakdowns[trump].trumpAces++;
-                    //     breakdowns[trump].trumpTotal++;
-                    // }
-                }
-                else // not trump
-                {
-                    if (cRank.Equals(ContextualRank.ACE))
+                    if (trump.Suit.Equals(cSuit))
                     {
-                        if (SortedHand[card.Suit].Count > 1) //make sure isn't lone Ace
-                        {
-                            score = Profile.getBestCardValue(trump, card.Suit);
+                        score = Profile.getTrumpCardValue(cRank);
 
-                            // if (TRACK_BOT_STATS)
-                            // {
-                            //     if (card.EffectiveSuit(trump).Equals(trump.Suit.getSameColourSuit()))
-                            //         breakdowns[trump].sameColourAces++;
-                            //     else breakdowns[trump].otherColourAces++;
-                            // }
-                        }
-                        else
+                        // if (TRACK_BOT_STATS)
+                        // {
+                        //     if (cRank.Equals(ContextualRank.RIGHT)) breakdowns[trump].rightBowers++;
+                        //     else if (cRank.Equals(ContextualRank.LEFT)) breakdowns[trump].leftBowers++;
+                        //     else if (cRank.Equals(ContextualRank.ACE)) breakdowns[trump].trumpAces++;
+                        //     breakdowns[trump].trumpTotal++;
+                        // }
+                    }
+                    else // not trump
+                    {
+                        if (cRank.Equals(ContextualRank.ACE))
                         {
-                            LoneAcesOrNines++;
+                            if (SortedHand[card.Suit].Count > 1) //make sure isn't lone Ace
+                            {
+                                score = Profile.getBestCardValue(trump, card.Suit);
 
-                            // if (TRACK_BOT_STATS) breakdowns[trump].loneAces++;
+                                // if (TRACK_BOT_STATS)
+                                // {
+                                //     if (card.EffectiveSuit(trump).Equals(trump.Suit.getSameColourSuit()))
+                                //         breakdowns[trump].sameColourAces++;
+                                //     else breakdowns[trump].otherColourAces++;
+                                // }
+                            }
+                            else
+                            {
+                                LoneAcesOrNines++;
+
+                                // if (TRACK_BOT_STATS) breakdowns[trump].loneAces++;
+                            }
                         }
                     }
                 }
-            }
-            else
-            {
-                if (trump.Equals(Trump.High))
+                else
                 {
-                    /**
-                     * This section is used to track how many high cards in a row the player has. (AAK, etc)
-                     */
-                    if (HighCards.Contains(card))
+                    if (trump.Equals(Trump.High))
                     {
-                        HighCards.Remove(card);
-                        if (cRank.Equals(ContextualRank.ACE) && !(SortedHand[card.Suit].Count > 1)) // lone ace
+                        /**
+                         * This section is used to track how many high cards in a row the player has. (AAK, etc)
+                         */
+                        if (HighCards.Contains(card))
                         {
-                            LoneAcesOrNines += 1;
+                            HighCards.Remove(card);
+                            if (cRank.Equals(ContextualRank.ACE) && !(SortedHand[card.Suit].Count > 1)) // lone ace
+                            {
+                                LoneAcesOrNines += 1;
 
-                            // if (TRACK_BOT_STATS) breakdowns[trump].loneAces++;
-                        }
-                        else
-                        {
-                            score = Profile.getBestCardValue(trump, card.Suit);
+                                // if (TRACK_BOT_STATS) breakdowns[trump].loneAces++;
+                            }
+                            else
+                            {
+                                score = Profile.getBestCardValue(trump, card.Suit);
 
-                            // if (TRACK_BOT_STATS) breakdowns[trump].runLength++;
-                        }
-                        if (!HighCards.Contains(card) && !card.Rank.Equals(Rank.Nine)) // refill high cards list
-                        {
-                            Card newCard = new Card(card.Suit, Rank.Ranks[card.Rank.Value - 1 - 9]);
-                            HighCards.Add(newCard);
-                            HighCards.Add(newCard);
+                                // if (TRACK_BOT_STATS) breakdowns[trump].runLength++;
+                            }
+                            if (!HighCards.Contains(card) && !card.Rank.Equals(Rank.Nine)) // refill high cards list
+                            {
+                                Card newCard = new Card(card.Suit, Rank.Ranks[card.Rank.Value - 1 - 9]);
+                                HighCards.Add(newCard);
+                                HighCards.Add(newCard);
+                            }
                         }
                     }
-                }
-                else if (trump.Equals(Trump.Low))
-                {
-                    /**
-                     * This section is used to track how many high cards in a row the player has. (AAK, etc)
-                     */
-                    if (LowCards.Contains(card))
+                    else if (trump.Equals(Trump.Low))
                     {
-                        LowCards.Remove(card);
-                        if (cRank.Equals(ContextualRank.NINE) && !(SortedHand[card.Suit].Count > 1))
+                        /**
+                         * This section is used to track how many high cards in a row the player has. (AAK, etc)
+                         */
+                        if (LowCards.Contains(card))
                         {
-                            LoneAcesOrNines += 1;
+                            LowCards.Remove(card);
+                            if (cRank.Equals(ContextualRank.NINE) && !(SortedHand[card.Suit].Count > 1))
+                            {
+                                LoneAcesOrNines += 1;
 
-                            // if (TRACK_BOT_STATS) breakdowns[trump].loneAces++;
-                        }
-                        else
-                        {
-                            score = Profile.getBestCardValue(trump, card.Suit);
+                                // if (TRACK_BOT_STATS) breakdowns[trump].loneAces++;
+                            }
+                            else
+                            {
+                                score = Profile.getBestCardValue(trump, card.Suit);
 
-                            // if (TRACK_BOT_STATS) breakdowns[trump].runLength++;
-                        }
-                        if (!LowCards.Contains(card) && !card.Rank.Equals(Rank.Ace))
-                        {
-                            Card newCard = new Card(card.Suit, Rank.Ranks[card.Rank.Value + 1 - 9]);
-                            LowCards.Add(newCard);
-                            LowCards.Add(newCard);
+                                // if (TRACK_BOT_STATS) breakdowns[trump].runLength++;
+                            }
+                            if (!LowCards.Contains(card) && !card.Rank.Equals(Rank.Ace))
+                            {
+                                Card newCard = new Card(card.Suit, Rank.Ranks[card.Rank.Value + 1 - 9]);
+                                LowCards.Add(newCard);
+                                LowCards.Add(newCard);
+                            }
                         }
                     }
                 }
@@ -845,12 +876,15 @@ namespace Bot
         {
             int voidCount = 0;
 
-            foreach (Suit suit in SortedHand.Keys)
+            if (SortedHand is not null)
             {
-                if (SortedHand[suit].Count == 0 && contemplatedTrump.isSuit()
-                        && !suit.Equals(contemplatedTrump.Suit))
+                foreach (Suit suit in SortedHand.Keys)
                 {
-                    voidCount += 1;
+                    if (SortedHand[suit].Count == 0 && contemplatedTrump.isSuit()
+                            && !suit.Equals(contemplatedTrump.Suit))
+                    {
+                        voidCount += 1;
+                    }
                 }
             }
 
@@ -862,24 +896,27 @@ namespace Bot
         /// find highest available card in hand, based on lead card
         /// </summary>
         /// <returns>highest card in hand</returns>
-        private Card PickHighestCard()
+        private Card? PickHighestCard()
         {
-            Trump trump = Game.CurrentTrump; // get what trump is
-            Suit suit = Card.FromProto(Game.LeadCard.Card).EffectiveSuit(trump); // start with the suit that was lead
-            List<Card> cardsInSuit = SortedHand[suit]; // get cards that follow suit
-
-            // must follow suit if able, so return the highest card
-            if (cardsInSuit.Count > 0)
+            if (Game is not null && Game.CurrentTrump is not null && SortedHand is not null && Game.LeadCard is not null)
             {
-                return cardsInSuit[0]; // sorted in descending order, so 0 is highest
-            }
+                Trump trump = Game.CurrentTrump; // get what trump is
+                Suit suit = Card.FromProto(Game.LeadCard.Card).EffectiveSuit(trump); // start with the suit that was lead
+                List<Card> cardsInSuit = SortedHand[suit]; // get cards that follow suit
 
-            // doesn't need to follow suit, so return lowest trump if available
-            if (trump.isSuit() && !trump.Suit.Equals(suit) && SortedHand[trump.Suit].Count > 0)
-            {
-                suit = trump.Suit;
-                cardsInSuit = SortedHand[suit];
-                return cardsInSuit[cardsInSuit.Count - 1];
+                // must follow suit if able, so return the highest card
+                if (cardsInSuit.Count > 0)
+                {
+                    return cardsInSuit[0]; // sorted in descending order, so 0 is highest
+                }
+
+                // doesn't need to follow suit, so return lowest trump if available
+                if (trump.isSuit() && !trump.Suit.Equals(suit) && SortedHand[trump.Suit].Count > 0)
+                {
+                    suit = trump.Suit;
+                    cardsInSuit = SortedHand[suit];
+                    return cardsInSuit[cardsInSuit.Count - 1];
+                }
             }
 
             // if can't follow suit and can't play trump, return null
@@ -897,46 +934,49 @@ namespace Bot
             int highestScore = -1;
             Dictionary<Suit, int> suitScores;
             List<Suit> candidateSuits = new List<Suit>();
-            List<Card> candidateCards;
+            List<Card> candidateCards = new List<Card>();
             Random random = new Random();
             int suitChooser;
 
-            if (Game.LeadCard != null)
+            if (Game != null && Game.CurrentTrump != null && SortedHand != null)
             {
-                cardsInSuit = SortedHand[Card.FromProto(Game.LeadCard.Card).EffectiveSuit(Game.CurrentTrump)]; // get cards that follow suit
-
-                // must follow suit if able, so return the lowest card
-                if (cardsInSuit.Count > 0)
+                if (Game.LeadCard != null)
                 {
-                    return cardsInSuit[cardsInSuit.Count - 1]; // sorted in descending order, so last is lowest
+                    cardsInSuit = SortedHand[Card.FromProto(Game.LeadCard.Card).EffectiveSuit(Game.CurrentTrump)]; // get cards that follow suit
+
+                    // must follow suit if able, so return the lowest card
+                    if (cardsInSuit.Count > 0)
+                    {
+                        return cardsInSuit[cardsInSuit.Count - 1]; // sorted in descending order, so last is lowest
+                    }
                 }
-            }
 
-            suitScores = ScoreSuitsForThrowaway();
-            foreach (Suit suit in Suit.Suits.Values)
-            {
-                score = suitScores[suit];
-
-                if (score > highestScore)
+                suitScores = ScoreSuitsForThrowaway();
+                foreach (Suit suit in Suit.Suits.Values)
                 {
-                    highestScore = score;
-                    candidateSuits.Clear();
-                    candidateSuits.Add(suit);
-                }
-                else if (score == highestScore)
-                {
-                    candidateSuits.Add(suit);
-                }
-            }
+                    score = suitScores[suit];
 
-            if (candidateSuits.Count == 1)
-            { // there is a clear winner, so take from that suit
-                candidateCards = SortedHand[candidateSuits[0]];
-            }
-            else
-            {
-                suitChooser = Math.Abs(random.Next()) % candidateSuits.Count;
-                candidateCards = SortedHand[candidateSuits[suitChooser]];
+                    if (score > highestScore)
+                    {
+                        highestScore = score;
+                        candidateSuits.Clear();
+                        candidateSuits.Add(suit);
+                    }
+                    else if (score == highestScore)
+                    {
+                        candidateSuits.Add(suit);
+                    }
+                }
+
+                if (candidateSuits.Count == 1)
+                { // there is a clear winner, so take from that suit
+                    candidateCards = SortedHand[candidateSuits[0]];
+                }
+                else
+                {
+                    suitChooser = Math.Abs(random.Next()) % candidateSuits.Count;
+                    candidateCards = SortedHand[candidateSuits[suitChooser]];
+                }
             }
 
             return candidateCards[candidateCards.Count - 1]; // return lowest card
@@ -955,41 +995,45 @@ namespace Bot
         /// <returns>Dictionary containing scores for each suit</returns>
         private Dictionary<Suit, int> ScoreSuitsForThrowaway()
         {
-            Trump trump = Game.CurrentTrump;
+            Trump trump;
             List<Card> candidateSuit;
             Card highestCard;
             Dictionary<Suit, int> suitScores = new Dictionary<Suit, int>();
             int score = -1;
 
-            foreach (Suit suit in Suit.Suits.Values)
+            if (Game is not null && Game.CurrentTrump is not null && SortedHand is not null)
             {
-                candidateSuit = SortedHand[suit];
+                trump = Game.CurrentTrump;
+                foreach (Suit suit in Suit.Suits.Values)
+                {
+                    candidateSuit = SortedHand[suit];
 
-                if (candidateSuit.Count == 0)
-                {
-                    score = 0;
-                }
-                else if (trump.isSuit() && trump.Suit.Equals(suit))
-                {
-                    score = 1;
-                }
-                else
-                {
-                    highestCard = candidateSuit[0];
-
-                    if (Tracker.IsHighest(highestCard))
+                    if (candidateSuit.Count == 0)
                     {
-                        if (candidateSuit.Count == 1) score = 3;
-                        if (candidateSuit.Count == 2) score = 2;
-                        if (candidateSuit.Count > 2) score = 4;
+                        score = 0;
+                    }
+                    else if (trump.isSuit() && trump.Suit.Equals(suit))
+                    {
+                        score = 1;
                     }
                     else
                     {
-                        if (candidateSuit.Count == 1) score = 6;
-                        if (candidateSuit.Count > 1) score = 5;
+                        highestCard = candidateSuit[0];
+
+                        if (Tracker.IsHighest(highestCard))
+                        {
+                            if (candidateSuit.Count == 1) score = 3;
+                            if (candidateSuit.Count == 2) score = 2;
+                            if (candidateSuit.Count > 2) score = 4;
+                        }
+                        else
+                        {
+                            if (candidateSuit.Count == 1) score = 6;
+                            if (candidateSuit.Count > 1) score = 5;
+                        }
                     }
+                    suitScores.Add(suit, score);
                 }
-                suitScores.Add(suit, score);
             }
             return suitScores;
         }
@@ -1404,7 +1448,7 @@ namespace Bot
         /// <param name="trump">current trump</param>
         /// <returns>true if card is allowed</returns>
         private static bool IsCardLegal(List<Card> hand, Card card,
-                Card leadCard, Trump trump, out string reason)
+                Card? leadCard, Trump trump, out string reason)
         {
             Suit leadSuit = null;
             reason = string.Empty;
@@ -1447,7 +1491,7 @@ namespace Bot
          * Returns a new List<Card> containing all legal cards in a hand for a
          * given lead Card and trump
          */
-        private static List<Card> GetLegalCards(List<Card> hand, Card leadCard,
+        private static List<Card> GetLegalCards(List<Card> hand, Card? leadCard,
                 Trump trump)
         {
             string reason = string.Empty;
