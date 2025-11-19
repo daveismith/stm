@@ -40,9 +40,10 @@ namespace Bot
             return Trumps[(int) trump];
         }
 
-        public static ShootTheMoon.Network.Proto.Trump toProto(Trump trump)
+        public static ShootTheMoon.Network.Proto.Trump toProto(Trump? trump)
         {
-            return (ShootTheMoon.Network.Proto.Trump) trump.Index; 
+            int index = trump?.Index ?? 0;
+            return (ShootTheMoon.Network.Proto.Trump) index;
         }
     }
 }

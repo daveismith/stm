@@ -26,7 +26,7 @@ namespace Bot
         }
         public GameSettings GameSettings { get; set; }
         public string Uuid { get; set; }
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         public List<int> Score { get; set; }
         public int Dealer { get; set; }
@@ -36,9 +36,9 @@ namespace Bot
         public List<Bid> Bids { get; set; }
 
 
-        public Bid CurrentBid { get; set; }
+        public Bid? CurrentBid { get; set; }
 
-        public Trump CurrentTrump { get; set; }
+        public Trump? CurrentTrump { get; set; }
         public int RequiredTricks { get; set; }
         public int CallingTeam { get; set; }
         public int[] Tricks { get; set; }
