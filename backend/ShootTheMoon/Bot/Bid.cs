@@ -12,7 +12,7 @@ namespace Bot
         public static readonly uint SHOOT_NUM = 9;
 
         public uint Number { get; set; }
-        public Trump Trump { get; set; }
+        public Trump? Trump { get; set; }
         public uint ShootNumber { get; set; }
 
         public uint Seat { get; set; }
