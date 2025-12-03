@@ -1,13 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using Grpc.Core;
 using ShootTheMoon.Network.Proto;
-using System.Threading.Tasks;
-using Microsoft.Extensions.ObjectPool;
-using ShootTheMoon.Game;
 using Grpc.Net.Client;
-using Google.Protobuf.Collections;
 
 namespace Bot
 {
@@ -437,12 +430,15 @@ namespace Bot
                     fromSeat = notification.TransferRequest.FromSeat;
                     if (fromSeat == Seat && _grpcClient is not null)
                     {
-                        card = DecideTransferCard();
-                        Transfer transfer = new Transfer();
-                        transfer.FromSeat = fromSeat;
-                        transfer.ToSeat = toSeat;
-                        transfer.Card = Card.ToProto(card);
-                        _grpcClient.TransferCard(transfer, _grpcMetadata);
+                        Card? transferCard = DecideTransferCard();
+                        if (transferCard is not null)
+                        {
+                            Transfer transfer = new Transfer();
+                            transfer.FromSeat = fromSeat;
+                            transfer.ToSeat = toSeat;
+                            transfer.Card = Card.ToProto(transferCard);
+                            _grpcClient.TransferCard(transfer, _grpcMetadata);
+                        }
                     }
                     break;
 
@@ -1057,98 +1053,101 @@ namespace Bot
         /// <returns>Dictionary containing score for each suit</returns>
         private Dictionary<Suit, int> ScoreSuitsForLead()
         {
-            Trump trump = Game.CurrentTrump;
             List<Card> candidateSuit;
             Card candidate;
             Dictionary<Suit, int> suitScores = new Dictionary<Suit, int>();
             int score = -1;
 
-            foreach (Suit suit in Suit.Suits.Values)
-            {
-                candidateSuit = SortedHand[suit];
+            if (Game is not null && Game.CurrentTrump is not null && SortedHand is not null) {
+                Trump trump = Game.CurrentTrump;
 
-                if (candidateSuit.Count == 0)
+                foreach (Suit suit in Suit.Suits.Values)
                 {
-                    score = 0;
-                }
-                else
-                {
-                    candidate = candidateSuit[0];
+                    candidateSuit = SortedHand[suit];
 
-                    if (trump.isSuit() && suit.Equals(trump.Suit))
-                    { // candidate suit is trump
-                        if (Tracker.IsHighest(candidate))
-                        { // highest trump
-                            score = 10;
-                        }
-                        else
-                        {
-                            score = 1;
-                        }
+                    if (candidateSuit.Count == 0)
+                    {
+                        score = 0;
                     }
                     else
                     {
-                        if (Tracker.IsHighest(candidate))
-                        { // is highest
-                            if (trump.isSuit() && candidateSuit.Count == 1)
-                            { // is lone
-                                if (!Tracker.IsLone(candidate))
-                                { // is unique
-                                    if (trump.isSuit() && trump.SameColour.Equals(suit))
-                                    { // is same colour
-                                        score = 6;
+                        candidate = candidateSuit[0];
+
+                        if (trump.isSuit() && suit.Equals(trump.Suit))
+                        { // candidate suit is trump
+                            if (Tracker.IsHighest(candidate))
+                            { // highest trump
+                                score = 10;
+                            }
+                            else
+                            {
+                                score = 1;
+                            }
+                        }
+                        else
+                        {
+                            if (Tracker.IsHighest(candidate))
+                            { // is highest
+                                if (trump.isSuit() && candidateSuit.Count == 1)
+                                { // is lone
+                                    if (!Tracker.IsLone(candidate))
+                                    { // is unique
+                                        if (trump.isSuit() && trump.SameColour.Equals(suit))
+                                        { // is same colour
+                                            score = 6;
+                                        }
+                                        else
+                                        { // opposite colour
+                                            score = 8;
+                                        }
                                     }
                                     else
-                                    { // opposite colour
-                                        score = 8;
+                                    { // non-unique
+                                        if (trump.isSuit() && trump.SameColour.Equals(suit))
+                                        { // is same colour
+                                            score = 7;
+                                        }
+                                        else
+                                        { // opposite colour
+                                            score = 9;
+                                        }
                                     }
                                 }
                                 else
-                                { // non-unique
-                                    if (trump.isSuit() && trump.SameColour.Equals(suit))
-                                    { // is same colour
-                                        score = 7;
+                                { // is not lone
+                                    if (!Tracker.IsLone(candidate))
+                                    { // is unique
+                                        if (trump.isSuit() && trump.SameColour.Equals(suit))
+                                        { // is same colour
+                                            score = 2;
+                                        }
+                                        else
+                                        { // opposite colour
+                                            score = 4;
+                                        }
                                     }
                                     else
-                                    { // opposite colour
-                                        score = 9;
+                                    { // non-unique
+                                        if (trump.isSuit() && trump.SameColour.Equals(suit))
+                                        { // is same colour
+                                            score = 3;
+                                        }
+                                        else
+                                        { // opposite colour
+                                            score = 5;
+                                        }
                                     }
                                 }
                             }
                             else
-                            { // is not lone
-                                if (!Tracker.IsLone(candidate))
-                                { // is unique
-                                    if (trump.isSuit() && trump.SameColour.Equals(suit))
-                                    { // is same colour
-                                        score = 2;
-                                    }
-                                    else
-                                    { // opposite colour
-                                        score = 4;
-                                    }
-                                }
-                                else
-                                { // non-unique
-                                    if (trump.isSuit() && trump.SameColour.Equals(suit))
-                                    { // is same colour
-                                        score = 3;
-                                    }
-                                    else
-                                    { // opposite colour
-                                        score = 5;
-                                    }
-                                }
+                            {
+                                score = 1;
                             }
                         }
-                        else
-                        {
-                            score = 1;
-                        }
                     }
-                }
 
-                suitScores.Add(suit, score);
+                    suitScores.Add(suit, score);
+                }
             }
 
             return suitScores;
@@ -1158,13 +1157,13 @@ namespace Bot
         /// Choose a card to lead
         /// </summary>
         /// <returns>best card in hand to lead</returns>
-        private Card PickCardToLead()
+        private Card? PickCardToLead()
         {
             int score;
             int highestScore = -1;
             Dictionary<Suit, int> suitScores = ScoreSuitsForLead();
             List<Suit> candidateSuits = new List<Suit>();
-            List<Card> candidateCards;
+            List<Card> candidateCards = new List<Card>();
             Random random = new Random();
             int suitChooser;
 
@@ -1193,14 +1192,16 @@ namespace Bot
                 return null; // no cards are high so leave it to PickLowestCard
             }
 
-            if (candidateSuits.Count == 1)
-            { // there is a clear winner, so return the highest card in that suit
-                candidateCards = SortedHand[candidateSuits[0]];
-            }
-            else
-            {
-                suitChooser = Math.Abs(random.Next()) % candidateSuits.Count;
-                candidateCards = SortedHand[candidateSuits[suitChooser]];
+            if (SortedHand is not null) {
+                if (candidateSuits.Count == 1)
+                { // there is a clear winner, so return the highest card in that suit
+                    candidateCards = SortedHand[candidateSuits[0]];
+                }
+                else
+                {
+                    suitChooser = Math.Abs(random.Next()) % candidateSuits.Count;
+                    candidateCards = SortedHand[candidateSuits[suitChooser]];
+                }
             }
 
             // if (DEBUG_MODE_PLAYING)
@@ -1216,17 +1217,19 @@ namespace Bot
         private void PrintSortedHand()
         {
             System.Console.WriteLine("Current Hand:");
-            foreach (List<Card> cards in SortedHand.Values)
-            {
-                if (cards.Count > 0)
+            if (SortedHand is not null) {
+                foreach (List<Card> cards in SortedHand.Values)
                 {
-                    System.Console.WriteLine("\t" + cards[0].Suit.ToString() + ":");
+                    if (cards.Count > 0)
+                    {
+                        System.Console.WriteLine("\t" + cards[0].Suit.ToString() + ":");
+                    }
+                    foreach (Card card in cards)
+                    {
+                        System.Console.WriteLine(" " + card.Rank.ShortName);
+                    }
+                    System.Console.WriteLine();
                 }
-                foreach (Card card in cards)
-                {
-                    System.Console.WriteLine(" " + card.Rank.ShortName);
-                }
-                System.Console.WriteLine();
             }
         }
 
@@ -1235,18 +1238,21 @@ namespace Bot
         /// </summary>
         /// <param name="cardToBeat">currently winning card</param>
         /// <returns>a card that can minimally beat the currently winning card</returns>
-        private Card FindLowestWinningCard(List<Card> legalCards, Card cardToBeat)
+        private Card? FindLowestWinningCard(List<Card> legalCards, Card cardToBeat)
         {
-            Trump trump = Game.CurrentTrump;
-            Suit suitLead = Card.FromProto(Game.LeadCard.Card).EffectiveSuit(trump);
-            Card chosenCard = null;
-
-            foreach (Card card in legalCards)
+            Card? chosenCard = null;
+            if (Game is not null && Game.CurrentTrump is not null && Game.LeadCard is not null && Game.LeadCard.Card is not null)
             {
-                if (IsCardBetter(cardToBeat, card, trump, suitLead)
-                        && (chosenCard == null || IsCardBetter(card, chosenCard, trump, suitLead)))
+                Trump trump = Game.CurrentTrump;
+                Suit suitLead = Card.FromProto(Game.LeadCard.Card).EffectiveSuit(trump);
+
+                foreach (Card card in legalCards)
                 {
-                    chosenCard = card;
+                    if (IsCardBetter(cardToBeat, card, trump, suitLead)
+                            && (chosenCard is null || IsCardBetter(card, chosenCard, trump, suitLead)))
+                    {
+                        chosenCard = card;
+                    }
                 }
             }
 
@@ -1259,76 +1265,84 @@ namespace Bot
         /// <returns>the card chosen</returns>
         private Card DecideCard(List<Card> legalCards)
         {
-            bool isLeader = Game.LeadCard == null;
-            Card cardToPlay = null;
-            Trump trump = Game.CurrentTrump;
+            Card? cardToPlay = PickLowestCard();
 
-            // if (DEBUG_MODE_PLAYING)
-            // {
-            //     PrintSortedHand();
-            //     System.Console.WriteLine("Deciding card...");
-            // }
+            if (Game is not null && Game.CurrentTrump is not null && SortedHand is not null)
+            {
+                bool isLeader = Game.LeadCard is null;
+                Trump trump = Game.CurrentTrump;
 
-            if (isLeader)
-            {
-                cardToPlay = PickCardToLead();
-                if (cardToPlay == null)
+                // if (DEBUG_MODE_PLAYING)
+                // {
+                //     PrintSortedHand();
+                //     System.Console.WriteLine("Deciding card...");
+                // }
+
+                if (isLeader)
                 {
-                    cardToPlay = PickLowestCard();
-                }
-            }
-            else
-            {
-                Card winningCard = Tracker.BestInCurrentTrick;
-                bool teamIsWinning = SameTeam(Seat, (uint)Tracker.WinnerOfCurrentTrick);
-                bool winningCardIsHighestInSuit = Tracker.IsHighestExcluding(winningCard, SortedHand);
-                if (teamIsWinning && (winningCardIsHighestInSuit || (trump.isSuit() && winningCard.EffectiveSuit(trump).Equals(trump.Suit))))
-                {
-                    cardToPlay = PickLowestCard();
-                    // if (DEBUG_MODE_PLAYING)
-                    // {
-                    //     System.Console.WriteLine("throwing off - team is winning.");
-                    // }
+                    cardToPlay = PickCardToLead();
+                    if (cardToPlay is null)
+                    {
+                        cardToPlay = PickLowestCard();
+                    }
                 }
                 else
                 {
-                    if (Tracker.PlaysLast(Seat, Game.GameSettings.NumPlayers))
-                    { // beat with lowest winning card
-                        cardToPlay = FindLowestWinningCard(legalCards, winningCard);
-                        // if (DEBUG_MODE_PLAYING)
-                        // {
-                        //     System.Console.WriteLine("last player - using lowest winning card if possible...");
-                        // }
-                    }
-                    else
+                    Card? winningCard = Tracker.BestInCurrentTrick;
+                    if (winningCard is not null)
                     {
-                        cardToPlay = PickHighestCard();
-                    }
-                    if (cardToPlay == null)
-                    {
-                        cardToPlay = PickLowestCard();
-                    }
-                    if (!IsCardBetter(winningCard, cardToPlay, trump, Card.FromProto(Game.LeadCard.Card).EffectiveSuit(trump)))
-                    {
-                        cardToPlay = PickLowestCard();
-                        // if (DEBUG_MODE_PLAYING)
-                        // {
-                        //     System.Console.WriteLine("throwing off.");
-                        // }
-                    }
-                    else
-                    {
-                        // if (DEBUG_MODE_PLAYING)
-                        // {
-                        //     System.Console.WriteLine("trying to win.");
-                        // }
+                        bool teamIsWinning = SameTeam(Seat, (uint)Tracker.WinnerOfCurrentTrick);
+                        bool winningCardIsHighestInSuit = Tracker.IsHighestExcluding(winningCard, SortedHand);
+                        if (teamIsWinning && (winningCardIsHighestInSuit || (trump.isSuit() && winningCard.EffectiveSuit(trump).Equals(trump.Suit))))
+                        {
+                            cardToPlay = PickLowestCard();
+                            // if (DEBUG_MODE_PLAYING)
+                            // {
+                            //     System.Console.WriteLine("throwing off - team is winning.");
+                            // }
+                        }
+                        else
+                        {
+                            if (Tracker.PlaysLast(Seat, Game.GameSettings.NumPlayers))
+                            { // beat with lowest winning card
+                                cardToPlay = FindLowestWinningCard(legalCards, winningCard);
+                                // if (DEBUG_MODE_PLAYING)
+                                // {
+                                //     System.Console.WriteLine("last player - using lowest winning card if possible...");
+                                // }
+                            }
+                            else
+                            {
+                                cardToPlay = PickHighestCard();
+                            }
+                            if (cardToPlay is null)
+                            {
+                                cardToPlay = PickLowestCard();
+                            }
+                            if (Game.LeadCard is not null && !IsCardBetter(winningCard, cardToPlay, trump, Card.FromProto(Game.LeadCard.Card).EffectiveSuit(trump)))
+                            {
+                                cardToPlay = PickLowestCard();
+                                // if (DEBUG_MODE_PLAYING)
+                                // {
+                                //     System.Console.WriteLine("throwing off.");
+                                // }
+                            }
+                            else
+                            {
+                                // if (DEBUG_MODE_PLAYING)
+                                // {
+                                //     System.Console.WriteLine("trying to win.");
+                                // }
+                            }
+                        }
                     }
                 }
+
+                // Thread.Sleep(CARD_DELAY);
+
+                SortedHand[cardToPlay.EffectiveSuit(trump)].Remove(cardToPlay);
             }
 
-            // Thread.Sleep(CARD_DELAY);
-
-            SortedHand[cardToPlay.EffectiveSuit(trump)].Remove(cardToPlay);
             return cardToPlay;
         }
 
@@ -1386,38 +1400,41 @@ namespace Bot
         /// Choose a card to give to the person shooting.
         /// </summary>
         /// <returns>best card in hand</returns>
-        private Card DecideTransferCard()
+        private Card? DecideTransferCard()
         {
-            Trump trump = Game.CurrentTrump;
-
-            Card transferCard = null;
+            Card? transferCard = null;
             int candidateRank;
             int cardsInSuit;
 
-            if (trump.isSuit())
+            if (Game is not null && Game.CurrentTrump is not null && SortedHand is not null)
             {
-                Suit trumpSuit = trump.Suit;
+                Trump trump = Game.CurrentTrump;
 
-                if (SortedHand[trumpSuit].Count > 0) return SortedHand[trumpSuit][0]; // Bot has trump, so return highest
-            }
-
-            foreach (Suit suit in SortedHand.Keys)
-            {
-                cardsInSuit = SortedHand[suit].Count;
-
-                if (cardsInSuit > 0)
+                if (trump.isSuit())
                 {
-                    candidateRank = SortedHand[suit][0].Rank.Value;
+                    Suit trumpSuit = trump.Suit;
 
-                    if (trump.Equals(Trump.Low))
+                    if (SortedHand[trumpSuit].Count > 0) return SortedHand[trumpSuit][0]; // Bot has trump, so return highest
+                }
+
+                foreach (Suit suit in SortedHand.Keys)
+                {
+                    cardsInSuit = SortedHand[suit].Count;
+
+                    if (cardsInSuit > 0)
                     {
-                        if (transferCard == null || candidateRank < transferCard.Rank.Value)
-                            transferCard = SortedHand[suit][0];
-                    }
-                    else
-                    {
-                        if (transferCard == null || candidateRank > transferCard.Rank.Value)
-                            transferCard = SortedHand[suit][0];
+                        candidateRank = SortedHand[suit][0].Rank.Value;
+
+                        if (trump.Equals(Trump.Low))
+                        {
+                            if (transferCard is null || candidateRank < transferCard.Rank.Value)
+                                transferCard = SortedHand[suit][0];
+                        }
+                        else
+                        {
+                            if (transferCard is null || candidateRank > transferCard.Rank.Value)
+                                transferCard = SortedHand[suit][0];
+                        }
                     }
                 }
             }
@@ -1450,10 +1467,10 @@ namespace Bot
         private static bool IsCardLegal(List<Card> hand, Card card,
                 Card? leadCard, Trump trump, out string reason)
         {
-            Suit leadSuit = null;
+            Suit? leadSuit = null;
             reason = string.Empty;
 
-            if (leadCard != null)
+            if (leadCard is not null)
             {
                 leadSuit = leadCard.EffectiveSuit(trump);
             }
@@ -1734,10 +1751,10 @@ namespace Bot
             public Dictionary<Suit, Card> BestCardsLeft = new Dictionary<Suit, Card>();
             public Dictionary<Suit, int> NumBestCardsLeft = new Dictionary<Suit, int>();
             public Dictionary<Suit, int> NumTotalCardsLeft = new Dictionary<Suit, int>();
-            public Trump CurrentTrump;
-            public Suit SuitLeadInCurrentTrick;
+            public Trump? CurrentTrump;
+            public Suit? SuitLeadInCurrentTrick;
             public int LeadPositionInCurrentTrick;
-            public Card BestInCurrentTrick;
+            public Card? BestInCurrentTrick;
             public int WinnerOfCurrentTrick;
 
             private const bool DEBUG_MODE = false;
@@ -1776,137 +1793,144 @@ namespace Bot
 
             public void PlayCard(Card card, int seat)
             {
-                Suit cSuit = card.EffectiveSuit(CurrentTrump);
-                ContextualRank cRank = card.EffectiveRank(CurrentTrump);
-                Card newCard = null;
-                Rank newRank = null;
-                Suit newSuit = null;
+                Card? newCard = null;
+                Rank? newRank = null;
+                Suit? newSuit = null;
                 bool cardOK = false;
                 int numCardsLeft;
 
-                if (LeadPositionInCurrentTrick == -1)
+                if (CurrentTrump is not null)
                 {
-                    LeadPositionInCurrentTrick = seat;
-                    SuitLeadInCurrentTrick = card.EffectiveSuit(CurrentTrump);
-                }
+                    Suit cSuit = card.EffectiveSuit(CurrentTrump);
+                    ContextualRank cRank = card.EffectiveRank(CurrentTrump);
 
-                if (BestInCurrentTrick == null || IsCardBetter(BestInCurrentTrick, card, CurrentTrump, BestInCurrentTrick.EffectiveSuit(CurrentTrump)))
-                {
-                    BestInCurrentTrick = card;
-                    WinnerOfCurrentTrick = seat;
-                }
+                    if (LeadPositionInCurrentTrick == -1)
+                    {
+                        LeadPositionInCurrentTrick = seat;
+                        SuitLeadInCurrentTrick = card.EffectiveSuit(CurrentTrump);
+                    }
 
-                CardsLeft.Remove(card);
-                // if (DEBUG_MODE)
-                // {
-                //     System.Console.WriteLine(card.getRank().getShortName() + " of " + card.Suit.ToString() + " removed from Cards Left");
-                // }
-                CardsPlayed.Add(card);
-                // if (DEBUG_MODE)
-                // {
-                //     System.Console.WriteLine(card.getRank().getShortName() + " of " + card.Suit.ToString() + " added to Cards Played");
-                // }
-                numCardsLeft = NumTotalCardsLeft[cSuit];
-                NumTotalCardsLeft.Remove(cSuit);
-                NumTotalCardsLeft.Add(cSuit, numCardsLeft - 1);
-                if (NumTotalCardsLeft[cSuit] == 0)
-                {
-                    BestCardsLeft.Remove(cSuit);
-                    NumBestCardsLeft.Remove(cSuit);
-                    NumBestCardsLeft.Add(cSuit, 0);
-                    return;
-                }
+                    if (BestInCurrentTrick is null || IsCardBetter(BestInCurrentTrick, card, CurrentTrump, BestInCurrentTrick.EffectiveSuit(CurrentTrump)))
+                    {
+                        BestInCurrentTrick = card;
+                        WinnerOfCurrentTrick = seat;
+                    }
 
-                if (BestCardsLeft[cSuit].Equals(card))
-                {
-                    numCardsLeft = NumBestCardsLeft[cSuit];
-                    NumBestCardsLeft.Remove(cSuit);
-                    NumBestCardsLeft.Add(cSuit, numCardsLeft - 1);
+                    CardsLeft.Remove(card);
                     // if (DEBUG_MODE)
                     // {
-                    //     System.Console.WriteLine(card.getRank().getShortName() + " of " + card.Suit.ToString() + " removed from Best Cards Left");
+                    //     System.Console.WriteLine(card.getRank().getShortName() + " of " + card.Suit.ToString() + " removed from Cards Left");
                     // }
-
-                    if (NumBestCardsLeft[cSuit] == 0)
+                    CardsPlayed.Add(card);
+                    // if (DEBUG_MODE)
+                    // {
+                    //     System.Console.WriteLine(card.getRank().getShortName() + " of " + card.Suit.ToString() + " added to Cards Played");
+                    // }
+                    numCardsLeft = NumTotalCardsLeft[cSuit];
+                    NumTotalCardsLeft.Remove(cSuit);
+                    NumTotalCardsLeft.Add(cSuit, numCardsLeft - 1);
+                    if (NumTotalCardsLeft[cSuit] == 0)
                     {
-                        while (!cardOK)
+                        BestCardsLeft.Remove(cSuit);
+                        NumBestCardsLeft.Remove(cSuit);
+                        NumBestCardsLeft.Add(cSuit, 0);
+                        return;
+                    }
+
+                    if (BestCardsLeft[cSuit].Equals(card))
+                    {
+                        numCardsLeft = NumBestCardsLeft[cSuit];
+                        NumBestCardsLeft.Remove(cSuit);
+                        NumBestCardsLeft.Add(cSuit, numCardsLeft - 1);
+                        // if (DEBUG_MODE)
+                        // {
+                        //     System.Console.WriteLine(card.getRank().getShortName() + " of " + card.Suit.ToString() + " removed from Best Cards Left");
+                        // }
+
+                        if (NumBestCardsLeft[cSuit] == 0)
                         {
-                            if (CurrentTrump.Equals(Trump.Low) && !cRank.Equals(ContextualRank.ACE))
-                            { // trump is low
-                                newRank = Rank.Ranks[cRank.Ranking + 1];
-                                newSuit = cSuit;
-                            }
-                            else if ((CurrentTrump.Equals(Trump.High) || !cSuit.Equals(CurrentTrump.Suit)) && !cRank.Equals(ContextualRank.NINE))
-                            { // trump is high or card isn't trump
-                                if (CurrentTrump.isSuit() && CurrentTrump.Suit.Equals(CurrentTrump.SameColour) && cRank.Equals(ContextualRank.QUEEN))
-                                {
-                                    newRank = Rank.Ten;
-                                }
-                                else
-                                {
-                                    newRank = Rank.Ranks[cRank.Ranking - 1];
-                                }
-                                newSuit = cSuit;
-                            }
-                            else if (cSuit.Equals(CurrentTrump.Suit) && !cRank.Equals(ContextualRank.NINE))
-                            { // card played is trump
-                                if (cRank.Equals(ContextualRank.RIGHT))
-                                {
-                                    newRank = Rank.Jack;
-                                    newSuit = CurrentTrump.SameColour;
-                                }
-                                else if (cRank.Equals(ContextualRank.LEFT))
-                                {
-                                    newRank = Rank.Ace;
+                            while (!cardOK)
+                            {
+                                if (CurrentTrump.Equals(Trump.Low) && !cRank.Equals(ContextualRank.ACE))
+                                { // trump is low
+                                    newRank = Rank.Ranks[cRank.Ranking + 1];
                                     newSuit = cSuit;
                                 }
-                                else if (cRank.Equals(ContextualRank.ACE))
-                                {
-                                    newRank = Rank.King;
+                                else if ((CurrentTrump.Equals(Trump.High) || !cSuit.Equals(CurrentTrump.Suit)) && !cRank.Equals(ContextualRank.NINE))
+                                { // trump is high or card isn't trump
+                                    if (CurrentTrump.isSuit() && CurrentTrump.Suit.Equals(CurrentTrump.SameColour) && cRank.Equals(ContextualRank.QUEEN))
+                                    {
+                                        newRank = Rank.Ten;
+                                    }
+                                    else
+                                    {
+                                        newRank = Rank.Ranks[cRank.Ranking - 1];
+                                    }
                                     newSuit = cSuit;
                                 }
-                                else if (cRank.Equals(ContextualRank.KING))
-                                {
-                                    newRank = Rank.Queen;
-                                    newSuit = cSuit;
-                                }
-                                else if (cRank.Equals(ContextualRank.QUEEN))
-                                {
-                                    newRank = Rank.Ten;
-                                    newSuit = cSuit;
-                                }
-                                else if (cRank.Equals(ContextualRank.TEN))
-                                {
-                                    newRank = Rank.Nine;
-                                    newSuit = cSuit;
+                                else if (cSuit.Equals(CurrentTrump.Suit) && !cRank.Equals(ContextualRank.NINE))
+                                { // card played is trump
+                                    if (cRank.Equals(ContextualRank.RIGHT))
+                                    {
+                                        newRank = Rank.Jack;
+                                        newSuit = CurrentTrump.SameColour;
+                                    }
+                                    else if (cRank.Equals(ContextualRank.LEFT))
+                                    {
+                                        newRank = Rank.Ace;
+                                        newSuit = cSuit;
+                                    }
+                                    else if (cRank.Equals(ContextualRank.ACE))
+                                    {
+                                        newRank = Rank.King;
+                                        newSuit = cSuit;
+                                    }
+                                    else if (cRank.Equals(ContextualRank.KING))
+                                    {
+                                        newRank = Rank.Queen;
+                                        newSuit = cSuit;
+                                    }
+                                    else if (cRank.Equals(ContextualRank.QUEEN))
+                                    {
+                                        newRank = Rank.Ten;
+                                        newSuit = cSuit;
+                                    }
+                                    else if (cRank.Equals(ContextualRank.TEN))
+                                    {
+                                        newRank = Rank.Nine;
+                                        newSuit = cSuit;
+                                    }
+                                    else
+                                    {
+                                        return;
+                                    }
                                 }
                                 else
                                 {
                                     return;
                                 }
+                                newCard = new Card(newSuit, newRank);
+                                if (!CardsLeft.Contains(newCard))
+                                {
+                                    cRank = newCard.EffectiveRank(CurrentTrump);
+                                }
+                                else
+                                {
+                                    cardOK = true;
+                                }
                             }
-                            else
+                            if (newCard is not null)
                             {
-                                return;
+                                BestCardsLeft.Remove(cSuit);
+                                BestCardsLeft.Add(cSuit, newCard);
+                                NumBestCardsLeft.Remove(cSuit);
+                                NumBestCardsLeft.Add(cSuit, 2);
                             }
-                            newCard = new Card(newSuit, newRank);
-                            if (!CardsLeft.Contains(newCard))
-                            {
-                                cRank = newCard.EffectiveRank(CurrentTrump);
-                            }
-                            else
-                            {
-                                cardOK = true;
-                            }
+                            // if (DEBUG_MODE)
+                            // {
+                            //     System.Console.WriteLine(newCard.Rank.ShortName + " of " + newCard.Suit.ToString() + " added to Best Cards Left (x2)");
+                            // }
                         }
-                        BestCardsLeft.Remove(cSuit);
-                        BestCardsLeft.Add(cSuit, newCard);
-                        NumBestCardsLeft.Remove(cSuit);
-                        NumBestCardsLeft.Add(cSuit, 2);
-                        // if (DEBUG_MODE)
-                        // {
-                        //     System.Console.WriteLine(newCard.Rank.ShortName + " of " + newCard.Suit.ToString() + " added to Best Cards Left (x2)");
-                        // }
                     }
                 }
             }
@@ -1950,7 +1974,7 @@ namespace Bot
 
             public bool IsHighest(Card card)
             {
-                if (BestCardsLeft[card.EffectiveSuit(CurrentTrump)].Equals(card))
+                if (CurrentTrump is not null && BestCardsLeft[card.EffectiveSuit(CurrentTrump)].Equals(card))
                 {
                     return true;
                 }
@@ -1959,21 +1983,27 @@ namespace Bot
 
             public bool IsHighestExcluding(Card card, Dictionary<Suit, List<Card>> excluded)
             { // sloppy
-                Suit suit = card.EffectiveSuit(CurrentTrump);
                 List<Card> adjustedCardsLeft = new List<Card>(CardsLeft);
 
-                foreach (List<Card> cardsInSuit in excluded.Values)
+                if (CurrentTrump is not null)
                 {
-                    foreach (Card toRemove in cardsInSuit)
+                    Suit suit = card.EffectiveSuit(CurrentTrump);
+
+                    foreach (List<Card> cardsInSuit in excluded.Values)
                     {
-                        adjustedCardsLeft.Remove(toRemove);
+                        foreach (Card toRemove in cardsInSuit)
+                        {
+                            adjustedCardsLeft.Remove(toRemove);
+                        }
                     }
-                }
-                foreach (Card candidate in adjustedCardsLeft)
-                {
-                    if (candidate.EffectiveSuit(CurrentTrump).Equals(suit) && IsCardBetter(card, candidate, CurrentTrump, SuitLeadInCurrentTrick))
+                    foreach (Card candidate in adjustedCardsLeft)
                     {
-                        return false;
+                        if (SuitLeadInCurrentTrick is not null
+                            && candidate.EffectiveSuit(CurrentTrump).Equals(suit)
+                            && IsCardBetter(card, candidate, CurrentTrump, SuitLeadInCurrentTrick))
+                        {
+                            return false;
+                        }
                     }
                 }
                 return true;
