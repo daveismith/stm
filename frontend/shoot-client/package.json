@@ -13,7 +13,7 @@
     "@mui/styled-engine-sc": "^7.3.3",
     "@mui/system": "^7.1.0",
     "@types/node": "^24.10.1",
-    "@types/react": "^19.2.6",
+    "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "google-protobuf": "^4.0.0",
     "grpc-web": "^2.0.2",
