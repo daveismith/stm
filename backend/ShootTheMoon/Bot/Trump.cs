@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace Bot
+﻿namespace Bot
 {
     public class Trump
     {
@@ -26,10 +21,10 @@ namespace Bot
 
         public int Index { get; private set; }
 
-        public string Name { get; private set; }
-        public Suit Suit { get; private set; }
+        public string Name { get; private set; } = "Spades";
+        public Suit Suit { get; private set; } = Suit.Spades;
 
-        public Suit SameColour { get; private set; }
+        public Suit SameColour { get; private set; } = Suit.Clubs;
 
         public bool isSuit() {
             return Suit != null;
