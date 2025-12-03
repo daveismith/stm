@@ -17,7 +17,7 @@
     "@types/react-dom": "^19.2.3",
     "google-protobuf": "^4.0.0",
     "grpc-web": "^2.0.2",
-    "immer": "^10.2.0",
+    "immer": "^11.0.1",
     "proto": "file:src/proto",
     "react": "19.2.0",
     "react-dom": "19.2.0",
