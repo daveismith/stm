@@ -1,4 +1,6 @@
-﻿namespace ShootTheMoon.Game
+﻿using System.Collections.Generic;
+
+namespace ShootTheMoon.Game
 {
     public class GameSettings
     {

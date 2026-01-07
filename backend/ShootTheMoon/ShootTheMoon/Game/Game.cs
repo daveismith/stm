@@ -54,7 +54,6 @@ namespace ShootTheMoon.Game
         //public int InProgress { get; set; }
         public ImmutableList<Client> Clients { get; private set; }
         public Client[] Players { get; private set; }
-        public List<Bot> Bots { get; private set; }
 
         public bool AllPlayersReady { get { return (NumPlayersPresent > 0) && Array.TrueForAll(Players, value => { return value == null || value.Ready; }); } }
 
@@ -99,7 +98,6 @@ namespace ShootTheMoon.Game
             PlayedCards = new List<PlayedCard>();
             SkipSeats = new List<uint>();
             NumPlayersPresent = 0;
-            Bots = new List<Bot>();
 
             if (aDealer < 0 || aDealer >= Players.Length)
             {
