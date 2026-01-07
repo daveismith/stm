@@ -1,10 +1,13 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using Bot;
+class BotMaker
+{
+    static async Task Main(string[] args)
+    {
+        Bot.Bot bot = new Bot.Bot(BotProfile.DEFAULT);
 
-Console.WriteLine("Hello, World!");
+        bot.JoinGame(args[0]);
 
-Bot.Bot bot = new Bot.Bot(BotProfile.DEFAULT);
-
-bot.JoinGame("second-hand_revolution");
-
-await bot.GetNotifications();
+        await bot.GetNotifications();
+    }
+}

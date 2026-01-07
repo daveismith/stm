@@ -25,7 +25,7 @@ namespace Bot
         };
 
         public int Value { get; set; }
-        public string ShortName { get; set; }
-        public string LongName { get; set; }
+        public string ShortName { get; set; } = string.Empty;
+        public string LongName { get; set; } = string.Empty;
     }
 }

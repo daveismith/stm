@@ -64,9 +64,9 @@ namespace Bot
             return protoCard;
         }
 
-        public override bool Equals(object obj) => this.Equals(obj as Card);
+        public override bool Equals(object? obj) => this.Equals(obj as Card);
 
-        public bool Equals(Card p)
+        public bool Equals(Card? p)
         {
             if (p is null)
             {

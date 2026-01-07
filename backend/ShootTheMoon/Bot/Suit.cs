@@ -21,11 +21,15 @@ namespace Bot
         };
         public int Index { get; set; }
 
-        public string ShortName { get; set; }
-        public string LongName { get; set; }
+        public string ShortName { get; set; } = string.Empty;
+        public string LongName { get; set; } = string.Empty;
 
-        public override bool Equals(Object o)
+        public override bool Equals(Object? o)
         {
+            if (o is null)
+            {
+                return false;
+            }
             if (this == o)
             {
                 return true;
