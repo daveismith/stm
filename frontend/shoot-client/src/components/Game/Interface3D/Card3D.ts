@@ -23,7 +23,7 @@ import {
 import { GameSettings } from "./GameSettings3D";
 import { CardStack3D } from "./CardStack3D";
 import { baseRotation, baseRotationQuaternion, gaussianRandom } from "./SceneFunctions";
-import { Card as ProtoCard } from "../../../proto/shoot_pb";
+import { Card as ProtoCard } from "proto/shoot_pb";
 
 import cardTextures from "./resources/images/cards.png";
 import { GameState, SceneController } from "./SceneController";
@@ -777,7 +777,7 @@ class Card3D {
 
                 for (let j: number = 0; j < cardStack.index.length; j++) {
                     potentialMatch = cardStack.index[j];
-                    console.log("checking source card " + j + ": " +  + potentialMatch?.card.getRank() + potentialMatch?.card.getSuit());
+                    console.log("checking source card " + j + ": " + potentialMatch?.card.getRank() + potentialMatch?.card.getSuit());
 
                     if (potentialMatch && potentialMatch.equals(targetCard)) {
                         return [i, j];

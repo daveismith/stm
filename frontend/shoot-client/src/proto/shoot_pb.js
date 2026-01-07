@@ -13,7 +13,13 @@
 
 var jspb = require('google-protobuf');
 var goog = jspb;
-var global = Function('return this')();
+var global =
+    (typeof globalThis !== 'undefined' && globalThis) ||
+    (typeof window !== 'undefined' && window) ||
+    (typeof global !== 'undefined' && global) ||
+    (typeof self !== 'undefined' && self) ||
+    (function () { return this; }).call(null) ||
+    Function('return this')();
 
 goog.exportSymbol('proto.AssignBotRequest', null, global);
 goog.exportSymbol('proto.Bid', null, global);
@@ -733,8 +739,8 @@ proto.Card.prototype.toObject = function(opt_includeInstance) {
  */
 proto.Card.toObject = function(includeInstance, msg) {
   var f, obj = {
-    suit: jspb.Message.getFieldWithDefault(msg, 1, 0),
-    rank: jspb.Message.getFieldWithDefault(msg, 2, 0)
+suit: jspb.Message.getFieldWithDefault(msg, 1, 0),
+rank: jspb.Message.getFieldWithDefault(msg, 2, 0)
   };
 
   if (includeInstance) {
@@ -917,9 +923,9 @@ proto.StatusResponse.prototype.toObject = function(opt_includeInstance) {
  */
 proto.StatusResponse.toObject = function(includeInstance, msg) {
   var f, obj = {
-    success: jspb.Message.getBooleanFieldWithDefault(msg, 1, false),
-    errorNum: jspb.Message.getFieldWithDefault(msg, 2, 0),
-    errorText: jspb.Message.getFieldWithDefault(msg, 3, "")
+success: jspb.Message.getBooleanFieldWithDefault(msg, 1, false),
+errorNum: jspb.Message.getFieldWithDefault(msg, 2, 0),
+errorText: jspb.Message.getFieldWithDefault(msg, 3, "")
   };
 
   if (includeInstance) {
@@ -1107,11 +1113,11 @@ proto.SeatDetails.prototype.toObject = function(opt_includeInstance) {
  */
 proto.SeatDetails.toObject = function(includeInstance, msg) {
   var f, obj = {
-    seat: jspb.Message.getFieldWithDefault(msg, 1, 0),
-    ready: jspb.Message.getBooleanFieldWithDefault(msg, 2, false),
-    empty: jspb.Message.getBooleanFieldWithDefault(msg, 3, false),
-    human: jspb.Message.getBooleanFieldWithDefault(msg, 4, false),
-    name: jspb.Message.getFieldWithDefault(msg, 5, "")
+seat: jspb.Message.getFieldWithDefault(msg, 1, 0),
+ready: jspb.Message.getBooleanFieldWithDefault(msg, 2, false),
+empty: jspb.Message.getBooleanFieldWithDefault(msg, 3, false),
+human: jspb.Message.getBooleanFieldWithDefault(msg, 4, false),
+name: jspb.Message.getFieldWithDefault(msg, 5, "")
   };
 
   if (includeInstance) {
@@ -1364,7 +1370,7 @@ proto.SeatsList.prototype.toObject = function(opt_includeInstance) {
  */
 proto.SeatsList.toObject = function(includeInstance, msg) {
   var f, obj = {
-    seatsList: jspb.Message.toObjectList(msg.getSeatsList(),
+seatsList: jspb.Message.toObjectList(msg.getSeatsList(),
     proto.SeatDetails.toObject, includeInstance)
   };
 
@@ -1517,7 +1523,7 @@ proto.CreateGameRequest.prototype.toObject = function(opt_includeInstance) {
  */
 proto.CreateGameRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
-    seats: jspb.Message.getFieldWithDefault(msg, 1, 0)
+seats: jspb.Message.getFieldWithDefault(msg, 1, 0)
   };
 
   if (includeInstance) {
@@ -1647,7 +1653,7 @@ proto.CreateGameResponse.prototype.toObject = function(opt_includeInstance) {
  */
 proto.CreateGameResponse.toObject = function(includeInstance, msg) {
   var f, obj = {
-    uuid: jspb.Message.getFieldWithDefault(msg, 1, "")
+uuid: jspb.Message.getFieldWithDefault(msg, 1, "")
   };
 
   if (includeInstance) {
@@ -1777,8 +1783,8 @@ proto.JoinGameRequest.prototype.toObject = function(opt_includeInstance) {
  */
 proto.JoinGameRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
-    uuid: jspb.Message.getFieldWithDefault(msg, 1, ""),
-    name: jspb.Message.getFieldWithDefault(msg, 2, "")
+uuid: jspb.Message.getFieldWithDefault(msg, 1, ""),
+name: jspb.Message.getFieldWithDefault(msg, 2, "")
   };
 
   if (includeInstance) {
@@ -1937,8 +1943,8 @@ proto.JoinGameResponse.prototype.toObject = function(opt_includeInstance) {
  */
 proto.JoinGameResponse.toObject = function(includeInstance, msg) {
   var f, obj = {
-    token: jspb.Message.getFieldWithDefault(msg, 1, ""),
-    seats: jspb.Message.getFieldWithDefault(msg, 2, 0)
+token: jspb.Message.getFieldWithDefault(msg, 1, ""),
+seats: jspb.Message.getFieldWithDefault(msg, 2, 0)
   };
 
   if (includeInstance) {
@@ -2097,7 +2103,7 @@ proto.SetReadyStatusRequest.prototype.toObject = function(opt_includeInstance) {
  */
 proto.SetReadyStatusRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
-    ready: jspb.Message.getBooleanFieldWithDefault(msg, 1, false)
+ready: jspb.Message.getBooleanFieldWithDefault(msg, 1, false)
   };
 
   if (includeInstance) {
@@ -2335,9 +2341,9 @@ proto.Hand.prototype.toObject = function(opt_includeInstance) {
  */
 proto.Hand.toObject = function(includeInstance, msg) {
   var f, obj = {
-    handList: jspb.Message.toObjectList(msg.getHandList(),
+handList: jspb.Message.toObjectList(msg.getHandList(),
     proto.Card.toObject, includeInstance),
-    dealer: jspb.Message.getFieldWithDefault(msg, 2, 0)
+dealer: jspb.Message.getFieldWithDefault(msg, 2, 0)
   };
 
   if (includeInstance) {
@@ -2619,10 +2625,10 @@ proto.Bid.prototype.toObject = function(opt_includeInstance) {
  */
 proto.Bid.toObject = function(includeInstance, msg) {
   var f, obj = {
-    tricks: jspb.Message.getFieldWithDefault(msg, 1, 0),
-    shootNum: jspb.Message.getFieldWithDefault(msg, 2, 0),
-    trump: jspb.Message.getFieldWithDefault(msg, 3, 0),
-    seat: jspb.Message.getFieldWithDefault(msg, 4, 0)
+tricks: jspb.Message.getFieldWithDefault(msg, 1, 0),
+shootNum: jspb.Message.getFieldWithDefault(msg, 2, 0),
+trump: jspb.Message.getFieldWithDefault(msg, 3, 0),
+seat: jspb.Message.getFieldWithDefault(msg, 4, 0)
   };
 
   if (includeInstance) {
@@ -2846,9 +2852,9 @@ proto.BidList.prototype.toObject = function(opt_includeInstance) {
  */
 proto.BidList.toObject = function(includeInstance, msg) {
   var f, obj = {
-    bidsList: jspb.Message.toObjectList(msg.getBidsList(),
+bidsList: jspb.Message.toObjectList(msg.getBidsList(),
     proto.Bid.toObject, includeInstance),
-    currentBidder: jspb.Message.getFieldWithDefault(msg, 2, 0)
+currentBidder: jspb.Message.getFieldWithDefault(msg, 2, 0)
   };
 
   if (includeInstance) {
@@ -3029,7 +3035,7 @@ proto.TakeSeatRequest.prototype.toObject = function(opt_includeInstance) {
  */
 proto.TakeSeatRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
-    seat: jspb.Message.getFieldWithDefault(msg, 1, 0)
+seat: jspb.Message.getFieldWithDefault(msg, 1, 0)
   };
 
   if (includeInstance) {
@@ -3159,7 +3165,7 @@ proto.AssignBotRequest.prototype.toObject = function(opt_includeInstance) {
  */
 proto.AssignBotRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
-    seat: jspb.Message.getFieldWithDefault(msg, 1, 0)
+seat: jspb.Message.getFieldWithDefault(msg, 1, 0)
   };
 
   if (includeInstance) {
@@ -3289,8 +3295,8 @@ proto.TransferRequest.prototype.toObject = function(opt_includeInstance) {
  */
 proto.TransferRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
-    fromSeat: jspb.Message.getFieldWithDefault(msg, 1, 0),
-    toSeat: jspb.Message.getFieldWithDefault(msg, 2, 0)
+fromSeat: jspb.Message.getFieldWithDefault(msg, 1, 0),
+toSeat: jspb.Message.getFieldWithDefault(msg, 2, 0)
   };
 
   if (includeInstance) {
@@ -3449,9 +3455,9 @@ proto.Transfer.prototype.toObject = function(opt_includeInstance) {
  */
 proto.Transfer.toObject = function(includeInstance, msg) {
   var f, obj = {
-    fromSeat: jspb.Message.getFieldWithDefault(msg, 1, 0),
-    toSeat: jspb.Message.getFieldWithDefault(msg, 2, 0),
-    card: (f = msg.getCard()) && proto.Card.toObject(includeInstance, f)
+fromSeat: jspb.Message.getFieldWithDefault(msg, 1, 0),
+toSeat: jspb.Message.getFieldWithDefault(msg, 2, 0),
+card: (f = msg.getCard()) && proto.Card.toObject(includeInstance, f)
   };
 
   if (includeInstance) {
@@ -3660,8 +3666,8 @@ proto.TransferComplete.prototype.toObject = function(opt_includeInstance) {
  */
 proto.TransferComplete.toObject = function(includeInstance, msg) {
   var f, obj = {
-    fromSeat: jspb.Message.getFieldWithDefault(msg, 1, 0),
-    toSeat: jspb.Message.getFieldWithDefault(msg, 2, 0)
+fromSeat: jspb.Message.getFieldWithDefault(msg, 1, 0),
+toSeat: jspb.Message.getFieldWithDefault(msg, 2, 0)
   };
 
   if (includeInstance) {
@@ -3921,8 +3927,8 @@ proto.ThrowawayResponse.prototype.toObject = function(opt_includeInstance) {
  */
 proto.ThrowawayResponse.toObject = function(includeInstance, msg) {
   var f, obj = {
-    finished: jspb.Message.getBooleanFieldWithDefault(msg, 1, false),
-    cardRemoved: (f = msg.getCardRemoved()) && proto.Card.toObject(includeInstance, f)
+finished: jspb.Message.getBooleanFieldWithDefault(msg, 1, false),
+cardRemoved: (f = msg.getCardRemoved()) && proto.Card.toObject(includeInstance, f)
   };
 
   if (includeInstance) {
@@ -4102,10 +4108,10 @@ proto.TrumpUpdate.prototype.toObject = function(opt_includeInstance) {
  */
 proto.TrumpUpdate.toObject = function(includeInstance, msg) {
   var f, obj = {
-    tricks: jspb.Message.getFieldWithDefault(msg, 1, 0),
-    shootNum: jspb.Message.getFieldWithDefault(msg, 2, 0),
-    trump: jspb.Message.getFieldWithDefault(msg, 3, 0),
-    seat: jspb.Message.getFieldWithDefault(msg, 4, 0)
+tricks: jspb.Message.getFieldWithDefault(msg, 1, 0),
+shootNum: jspb.Message.getFieldWithDefault(msg, 2, 0),
+trump: jspb.Message.getFieldWithDefault(msg, 3, 0),
+seat: jspb.Message.getFieldWithDefault(msg, 4, 0)
   };
 
   if (includeInstance) {
@@ -4322,8 +4328,8 @@ proto.PlayCardRequest.prototype.toObject = function(opt_includeInstance) {
  */
 proto.PlayCardRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
-    seat: jspb.Message.getFieldWithDefault(msg, 1, 0),
-    timeout: jspb.Message.getFieldWithDefault(msg, 2, 0)
+seat: jspb.Message.getFieldWithDefault(msg, 1, 0),
+timeout: jspb.Message.getFieldWithDefault(msg, 2, 0)
   };
 
   if (includeInstance) {
@@ -4482,8 +4488,8 @@ proto.UpdateTimeout.prototype.toObject = function(opt_includeInstance) {
  */
 proto.UpdateTimeout.toObject = function(includeInstance, msg) {
   var f, obj = {
-    seat: jspb.Message.getFieldWithDefault(msg, 1, 0),
-    timeout: jspb.Message.getFieldWithDefault(msg, 2, 0)
+seat: jspb.Message.getFieldWithDefault(msg, 1, 0),
+timeout: jspb.Message.getFieldWithDefault(msg, 2, 0)
   };
 
   if (includeInstance) {
@@ -4642,9 +4648,9 @@ proto.PlayedCard.prototype.toObject = function(opt_includeInstance) {
  */
 proto.PlayedCard.toObject = function(includeInstance, msg) {
   var f, obj = {
-    order: jspb.Message.getFieldWithDefault(msg, 1, 0),
-    seat: jspb.Message.getFieldWithDefault(msg, 2, 0),
-    card: (f = msg.getCard()) && proto.Card.toObject(includeInstance, f)
+order: jspb.Message.getFieldWithDefault(msg, 1, 0),
+seat: jspb.Message.getFieldWithDefault(msg, 2, 0),
+card: (f = msg.getCard()) && proto.Card.toObject(includeInstance, f)
   };
 
   if (includeInstance) {
@@ -4860,9 +4866,9 @@ proto.PlayedCards.prototype.toObject = function(opt_includeInstance) {
  */
 proto.PlayedCards.toObject = function(includeInstance, msg) {
   var f, obj = {
-    cardsList: jspb.Message.toObjectList(msg.getCardsList(),
+cardsList: jspb.Message.toObjectList(msg.getCardsList(),
     proto.PlayedCard.toObject, includeInstance),
-    winningSeat: jspb.Message.getFieldWithDefault(msg, 2, 0)
+winningSeat: jspb.Message.getFieldWithDefault(msg, 2, 0)
   };
 
   if (includeInstance) {
@@ -5043,9 +5049,9 @@ proto.Tricks.prototype.toObject = function(opt_includeInstance) {
  */
 proto.Tricks.toObject = function(includeInstance, msg) {
   var f, obj = {
-    team1: jspb.Message.getFieldWithDefault(msg, 1, 0),
-    team2: jspb.Message.getFieldWithDefault(msg, 2, 0),
-    tricksRemainingInHand: jspb.Message.getFieldWithDefault(msg, 3, 0)
+team1: jspb.Message.getFieldWithDefault(msg, 1, 0),
+team2: jspb.Message.getFieldWithDefault(msg, 2, 0),
+tricksRemainingInHand: jspb.Message.getFieldWithDefault(msg, 3, 0)
   };
 
   if (includeInstance) {
@@ -5233,8 +5239,8 @@ proto.Scores.prototype.toObject = function(opt_includeInstance) {
  */
 proto.Scores.toObject = function(includeInstance, msg) {
   var f, obj = {
-    team1: jspb.Message.getFieldWithDefault(msg, 1, 0),
-    team2: jspb.Message.getFieldWithDefault(msg, 2, 0)
+team1: jspb.Message.getFieldWithDefault(msg, 1, 0),
+team2: jspb.Message.getFieldWithDefault(msg, 2, 0)
   };
 
   if (includeInstance) {
@@ -5393,7 +5399,7 @@ proto.EndGame.prototype.toObject = function(opt_includeInstance) {
  */
 proto.EndGame.toObject = function(includeInstance, msg) {
   var f, obj = {
-    winningTeam: jspb.Message.getFieldWithDefault(msg, 1, 0)
+winningTeam: jspb.Message.getFieldWithDefault(msg, 1, 0)
   };
 
   if (includeInstance) {
@@ -5668,27 +5674,27 @@ proto.Notification.prototype.toObject = function(opt_includeInstance) {
  */
 proto.Notification.toObject = function(includeInstance, msg) {
   var f, obj = {
-    sequence: jspb.Message.getFieldWithDefault(msg, 1, 0),
-    status: (f = msg.getStatus()) && proto.StatusResponse.toObject(includeInstance, f),
-    joinResponse: (f = msg.getJoinResponse()) && proto.JoinGameResponse.toObject(includeInstance, f),
-    seatList: (f = msg.getSeatList()) && proto.SeatsList.toObject(includeInstance, f),
-    seatUpdate: (f = msg.getSeatUpdate()) && proto.SeatDetails.toObject(includeInstance, f),
-    startGame: (f = msg.getStartGame()) && proto.StartGame.toObject(includeInstance, f),
-    hand: (f = msg.getHand()) && proto.Hand.toObject(includeInstance, f),
-    bidRequest: (f = msg.getBidRequest()) && proto.BidRequest.toObject(includeInstance, f),
-    bid: (f = msg.getBid()) && proto.Bid.toObject(includeInstance, f),
-    bidList: (f = msg.getBidList()) && proto.BidList.toObject(includeInstance, f),
-    transferRequest: (f = msg.getTransferRequest()) && proto.TransferRequest.toObject(includeInstance, f),
-    transfer: (f = msg.getTransfer()) && proto.Transfer.toObject(includeInstance, f),
-    transferComplete: (f = msg.getTransferComplete()) && proto.TransferComplete.toObject(includeInstance, f),
-    throwawayRequest: (f = msg.getThrowawayRequest()) && proto.ThrowawayRequest.toObject(includeInstance, f),
-    trumpUpdate: (f = msg.getTrumpUpdate()) && proto.TrumpUpdate.toObject(includeInstance, f),
-    playCardRequest: (f = msg.getPlayCardRequest()) && proto.PlayCardRequest.toObject(includeInstance, f),
-    updateTimeout: (f = msg.getUpdateTimeout()) && proto.UpdateTimeout.toObject(includeInstance, f),
-    playedCards: (f = msg.getPlayedCards()) && proto.PlayedCards.toObject(includeInstance, f),
-    tricks: (f = msg.getTricks()) && proto.Tricks.toObject(includeInstance, f),
-    scores: (f = msg.getScores()) && proto.Scores.toObject(includeInstance, f),
-    endGame: (f = msg.getEndGame()) && proto.EndGame.toObject(includeInstance, f)
+sequence: jspb.Message.getFieldWithDefault(msg, 1, 0),
+status: (f = msg.getStatus()) && proto.StatusResponse.toObject(includeInstance, f),
+joinResponse: (f = msg.getJoinResponse()) && proto.JoinGameResponse.toObject(includeInstance, f),
+seatList: (f = msg.getSeatList()) && proto.SeatsList.toObject(includeInstance, f),
+seatUpdate: (f = msg.getSeatUpdate()) && proto.SeatDetails.toObject(includeInstance, f),
+startGame: (f = msg.getStartGame()) && proto.StartGame.toObject(includeInstance, f),
+hand: (f = msg.getHand()) && proto.Hand.toObject(includeInstance, f),
+bidRequest: (f = msg.getBidRequest()) && proto.BidRequest.toObject(includeInstance, f),
+bid: (f = msg.getBid()) && proto.Bid.toObject(includeInstance, f),
+bidList: (f = msg.getBidList()) && proto.BidList.toObject(includeInstance, f),
+transferRequest: (f = msg.getTransferRequest()) && proto.TransferRequest.toObject(includeInstance, f),
+transfer: (f = msg.getTransfer()) && proto.Transfer.toObject(includeInstance, f),
+transferComplete: (f = msg.getTransferComplete()) && proto.TransferComplete.toObject(includeInstance, f),
+throwawayRequest: (f = msg.getThrowawayRequest()) && proto.ThrowawayRequest.toObject(includeInstance, f),
+trumpUpdate: (f = msg.getTrumpUpdate()) && proto.TrumpUpdate.toObject(includeInstance, f),
+playCardRequest: (f = msg.getPlayCardRequest()) && proto.PlayCardRequest.toObject(includeInstance, f),
+updateTimeout: (f = msg.getUpdateTimeout()) && proto.UpdateTimeout.toObject(includeInstance, f),
+playedCards: (f = msg.getPlayedCards()) && proto.PlayedCards.toObject(includeInstance, f),
+tricks: (f = msg.getTricks()) && proto.Tricks.toObject(includeInstance, f),
+scores: (f = msg.getScores()) && proto.Scores.toObject(includeInstance, f),
+endGame: (f = msg.getEndGame()) && proto.EndGame.toObject(includeInstance, f)
   };
 
   if (includeInstance) {

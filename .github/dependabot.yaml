@@ -1,0 +1,29 @@
+---
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: npm
+    directory: "/frontend/shoot-client"
+    schedule:
+      interval: "weekly"
+    groups:
+      babylonjs-dependencies:
+        patterns:
+          - "@babylonjs/*"
+      mui-dependencies:
+        patterns:
+          - "@mui/*"
+          - "tss-react"
+      react-dependencies:
+        patterns:
+          - "react*"
+      types-dependencies:
+        patterns:
+          - "@types/*"
+      vite-dependencies:
+        patterns:
+          - "vite*"
+          - "@vitejs/*"

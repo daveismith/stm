@@ -75,7 +75,7 @@ export namespace Bid {
         }
     }
 
-    export function toProtoTrump(trump: Bid.Trump): Trump | null {
+    export function toProtoTrump(trump: Bid.Trump): Trump {
         switch (trump) {
             case Bid.Trump.SPADES:
                 return Trump.SPADES;
@@ -90,7 +90,7 @@ export namespace Bid {
             case Bid.Trump.HIGH:
                 return Trump.HIGH;
             default:
-                return null;
+                return Trump.SPADES;    // default to spades
         }
     }
 

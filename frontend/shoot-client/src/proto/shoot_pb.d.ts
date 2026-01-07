@@ -3,11 +3,11 @@ import * as jspb from 'google-protobuf'
 
 
 export class Card extends jspb.Message {
-  getSuit(): ard.Suit;
-  setSuit(value: ard.Suit): Card;
+  getSuit(): Card.Suit;
+  setSuit(value: Card.Suit): Card;
 
-  getRank(): ard.Rank;
-  setRank(value: ard.Rank): Card;
+  getRank(): Card.Rank;
+  setRank(value: Card.Rank): Card;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Card.AsObject;
@@ -19,8 +19,8 @@ export class Card extends jspb.Message {
 
 export namespace Card {
   export type AsObject = {
-    suit: ard.Suit,
-    rank: ard.Rank,
+    suit: Card.Suit,
+    rank: Card.Rank,
   }
 
   export enum Suit { 
@@ -279,8 +279,8 @@ export class Bid extends jspb.Message {
   getShootNum(): number;
   setShootNum(value: number): Bid;
 
-  getTrump(): rump;
-  setTrump(value: rump): Bid;
+  getTrump(): Trump;
+  setTrump(value: Trump): Bid;
 
   getSeat(): number;
   setSeat(value: number): Bid;
@@ -297,7 +297,7 @@ export namespace Bid {
   export type AsObject = {
     tricks: number,
     shootNum: number,
-    trump: rump,
+    trump: Trump,
     seat: number,
   }
 }
@@ -479,8 +479,8 @@ export class TrumpUpdate extends jspb.Message {
   getShootNum(): number;
   setShootNum(value: number): TrumpUpdate;
 
-  getTrump(): rump;
-  setTrump(value: rump): TrumpUpdate;
+  getTrump(): Trump;
+  setTrump(value: Trump): TrumpUpdate;
 
   getSeat(): number;
   setSeat(value: number): TrumpUpdate;
@@ -497,7 +497,7 @@ export namespace TrumpUpdate {
   export type AsObject = {
     tricks: number,
     shootNum: number,
-    trump: rump,
+    trump: Trump,
     seat: number,
   }
 }

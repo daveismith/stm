@@ -1,4 +1,4 @@
-import { Notification, SeatDetails, Hand, Bid as BidDetails, TrumpUpdate, PlayCardRequest, PlayedCard, Card, Tricks } from '../../../proto/shoot_pb';
+import { Notification, SeatDetails, Hand, Bid as BidDetails, TrumpUpdate, PlayCardRequest, PlayedCard, Card, Tricks } from 'proto/shoot_pb';
 import { Seat } from "../Models/Seat";
 import { Bid } from "../Models/Bid";
 import { GameSettings } from "./GameSettings3D";

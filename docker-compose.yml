@@ -24,4 +24,5 @@ services:
         context: "./frontend/shoot-client"
         dockerfile: Dockerfile
     ports:
+      - "80:80"
       - "8001:80"
