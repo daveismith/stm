@@ -55,8 +55,8 @@ namespace ShootTheMoon.Game
         public ImmutableList<Client> Clients { get; private set; }
         public Client[] Players { get; private set; }
 
-        public bool AllPlayersReady { get { return (NumPlayersPresent > 0) && Array.TrueForAll(Players, value => { return value == null || value.Ready; }); } }
-
+        // public bool AllPlayersReady { get { return (NumPlayersPresent > 0) && Array.TrueForAll(Players, value => { return value == null || value.Ready; }); } }
+        public bool AllPlayersReady { get { return Array.TrueForAll(Players, value => { return value != null && value.Ready; }); } }
         public List<int> Score { get; set; }
         public int Dealer { get; set; }
         public Client CurrentPlayer { get; set; }
@@ -80,7 +80,7 @@ namespace ShootTheMoon.Game
 
         public int NumPlayersPresent { get; private set; }
 
-        public bool AddingBots { get; private set; }
+        // public bool AddingBots { get; private set; }
 
         public Game(GameSettings gameSettings, int aDealer = -1)
         {
@@ -162,19 +162,22 @@ namespace ShootTheMoon.Game
             // Implements The Game State Machine
             switch (State) {
                 case GameState.AWAITING_PLAYERS:
-                    if (AddingBots) {
-                        return;
-                    }
-                    bool addBots = AllPlayersReady;
-                    int humanPlayers = NumPlayersPresent;
-                    if (humanPlayers > 0 && addBots) {
-                        AddingBots = true;
-                        // count seats -- if not full, add bots
-                        for (int i = 0; i < NumPlayers - humanPlayers; i++) {
-                            await AddBot();
-                        }
+                    if (AllPlayersReady) {
                         await EnterState(GameState.DEALING);
                     }
+                    // if (AddingBots) {
+                    //     return;
+                    // }
+                    // bool addBots = AllPlayersReady;
+                    // int humanPlayers = NumPlayersPresent;
+                    // if (humanPlayers > 0 && addBots) {
+                    //     AddingBots = true;
+                        // count seats -- if not full, add bots
+                        // for (int i = 0; i < NumPlayers - humanPlayers; i++) {
+                        //     await AddBot();
+                        // }
+                    //     await EnterState(GameState.DEALING);
+                    // }
                     break;
                 case GameState.AWAITING_BIDS:
                     await EnterState(GameState.AWAITING_BIDS);
@@ -395,39 +398,6 @@ namespace ShootTheMoon.Game
                 client.Unsubscribe(this);
                 await PublishEvent(new GameEvent(GameEventType.ClientUpdate, this));
             }
-        }
-
-        public async Task AddBot() {
-            // GrpcChannel channel = GrpcChannel.ForAddress("http://localhost:8080");
-            // ShootServer.ShootServerClient grpcClient = new ShootServer.ShootServerClient(channel);
-            // Bot client = new Bot(grpcClient);
-            // Bots.Add(client);
-
-            // JoinGameRequest joinGameRequest = new JoinGameRequest();
-            // joinGameRequest.Uuid = this.Name;
-            // joinGameRequest.Name = "Bot";
-
-            // Console.WriteLine($"JoinGameRequest: {joinGameRequest}");
-
-            // AsyncServerStreamingCall<Notification> response = grpcClient.JoinGame(joinGameRequest);
-            // client.NotificationStream = response;
-            // // await Task.Run(() => client.GetNotifications());
-            // var ct = Task.Run(() => client.GetNotifications());
-
-            // // TODO: Move this to the Bot
-            // for (uint i = 0; i < NumPlayers; i++) {
-            //     if (Players[i] == null) {
-            //         TakeSeatRequest takeSeatRequest = new TakeSeatRequest();
-            //         takeSeatRequest.Seat = i;
-            //         try {
-            //             var resp = grpcClient.TakeSeat(takeSeatRequest);
-            //             Console.WriteLine($"TakeSeat response: {resp}");
-            //         } catch (RpcException ex) {
-            //             Console.WriteLine($"Error: {{Code: {ex.StatusCode}, Status: {ex.Status.Detail}}}");
-            //         }
-            //         break;
-            //     }
-            // }
         }
 
         public async Task<bool> TakeSeat(uint? seat, Client client) {
