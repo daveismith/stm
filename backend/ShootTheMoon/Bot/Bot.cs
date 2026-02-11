@@ -76,6 +76,32 @@ namespace Bot
 
         private Queue<Notification> notificationQueue = new Queue<Notification>();
 
+        private enum ThrowawayScore : int
+        {
+            NO_CARDS_IN_SUIT = 0,
+            SUIT_IS_TRUMP = 1,
+            HIGHEST_WITH_BACKUP = 2,
+            HIGHEST_WITHOUT_BACKUP = 3,
+            HIGHEST_MULTIPLE_BACKUP = 4,
+            MULTIPLE_LOW_CARDS = 5,
+            SINGLE_LOW_CARD = 6
+        }
+
+        private enum LeadScore : int
+        {
+            NO_CARDS_IN_SUIT = 0,
+            NOTHING_USEFUL = 1,
+            UNIQUE_SAME_COLOUR_HIGHEST_W_BACKUP = 2,
+            SAME_COLOUR_HIGHEST_W_BACKUP = 3,
+            UNIQUE_OPPOSITE_COLOUR_HIGHEST_W_BACKUP = 4,
+            OPPOSITE_COLOUR_HIGHEST_W_BACKUP = 5,
+            LONE_UNIQUE_SAME_COLOUR_HIGHEST = 6,
+            LONE_SAME_COLOUR_HIGHEST = 7,
+            LONE_UNIQUE_OPPOSITE_COLOUR_HIGHEST = 8,
+            LONE_OPPOSITE_COLOUR_HIGHEST = 9,
+            HIGHEST_TRUMP = 10
+        }
+
         static Bot()
         {
             PossibleNames = new List<string>(new string[] { "Alexander", "Genghis Khan", "Hannibal", "Louis IX", "Charlemagne", "Ivan III" });
@@ -430,32 +456,35 @@ namespace Bot
                     fromSeat = notification.TransferRequest.FromSeat;
                     if (fromSeat == Seat && _grpcClient is not null)
                     {
-                        Card? transferCard = DecideTransferCard();
-                        if (transferCard is not null)
-                        {
-                            Transfer transfer = new Transfer();
-                            transfer.FromSeat = fromSeat;
-                            transfer.ToSeat = toSeat;
-                            transfer.Card = Card.ToProto(transferCard);
-                            _grpcClient.TransferCard(transfer, _grpcMetadata);
-                        }
+                        Card transferCard = DecideTransferCard();
+                        Transfer transfer = new Transfer();
+                        transfer.FromSeat = fromSeat;
+                        transfer.ToSeat = toSeat;
+                        transfer.Card = Card.ToProto(transferCard);
+                        _grpcClient.TransferCard(transfer, _grpcMetadata);
                     }
                     break;
+
+                case Notification.NotificationOneofCase.Transfer:
+                    fromSeat = notification.Transfer.FromSeat;
+                    toSeat = notification.Transfer.ToSeat;
+                    card = Card.FromProto(notification.Transfer.Card);
+                     // check if giving away a card
+                    if (fromSeat == Seat && SortedHand is not null && Game is not null && Game.CurrentTrump is not null)
+                    {
+                        SortedHand[card.EffectiveSuit(Game.CurrentTrump)].Remove(card);
+                    }
+                    // check if receiving a card
+                    else if (toSeat == Seat && SortedHand is not null && Game is not null && Game.CurrentTrump is not null)
+                    {
+                        SortedHand[card.EffectiveSuit(Game.CurrentTrump)].Add(card);
+                    }
+                    break;
+
 
                 case Notification.NotificationOneofCase.TransferComplete:
                     fromSeat = notification.TransferComplete.FromSeat;
                     toSeat = notification.TransferComplete.ToSeat;
-                    // if (fromSeat == Seat) // check if giving away a card
-                    // {
-                    //     SortedHand[card.EffectiveSuit(Game.CurrentTrump)].Remove(card);
-                    // }
-                    // else
-                    // {
-                    //     if (toSeat == Seat) // check if receiving a card
-                    //     {
-                    //         SortedHand[card.EffectiveSuit(Game.CurrentTrump)].Add(card);
-                    //     }
-                    // }
                     break;
 
                 case Notification.NotificationOneofCase.ThrowawayRequest:
@@ -525,13 +554,17 @@ namespace Bot
 
             foreach (Suit suit in Suit.Suits.Values)
             {
-                HighCards.Add(new Card(suit, Rank.Ace));
-                HighCards.Add(new Card(suit, Rank.Ace));
+                for (int i = 0; i < Game?.GameSettings.NumDuplicateCards; i++)
+                {
+                    HighCards.Add(new Card(suit, Rank.Ace));
+                }
             }
             foreach (Suit suit in Suit.Suits.Values)
             {
-                LowCards.Add(new Card(suit, Rank.Nine));
-                LowCards.Add(new Card(suit, Rank.Nine));
+                for (int i = 0; i < Game?.GameSettings.NumDuplicateCards; i++)
+                {
+                    LowCards.Add(new Card(suit, Rank.Nine));
+                }
             }
 
             foreach (Trump trump in Trump.Trumps.Values)
@@ -1006,11 +1039,11 @@ namespace Bot
 
                     if (candidateSuit.Count == 0)
                     {
-                        score = 0;
+                        score = (int)ThrowawayScore.NO_CARDS_IN_SUIT;
                     }
                     else if (trump.isSuit() && trump.Suit.Equals(suit))
                     {
-                        score = 1;
+                        score = (int)ThrowawayScore.SUIT_IS_TRUMP;
                     }
                     else
                     {
@@ -1018,14 +1051,14 @@ namespace Bot
 
                         if (Tracker.IsHighest(highestCard))
                         {
-                            if (candidateSuit.Count == 1) score = 3;
-                            if (candidateSuit.Count == 2) score = 2;
-                            if (candidateSuit.Count > 2) score = 4;
+                            if (candidateSuit.Count == 1) score = (int)ThrowawayScore.HIGHEST_WITHOUT_BACKUP;
+                            if (candidateSuit.Count == 2) score = (int)ThrowawayScore.HIGHEST_WITH_BACKUP;
+                            if (candidateSuit.Count > 2) score = (int)ThrowawayScore.HIGHEST_MULTIPLE_BACKUP;
                         }
                         else
                         {
-                            if (candidateSuit.Count == 1) score = 6;
-                            if (candidateSuit.Count > 1) score = 5;
+                            if (candidateSuit.Count == 1) score = (int)ThrowawayScore.SINGLE_LOW_CARD;
+                            if (candidateSuit.Count > 1) score = (int)ThrowawayScore.MULTIPLE_LOW_CARDS;
                         }
                     }
                     suitScores.Add(suit, score);
@@ -1067,7 +1100,7 @@ namespace Bot
 
                     if (candidateSuit.Count == 0)
                     {
-                        score = 0;
+                        score = (int)LeadScore.NO_CARDS_IN_SUIT;
                     }
                     else
                     {
@@ -1077,11 +1110,11 @@ namespace Bot
                         { // candidate suit is trump
                             if (Tracker.IsHighest(candidate))
                             { // highest trump
-                                score = 10;
+                                score = (int)LeadScore.HIGHEST_TRUMP;
                             }
                             else
                             {
-                                score = 1;
+                                score = (int)LeadScore.NOTHING_USEFUL;
                             }
                         }
                         else
@@ -1094,22 +1127,22 @@ namespace Bot
                                     { // is unique
                                         if (trump.isSuit() && trump.SameColour.Equals(suit))
                                         { // is same colour
-                                            score = 6;
+                                            score = (int)LeadScore.LONE_UNIQUE_SAME_COLOUR_HIGHEST;
                                         }
                                         else
                                         { // opposite colour
-                                            score = 8;
+                                            score = (int)LeadScore.LONE_UNIQUE_OPPOSITE_COLOUR_HIGHEST;
                                         }
                                     }
                                     else
                                     { // non-unique
                                         if (trump.isSuit() && trump.SameColour.Equals(suit))
                                         { // is same colour
-                                            score = 7;
+                                            score = (int)LeadScore.LONE_SAME_COLOUR_HIGHEST;
                                         }
                                         else
                                         { // opposite colour
-                                            score = 9;
+                                            score = (int)LeadScore.LONE_OPPOSITE_COLOUR_HIGHEST;
                                         }
                                     }
                                 }
@@ -1119,29 +1152,29 @@ namespace Bot
                                     { // is unique
                                         if (trump.isSuit() && trump.SameColour.Equals(suit))
                                         { // is same colour
-                                            score = 2;
+                                            score = (int)LeadScore.UNIQUE_SAME_COLOUR_HIGHEST_W_BACKUP;
                                         }
                                         else
                                         { // opposite colour
-                                            score = 4;
+                                            score = (int)LeadScore.UNIQUE_OPPOSITE_COLOUR_HIGHEST_W_BACKUP;
                                         }
                                     }
                                     else
                                     { // non-unique
                                         if (trump.isSuit() && trump.SameColour.Equals(suit))
                                         { // is same colour
-                                            score = 3;
+                                            score = (int)LeadScore.SAME_COLOUR_HIGHEST_W_BACKUP;
                                         }
                                         else
                                         { // opposite colour
-                                            score = 5;
+                                            score = (int)LeadScore.OPPOSITE_COLOUR_HIGHEST_W_BACKUP;
                                         }
                                     }
                                 }
                             }
                             else
                             {
-                                score = 1;
+                                score = (int)LeadScore.NOTHING_USEFUL;
                             }
                         }
                     }
@@ -1400,7 +1433,7 @@ namespace Bot
         /// Choose a card to give to the person shooting.
         /// </summary>
         /// <returns>best card in hand</returns>
-        private Card? DecideTransferCard()
+        private Card DecideTransferCard()
         {
             Card? transferCard = null;
             int candidateRank;
@@ -1440,6 +1473,11 @@ namespace Bot
             }
 
             // Thread.Sleep(TRANSFER_DELAY);
+
+            if (transferCard is null)
+            {
+                throw new Exception("FATAL: couldn't find card to transfer.");
+            }
 
             return transferCard;
         }
