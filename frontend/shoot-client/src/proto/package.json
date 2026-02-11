@@ -10,6 +10,6 @@
       "grpc-web": "1.5.0"
     },
     "devDependencies": {
-      "webpack": "5.97.1"
+      "webpack": "5.104.1"
     }
   }
