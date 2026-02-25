@@ -23,6 +23,8 @@ namespace ShootTheMoon.Game
 
         public List<Card> Hand { get; set; }
 
+        public uint Seat { get; set; }
+
         public Client() {
             Token = Guid.NewGuid().ToString();
             _name = Token;

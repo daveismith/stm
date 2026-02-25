@@ -2,8 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using ShootTheMoon.Network.Proto;
 
-namespace ShootTheMoon.Game
+namespace Bot
 {
     public class Bid
     {
@@ -11,7 +12,7 @@ namespace ShootTheMoon.Game
         public static readonly uint SHOOT_NUM = 9;
 
         public uint Number { get; set; }
-        public Trump Trump { get; set; }
+        public Trump? Trump { get; set; }
         public uint ShootNumber { get; set; }
 
         public uint Seat { get; set; }
@@ -31,14 +32,14 @@ namespace ShootTheMoon.Game
             return new Bid { Seat = seat, Number = SHOOT_NUM, Trump = trump, ShootNumber = shootNumber };
         }
 
-        public static Bid fromProto(Network.Proto.Bid bid)
+        public static Bid fromProto(ShootTheMoon.Network.Proto.Bid bid)
         {
             return new Bid { Seat = bid.Seat, Number = bid.Tricks, ShootNumber = bid.ShootNum, Trump = Trump.fromProto(bid.Trump)};
         }
 
-        public static Network.Proto.Bid toProto(Bid bid)
+        public static ShootTheMoon.Network.Proto.Bid toProto(Bid bid)
         {
-            return new Network.Proto.Bid { Seat = bid.Seat, Tricks = bid.Number, ShootNum = bid.ShootNumber, Trump = Trump.toProto(bid.Trump) };
+            return new ShootTheMoon.Network.Proto.Bid { Seat = bid.Seat, Tricks = bid.Number, ShootNum = bid.ShootNumber, Trump = Trump.toProto(bid.Trump) };
         }
 
         public bool isPass()

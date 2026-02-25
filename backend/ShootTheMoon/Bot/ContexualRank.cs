@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace ShootTheMoon.Game
+namespace Bot
 {
     public class ContextualRank
     {
@@ -33,6 +33,6 @@ namespace ShootTheMoon.Game
         };
 
         public int Ranking { get; set; }
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
     }
 }

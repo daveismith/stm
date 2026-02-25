@@ -4,6 +4,9 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
 using Serilog;
+using ShootTheMoon.Network.Proto;
+using Grpc.Net.Client;
+using Grpc.Core;
 
 namespace ShootTheMoon.Game
 {
@@ -52,8 +55,8 @@ namespace ShootTheMoon.Game
         public ImmutableList<Client> Clients { get; private set; }
         public Client[] Players { get; private set; }
 
+        // public bool AllPlayersReady { get { return (NumPlayersPresent > 0) && Array.TrueForAll(Players, value => { return value == null || value.Ready; }); } }
         public bool AllPlayersReady { get { return Array.TrueForAll(Players, value => { return value != null && value.Ready; }); } }
-
         public List<int> Score { get; set; }
         public int Dealer { get; set; }
         public Client CurrentPlayer { get; set; }
@@ -75,6 +78,10 @@ namespace ShootTheMoon.Game
 
         public GameState State { get; private set; }
 
+        public int NumPlayersPresent { get; private set; }
+
+        // public bool AddingBots { get; private set; }
+
         public Game(GameSettings gameSettings, int aDealer = -1)
         {
             Uuid = Guid.NewGuid().ToString();
@@ -90,6 +97,7 @@ namespace ShootTheMoon.Game
             OutstandingTransfers = new List<Client>();
             PlayedCards = new List<PlayedCard>();
             SkipSeats = new List<uint>();
+            NumPlayersPresent = 0;
 
             if (aDealer < 0 || aDealer >= Players.Length)
             {
@@ -141,6 +149,15 @@ namespace ShootTheMoon.Game
         }
 
         private async Task Tick() {
+            List<Task> tasks = new List<Task>();
+            Console.WriteLine("Tick");
+
+            //foreach (Bot bot in Bots) {
+            //    Console.WriteLine("running notifications for bot");
+            //    tasks.Add(Task.Run(() => bot.GetNotifications()));
+            //}
+
+            await Task.WhenAll(tasks);
 
             // Implements The Game State Machine
             switch (State) {
@@ -148,6 +165,19 @@ namespace ShootTheMoon.Game
                     if (AllPlayersReady) {
                         await EnterState(GameState.DEALING);
                     }
+                    // if (AddingBots) {
+                    //     return;
+                    // }
+                    // bool addBots = AllPlayersReady;
+                    // int humanPlayers = NumPlayersPresent;
+                    // if (humanPlayers > 0 && addBots) {
+                    //     AddingBots = true;
+                        // count seats -- if not full, add bots
+                        // for (int i = 0; i < NumPlayers - humanPlayers; i++) {
+                        //     await AddBot();
+                        // }
+                    //     await EnterState(GameState.DEALING);
+                    // }
                     break;
                 case GameState.AWAITING_BIDS:
                     await EnterState(GameState.AWAITING_BIDS);
@@ -369,6 +399,7 @@ namespace ShootTheMoon.Game
                 await PublishEvent(new GameEvent(GameEventType.ClientUpdate, this));
             }
         }
+
         public async Task<bool> TakeSeat(uint? seat, Client client) {
             bool changed = false;
             bool success = false;
@@ -386,6 +417,7 @@ namespace ShootTheMoon.Game
                     Players[seat.Value] = client;
                     success = true;
                     changed = true;
+                    client.Seat = seat.Value;
                 }
             } else {
                 // Already Removed From Unoccupied Seat
@@ -395,6 +427,7 @@ namespace ShootTheMoon.Game
             if (changed) {
                 GameEvent seatTaken = new GameEvent(GameEventType.SeatListUpdate, this);
                 await PublishEvent(seatTaken);
+                NumPlayersPresent++;
             }
 
             return success;

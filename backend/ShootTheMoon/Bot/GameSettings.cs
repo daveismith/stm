@@ -1,7 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using System;
 
-namespace ShootTheMoon.Game
+namespace Bot
 {
     public class GameSettings
     {
@@ -22,6 +25,8 @@ namespace ShootTheMoon.Game
         public int TricksPerHand { get { return getDeckSize() / (NumPlayersPerTeam * 2); } }
 
         public int LeechLimit { get { return ScoreNeededToWin - (int)Math.Ceiling(TricksPerHand / 2.0); } }
+
+        public int NumPlayers { get { return NumPlayersPerTeam * 2; } }
 
         public int getDeckSize()
         {

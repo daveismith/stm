@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace ShootTheMoon.Game
+﻿namespace Bot
 {
     public class Trump
     {
@@ -26,23 +21,24 @@ namespace ShootTheMoon.Game
 
         public int Index { get; private set; }
 
-        public string Name { get; private set; }
-        public Suit Suit { get; private set; }
+        public string Name { get; private set; } = "Spades";
+        public Suit Suit { get; private set; } = Suit.Spades;
 
-        public Suit SameColour { get; private set; }
+        public Suit SameColour { get; private set; } = Suit.Clubs;
 
         public bool isSuit() {
             return Suit != null;
         }
 
-        public static Trump fromProto(Network.Proto.Trump trump)
+        public static Trump fromProto(ShootTheMoon.Network.Proto.Trump trump)
         {
             return Trumps[(int) trump];
         }
 
-        public static Network.Proto.Trump toProto(Trump trump)
+        public static ShootTheMoon.Network.Proto.Trump toProto(Trump? trump)
         {
-            return (Network.Proto.Trump) trump.Index; 
+            int index = trump?.Index ?? 0;
+            return (ShootTheMoon.Network.Proto.Trump) index;
         }
     }
 }
