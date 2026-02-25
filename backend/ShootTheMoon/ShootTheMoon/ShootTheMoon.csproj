@@ -25,6 +25,7 @@
 
   <ItemGroup>
     <Protobuf Include="schema/shoot.proto" Link="shoot.proto" />
+    <Protobuf Include="schema/bot.proto" Link="bot.proto" />
   </ItemGroup>
 
   <ItemGroup>

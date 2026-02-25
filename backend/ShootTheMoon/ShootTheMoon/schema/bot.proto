@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+// [START csharp_declaration]
+option csharp_namespace = "ShootTheMoon.Bot.Proto";
+// [END csharp_declaration]
+
+// [START messages]
+
+enum ResponseStatus {
+    OK = 0;
+    FAILURE = 1;
+}
+
+message BotRegisterRequest {
+    string endpoint = 1;    // endpoint of the BotServer (ie, a URL)
+    string bot_version = 2; // bot version
+};
+
+message BotRegisterResponse {
+    ResponseStatus status = 1;
+};
+
+message AddBotsToGameRequest {
+    string uuid = 1; // uuid of the game to join
+    uint32 bots_requested = 2; // number of bots to add
+    string profile_name = 3; // the name of the bot profile to use
+};
+
+message AddBotsToGameResponse {
+    ResponseStatus status = 1;
+};
+
+message BotStatusRequest {
+    string bot_id = 1;  // a unique identifer to be echoed back on BotStatusUpdate messages
+    uint32 ttl = 2;     // a time to live in seconds indicating the longest allowable time between update messages before the bot server is considered to be lost.
+};
+
+message BotStatusUpdate {
+    string bot_id = 1; // bot id
+    uint32 max_bots = 2; // the max number of bots supported by this server
+    uint32 active_bots = 3; // bots in use (how many active)
+    repeated string bot_profiles = 4;   // a list of available bot profile names
+    // other performance details?
+};
+
+// [END messages]
+
+// [START services]
+
+service BotRegistry {
+
+    rpc RegisterBot( BotRegisterRequest ) returns ( BotRegisterResponse );
+
+}
+
+service BotServer {
+
+    rpc AddBotsToGame( AddBotsToGameRequest ) returns ( AddBotsToGameResponse );
+    rpc Status( BotStatusRequest ) returns ( stream BotStatusUpdate );
+    
+}
+
+// [END services]
