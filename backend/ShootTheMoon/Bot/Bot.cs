@@ -1190,7 +1190,7 @@ namespace Bot
         /// Choose a card to lead
         /// </summary>
         /// <returns>best card in hand to lead</returns>
-        private Card? PickCardToLead()
+        private Card PickCardToLead()
         {
             int score;
             int highestScore = -1;
@@ -1222,7 +1222,7 @@ namespace Bot
                 // {
                 //     System.Console.WriteLine("No good card to lead - pick lowest to throw away.");
                 // }
-                return null; // no cards are high so leave it to PickLowestCard
+                return PickLowestCard(); // no cards are high so leave it to PickLowestCard
             }
 
             if (SortedHand is not null) {
@@ -1314,10 +1314,6 @@ namespace Bot
                 if (isLeader)
                 {
                     cardToPlay = PickCardToLead();
-                    if (cardToPlay is null)
-                    {
-                        cardToPlay = PickLowestCard();
-                    }
                 }
                 else
                 {

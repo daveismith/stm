@@ -37,8 +37,6 @@ namespace Bot
         protected double AGGRESSION_FACTOR = 1.15; // In its current default configuration, 1.15 beats opponents with 1.10. or 1.20.
 
         public static BotProfile DEFAULT = new BotProfile();
-        public static BotProfile AGGRESSIVE = new BotProfile();
-        public static BotProfile CONSERVATIVE = new BotProfile();
 
         protected BotProfile()
         {
