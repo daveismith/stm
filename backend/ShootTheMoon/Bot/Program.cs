@@ -1,6 +1,6 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using Bot;
-class BotMaker
+class BotStartup
 {
     static async Task Main(string[] args)
     {

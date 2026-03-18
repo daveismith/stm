@@ -24,6 +24,8 @@ namespace Bot
 
         public int id;
 
+        public string bot_uuid { get; set; }
+
         private readonly Dictionary<Trump, double> TrumpScores = new Dictionary<Trump, double>();
         private Bid? FirstPartnerBid;
         private Bid? SecondPartnerBid;
@@ -110,6 +112,7 @@ namespace Bot
         public Bot(BotProfile initProfile)
         {
             id = Bot.NextBot++;
+            bot_uuid = Guid.NewGuid().ToString();
             // Game = initGame;
             CurrentStatus = Status.PREGAME_READY;
             Profile = initProfile;
