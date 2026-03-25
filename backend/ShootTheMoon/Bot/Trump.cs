@@ -1,4 +1,4 @@
-﻿namespace Bot
+﻿namespace ShootTheMoon.Bot
 {
     public class Trump
     {

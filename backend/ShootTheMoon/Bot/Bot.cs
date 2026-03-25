@@ -2,7 +2,7 @@ using Grpc.Core;
 using ShootTheMoon.Network.Proto;
 using Grpc.Net.Client;
 
-namespace Bot
+namespace ShootTheMoon.Bot
 {
     public class Bot
     {
@@ -24,7 +24,7 @@ namespace Bot
 
         public int id;
 
-        public string bot_uuid { get; set; }
+        public string Bot_uuid { get; set; }
 
         private readonly Dictionary<Trump, double> TrumpScores = new Dictionary<Trump, double>();
         private Bid? FirstPartnerBid;
@@ -112,7 +112,7 @@ namespace Bot
         public Bot(BotProfile initProfile)
         {
             id = Bot.NextBot++;
-            bot_uuid = Guid.NewGuid().ToString();
+            Bot_uuid = Guid.NewGuid().ToString();
             // Game = initGame;
             CurrentStatus = Status.PREGAME_READY;
             Profile = initProfile;

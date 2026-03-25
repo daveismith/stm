@@ -8,7 +8,7 @@ using ShootTheMoon.Network.Proto;
 using Grpc.Net.Client;
 using Grpc.Core;
 
-namespace Bot
+namespace ShootTheMoon.Bot
 {
     public class Game
     {

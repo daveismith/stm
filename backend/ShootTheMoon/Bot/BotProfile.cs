@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System;
 
-namespace Bot
+namespace ShootTheMoon.Bot
 {
     public class BotProfile
     {
