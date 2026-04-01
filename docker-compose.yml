@@ -7,6 +7,7 @@ services:
       dockerfile: "ShootTheMoon/Dockerfile"
     ports: 
       - "8000:80"
+      - "30052:30052"
     environment:
       Serilog__MinimumLevel: "Debug"
   shoot-proxy:
