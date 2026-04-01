@@ -31,17 +31,19 @@ namespace ShootTheMoon.Bot
 
         private void RegisterBotserver()
         {
-            GrpcChannel channel = GrpcChannel.ForAddress("http://localhost:8080");
+            GrpcChannel channel = GrpcChannel.ForAddress("http://localhost:30052");
             BotRegistry.BotRegistryClient grpcClient = new BotRegistry.BotRegistryClient(channel);
             _grpcClient = grpcClient;
 
             BotRegisterRequest botRegisterRequest = new BotRegisterRequest();
             botRegisterRequest.BotVersion = "1.0";
-            botRegisterRequest.Endpoint = "";
+            botRegisterRequest.Endpoint = "http://localhost:30053";
 
             Console.WriteLine($"botRegisterRequest: {botRegisterRequest}");
 
             BotRegisterResponse botRegisterResponse = _grpcClient.RegisterBot(botRegisterRequest, _grpcMetadata);
+
+            Console.WriteLine($"botRegisterResponse: {botRegisterResponse}");
         }
 
         public async Task<bool> ActivateBot(string game_uuid)
