@@ -9,6 +9,8 @@ namespace ShootTheMoon.Bot
     {
         private static readonly int NUM_BOTS = 8;
 
+        private static readonly bool DOCKER_BOT_REGISTRY = false;
+
         private Queue<Bot> FreeBots = new Queue<Bot>();
 
         private Dictionary<string, Bot> BusyBots = new Dictionary<string, Bot>();
@@ -31,7 +33,18 @@ namespace ShootTheMoon.Bot
 
         private void RegisterBotserver()
         {
-            GrpcChannel channel = GrpcChannel.ForAddress("http://shoot-backend:30052");
+            string botRegistryURL;
+
+            if (DOCKER_BOT_REGISTRY)
+            {
+                botRegistryURL = "http://shoot-backend:30052";
+            }
+            else
+            {
+                botRegistryURL= "http://localhost:30052";
+            }
+
+            GrpcChannel channel = GrpcChannel.ForAddress(botRegistryURL);
             BotRegistry.BotRegistryClient grpcClient = new BotRegistry.BotRegistryClient(channel);
             _grpcClient = grpcClient;
 
