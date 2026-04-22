@@ -12,9 +12,7 @@ namespace ShootTheMoon.Bot
 
         private static readonly ILogger Log = Serilog.Log.ForContext<BotServerImpl>();
 
-        private static readonly uint NUM_BOTS = 8;
-
-        private static readonly bool DOCKER_BOT_REGISTRY = false;
+        public static uint NumBots { get; private set; } = 8;
 
         private Queue<Bot> FreeBots = new Queue<Bot>();
 
@@ -26,8 +24,14 @@ namespace ShootTheMoon.Bot
 
         public BotServerImpl()
         {
+            string numBotsEnv = Environment.GetEnvironmentVariable("NUM_BOTS") ?? "8";
+            if (!uint.TryParse(numBotsEnv, out uint NumBots))
+            {
+                NumBots = 8;
+            }
+
             Bot bot;
-            for (uint i = 0; i < NUM_BOTS; i++)
+            for (uint i = 0; i < NumBots; i++)
             {
                 bot = new Bot(BotProfile.DEFAULT);
                 FreeBots.Enqueue(bot);
@@ -41,16 +45,11 @@ namespace ShootTheMoon.Bot
 
         private void RegisterBotserver()
         {
-            string botRegistryURL;
+            string botRegistryURL = Environment.GetEnvironmentVariable("BOT_REGISTRY_URL") ?? "http://localhost:30052";
+            string hostName = System.Net.Dns.GetHostName();
 
-            if (DOCKER_BOT_REGISTRY)
-            {
-                botRegistryURL = "http://shoot-backend:30052";
-            }
-            else
-            {
-                botRegistryURL= "http://localhost:30052";
-            }
+            Console.WriteLine("Registering bot server with bot registry at " + botRegistryURL);
+            Console.WriteLine("Host Name is " + hostName);
 
             GrpcChannel channel = GrpcChannel.ForAddress(botRegistryURL);
             BotRegistry.BotRegistryClient grpcClient = new BotRegistry.BotRegistryClient(channel);
@@ -58,7 +57,7 @@ namespace ShootTheMoon.Bot
 
             BotRegisterRequest botRegisterRequest = new BotRegisterRequest();
             botRegisterRequest.BotVersion = "1.0";
-            botRegisterRequest.Endpoint = "http://localhost:30053";
+            botRegisterRequest.Endpoint = $"http://{hostName}:30053";
 
             Console.WriteLine($"botRegisterRequest: {botRegisterRequest}");
 
@@ -66,6 +65,31 @@ namespace ShootTheMoon.Bot
 
             Console.WriteLine($"botRegisterResponse: {botRegisterResponse}");
         }
+
+        public override async Task<AddBotsToGameResponse> AddBotsToGame(AddBotsToGameRequest request, ServerCallContext context)
+        {
+            //TODO: Handle This
+            Console.WriteLine("Received request to add bots to game " + request.Uuid + " with profile: " + request.ProfileName + ", num bots: " + request.BotsRequested);
+
+            for (uint i = 0; i < request.BotsRequested; i++)
+            {
+                if (FreeBots.Count > 0)
+                {
+                    await ActivateBot(request.Uuid);
+                }
+                else
+                {
+                    Log.Warning("No free bots available to add to game " + request.Uuid);
+                }
+            }
+
+
+            return new AddBotsToGameResponse
+            {
+                Status = ResponseStatus.Ok
+            };
+        }
+
 
         public override async Task Status(BotStatusRequest request, IServerStreamWriter<BotStatusUpdate> responseStream, ServerCallContext context)
         {
@@ -78,8 +102,8 @@ namespace ShootTheMoon.Bot
             {
                 BotStatusUpdate botStatusUpdate = new BotStatusUpdate();
                 botStatusUpdate.BotId = botId;
-                botStatusUpdate.MaxBots = NUM_BOTS;
-                botStatusUpdate.ActiveBots = (uint)(NUM_BOTS - FreeBots.Count);
+                botStatusUpdate.MaxBots = NumBots;
+                botStatusUpdate.ActiveBots = (uint)(NumBots - FreeBots.Count);
 
                 await responseStream.WriteAsync(botStatusUpdate);
 

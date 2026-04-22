@@ -7,10 +7,18 @@ using System.Collections.Generic;
 using System;
 using ShootTheMoon.Utils;
 using Grpc.Net.Client;
+using ShootTheMoon.Network.Proto;
 
 namespace ShootTheMoon.Network
 {
-    public class BotRegistryImpl : BotRegistry.BotRegistryBase
+    public interface IBotRegistry
+    {
+        
+        Task<bool> RequestBotsForGame(string gameUuid, string profileName, uint numBots);
+
+    }
+
+    public class BotRegistryImpl : BotRegistry.BotRegistryBase, IBotRegistry
     {
         class BotInfo
         {
@@ -41,12 +49,12 @@ namespace ShootTheMoon.Network
                 BotVersion = botVersion;
                 BotId = IdGenerator.NewId();
                 LastStatusUpdate = DateTime.UtcNow;
-                
+
                 StatusTask = Task.Run(async () =>
                 {
                     using var channel = GrpcChannel.ForAddress(endpoint);
                     BotServerClient = new BotServer.BotServerClient(channel);
-
+                                        
                     try
                     {
                         var StatusRequest = new BotStatusRequest
@@ -85,6 +93,29 @@ namespace ShootTheMoon.Network
             }
 
             // Add a function to set the bot up to trigger the addition of bots
+            public async Task<bool> RequestBotsForGame(string gameUuid, string profileName, uint numBots)
+            {
+                var addRequest = new AddBotsToGameRequest
+                {
+                    Uuid = gameUuid,
+                    ProfileName = profileName,
+                    BotsRequested = numBots
+                };
+
+                Log.Information("Requesting " + numBots + " bots for game " + gameUuid + " with profile " + profileName);
+
+                var response = await BotServerClient.AddBotsToGameAsync(addRequest);
+                if (response.Status == ResponseStatus.Ok)
+                {
+                    Log.Information("Bot at endpoint " + Endpoint + " accepted the request to add bots to game " + gameUuid);
+                    return true;
+                }
+                else
+                {
+                    Log.Warning("Bot at endpoint " + Endpoint + " rejected the request to add bots to game " + gameUuid);
+                    return false;
+                }
+            }
         }
         List<BotInfo> Bots { get; } = new List<BotInfo>();
         TimeSpan BotTimeout = TimeSpan.FromSeconds(30); // Example timeout duration
@@ -115,6 +146,34 @@ namespace ShootTheMoon.Network
             Bots.Add(botInfo);  // Register the bot information for later use
 
             return Task.FromResult(new BotRegisterResponse { Status = ResponseStatus.Ok });
+        }
+
+        public async Task<bool> RequestBotsForGame(string gameUuid, string profileName, uint numBots)
+        {
+            Log.Information("Requesting " + numBots + " bots for game " + gameUuid + " with profile " + profileName);
+
+            List<BotInfo> availableBots = Bots.FindAll(bot => (bot.MaxBots - bot.ActiveBots) >= numBots);
+            Log.Information("Found " + availableBots.Count + " available bots for profile " + profileName);
+
+            if (availableBots.Count == 0)
+            {
+                Log.Warning("No available bots found for game " + gameUuid + " with profile " + profileName);
+                return false;
+            } else
+            {
+                BotInfo selectedBot = availableBots[0]; // For now, just select the first available bot. We can implement more complex selection logic later if needed (e.g. load balancing, profile matching, etc.)
+                Log.Information("Selected bot at endpoint " + selectedBot.Endpoint + " to add bots to game " + gameUuid);
+                bool result = await selectedBot.RequestBotsForGame(gameUuid, profileName, numBots);
+                if (result)
+                {
+                    Log.Information("Successfully requested bot at endpoint " + selectedBot.Endpoint + " to add bots to game " + gameUuid);
+                }
+                else
+                {
+                    Log.Warning("Failed to request bot at endpoint " + selectedBot.Endpoint + " to add bots to game " + gameUuid);
+                }
+                return result;
+            }
         }
 
         public void RemoveInactiveBots()

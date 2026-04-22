@@ -34,3 +34,6 @@ services:
       dockerfile: "Bot/Dockerfile"
     ports:
       - "30053:30053"
+    environment:
+      BOT_REGISTRY_URL: "http://shoot-backend:30052"
+      GAME_SERVER_URL: "http://shoot-backend:30051"

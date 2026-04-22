@@ -57,6 +57,9 @@ namespace ShootTheMoon.Game
 
         // public bool AllPlayersReady { get { return (NumPlayersPresent > 0) && Array.TrueForAll(Players, value => { return value == null || value.Ready; }); } }
         public bool AllPlayersReady { get { return Array.TrueForAll(Players, value => { return value != null && value.Ready; }); } }
+
+        public bool AllPresentPlayersReady { get { return (NumPlayersPresent > 0) && Array.TrueForAll(Players, value => { return value == null || value.Ready; }); } }
+
         public List<int> Score { get; set; }
         public int Dealer { get; set; }
         public Client CurrentPlayer { get; set; }

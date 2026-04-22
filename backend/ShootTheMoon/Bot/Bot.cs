@@ -133,7 +133,9 @@ namespace ShootTheMoon.Bot
 
         public void JoinGame(string uuid)
         {
-            GrpcChannel channel = GrpcChannel.ForAddress("http://localhost:8080");
+            string gameUrl = Environment.GetEnvironmentVariable("GAME_SERVER_URL") ?? "http://localhost:8080";
+
+            GrpcChannel channel = GrpcChannel.ForAddress(gameUrl);
             ShootServer.ShootServerClient grpcClient = new ShootServer.ShootServerClient(channel);
             _grpcClient = grpcClient;
 
