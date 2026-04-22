@@ -31,7 +31,7 @@ namespace ShootTheMoon.Bot
 
         private void RegisterBotserver()
         {
-            GrpcChannel channel = GrpcChannel.ForAddress("http://localhost:30052");
+            GrpcChannel channel = GrpcChannel.ForAddress("http://shoot-backend:30052");
             BotRegistry.BotRegistryClient grpcClient = new BotRegistry.BotRegistryClient(channel);
             _grpcClient = grpcClient;
 
