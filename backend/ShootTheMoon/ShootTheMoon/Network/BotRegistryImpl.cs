@@ -5,7 +5,7 @@ using ShootTheMoon.Bot.Proto;
 using Serilog;
 using System.Collections.Generic;
 using System;
-using ShootTheMoon.Game;
+using ShootTheMoon.Utils;
 using Grpc.Net.Client;
 
 namespace ShootTheMoon.Network
@@ -35,22 +35,29 @@ namespace ShootTheMoon.Network
 
             public TimeSpan TimeSinceLastStatusUpdate => DateTime.UtcNow - LastStatusUpdate;
 
-            public BotInfo(string endpoint, string botVersion)
+            public BotInfo(string endpoint, string botVersion, TimeSpan botTimeout)
             {
                 Endpoint = endpoint;
                 BotVersion = botVersion;
-                using var channel = GrpcChannel.ForAddress(endpoint);
-                BotServerClient = new BotServer.BotServerClient(channel);
-
-                StatusStream = BotServerClient.Status(new BotStatusRequest());
-
+                BotId = IdGenerator.NewId();
+                LastStatusUpdate = DateTime.UtcNow;
+                
                 StatusTask = Task.Run(async () =>
                 {
+                    using var channel = GrpcChannel.ForAddress(endpoint);
+                    BotServerClient = new BotServer.BotServerClient(channel);
+
                     try
                     {
-                        while (await StatusStream.ResponseStream.MoveNext())
+                        var StatusRequest = new BotStatusRequest
                         {
-                            var statusUpdate = StatusStream.ResponseStream.Current;
+                            BotId = BotId,
+                            Ttl = (uint)botTimeout.TotalSeconds
+                        };
+                        using var StatusStream = BotServerClient.Status(StatusRequest);
+
+                        await foreach (var statusUpdate in StatusStream.ResponseStream.ReadAllAsync())
+                        {
                             Log.Information("Received status update from bot: " + statusUpdate.BotId);
                             
                             LastStatusUpdate = DateTime.UtcNow;
@@ -60,6 +67,15 @@ namespace ShootTheMoon.Network
                             BotProfiles.Clear();
                             BotProfiles.AddRange(statusUpdate.BotProfiles);
                         }
+                    }
+                    catch (Grpc.Core.RpcException rpcEx) when (rpcEx.StatusCode == Grpc.Core.StatusCode.Unavailable)
+                    {
+                        Log.Warning("Bot at endpoint " + endpoint + " is unavailable. It has likely gone offline. Marking for Removal");
+                        MaxBots = 0; // Mark the bot as unavailable by setting MaxBots to 0, which will trigger its removal in the next cleanup cycle
+                        ActiveBots = 0;
+                        BotProfiles.Clear();
+                        LastStatusUpdate = DateTime.MinValue; // Reset the last status update time to ensure it gets removed in the next cleanup cycle
+                        //TODO: Notify Any Games Using This Bot That It Has Gone Offline So They Can Handle It Gracefully (e.g. End The Game, Remove The Bot From The Game, etc.)
                     }
                     catch (Exception ex)
                     {
@@ -95,7 +111,7 @@ namespace ShootTheMoon.Network
 
             Log.Information("Registering bot with EP: " + request.Endpoint + " and version: " + request.BotVersion);
 
-            var botInfo = new BotInfo(request.Endpoint, request.BotVersion);
+            var botInfo = new BotInfo(request.Endpoint, request.BotVersion, BotTimeout);
             Bots.Add(botInfo);  // Register the bot information for later use
 
             return Task.FromResult(new BotRegisterResponse { Status = ResponseStatus.Ok });

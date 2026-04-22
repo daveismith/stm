@@ -2,12 +2,17 @@ using ShootTheMoon.Bot.Proto;
 using Grpc.Core;
 using Grpc.Net.Client;
 using ShootTheMoon.Network.Proto;
+using Serilog;
+
 
 namespace ShootTheMoon.Bot
 {
     class BotServerImpl : BotServer.BotServerBase
     {
-        private static readonly int NUM_BOTS = 8;
+
+        private static readonly ILogger Log = Serilog.Log.ForContext<BotServerImpl>();
+
+        private static readonly uint NUM_BOTS = 8;
 
         private static readonly bool DOCKER_BOT_REGISTRY = false;
 
@@ -22,13 +27,16 @@ namespace ShootTheMoon.Bot
         public BotServerImpl()
         {
             Bot bot;
-            for (int i = 0; i < NUM_BOTS; i++)
+            for (uint i = 0; i < NUM_BOTS; i++)
             {
                 bot = new Bot(BotProfile.DEFAULT);
                 FreeBots.Enqueue(bot);
             }
 
-            RegisterBotserver();
+            Task.Run(async () => {
+                await Task.Delay(1000);
+                RegisterBotserver();
+            });
         }
 
         private void RegisterBotserver()
@@ -57,6 +65,26 @@ namespace ShootTheMoon.Bot
             BotRegisterResponse botRegisterResponse = _grpcClient.RegisterBot(botRegisterRequest, _grpcMetadata);
 
             Console.WriteLine($"botRegisterResponse: {botRegisterResponse}");
+        }
+
+        public override async Task Status(BotStatusRequest request, IServerStreamWriter<BotStatusUpdate> responseStream, ServerCallContext context)
+        {
+            string botId = request.BotId;
+            int ttl = (int)((request.Ttl / 2) * 1000); // Convert to ms and divide by 2 to get the period for status updates (we want to send updates at half the TTL)
+
+            Console.WriteLine("Received status update for bot: " + request.BotId + ", TTL: " + request.Ttl + " seconds, selected TTL of " + ttl + " ms");
+
+            while (!context.CancellationToken.IsCancellationRequested)
+            {
+                BotStatusUpdate botStatusUpdate = new BotStatusUpdate();
+                botStatusUpdate.BotId = botId;
+                botStatusUpdate.MaxBots = NUM_BOTS;
+                botStatusUpdate.ActiveBots = (uint)(NUM_BOTS - FreeBots.Count);
+
+                await responseStream.WriteAsync(botStatusUpdate);
+
+                await Task.Delay(ttl);
+            }
         }
 
         public async Task<bool> ActivateBot(string game_uuid)
