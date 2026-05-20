@@ -8,10 +8,10 @@
     "@babylonjs/loaders": "^9.1.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
-    "@mui/icons-material": "^7.3.7",
-    "@mui/material": "^7.1.0",
-    "@mui/styled-engine-sc": "^7.3.7",
-    "@mui/system": "^7.1.0",
+    "@mui/icons-material": "^9.0.1",
+    "@mui/material": "^9.0.1",
+    "@mui/styled-engine-sc": "^9.0.1",
+    "@mui/system": "^9.0.1",
     "@types/node": "^25.5.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
@@ -23,7 +23,7 @@
     "react-dom": "19.2.4",
     "react-router": "^7.13.0",
     "styled-components": "^6.4.2",
-    "tss-react": "^4.9.20",
+    "tss-react": "^4.9.21",
     "web-vitals": "^5.1.0"
   },
   "scripts": {
