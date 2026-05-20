@@ -55,17 +55,13 @@ const Bidding: React.FC<IBiddingProps> = (props: IBiddingProps) => {
             <div className="bidding">
                 <Grid
                     container
-                    direction="row"
-                    justifyContent="center"
-                    alignItems="center"
+                    sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}
                 >
                     <BidTricksSelector highBid={highBid} bidTricksSelected={bidTricksSelected}/>
                 </Grid>
                 <Grid
                     container
-                    direction="row"
-                    justifyContent="center"
-                    alignItems="center"
+                    sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}
                 >
                     <BidTrumpSelector bidTrumpSelected = {bidTrumpSelected}/> 
                     <Button 

@@ -97,15 +97,12 @@ const GameBoard: React.FC<IGameBoardProps> = (props: IGameBoardProps) => {
         <div style={{color: 'white', backgroundColor: '#404040', height: '100%', paddingTop: '1rem'}}>
             <Grid
                 container
-                direction="row"
-                justifyContent="center"
-                alignItems="flex-start"
+                sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}
             >
                 {orderedSeats.map((seat, index) => (
                 <Grid
-                    justifyContent="center"
-                    alignItems="flex-start"
                     key={index}
+                    sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}
                 >
                     <div>
                         <TextBubble size="small" text={seat.name.length === 0 ? "Empty" : seat.name + ((seat.index === mySeat) ? " (me)" : "")} color={seat.index % 2 === 0 ? "green" : "blue"} disabled={seat.empty}></TextBubble>
