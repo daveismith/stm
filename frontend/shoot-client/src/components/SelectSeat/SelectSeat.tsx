@@ -81,10 +81,8 @@ const SelectSeat: React.FC = () => {
             <Grid
                 container
                 spacing={0}
-                direction="column"
-                alignItems="center"
-                justifyContent="center"
                 style={{ minHeight: '100vh' }}
+                sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}
             >
                 <Card className={classes.card}>
                     <h2>
