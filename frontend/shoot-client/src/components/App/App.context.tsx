@@ -15,7 +15,7 @@ export interface IApp {
     numPlayers?: number,
     stream?: grpcWeb.ClientReadableStream<Notification>,
     createGame?(seats: number): void,
-    joinGame?(gameId: string, name: string): boolean,
+    joinGame?(gameId: string, name: string, listener: (notification: Notification) => void): boolean,
     metadata: grpcWeb.Metadata,
     joined: boolean,
     registered: boolean
@@ -76,7 +76,7 @@ export const AppProvider: React.FC<Props> = ({ children }) => {
         });        
     };
 
-    appState.joinGame = (gameId: string, name: string) => {
+    appState.joinGame = (gameId: string, name: string, listener: (notification: Notification) => void) => {
         if (appState.joined || connection === undefined) {
             return false;
         }
@@ -111,6 +111,10 @@ export const AppProvider: React.FC<Props> = ({ children }) => {
                 updateState.metadata['x-game-id'] = gameId;
                 updateState.numPlayers = response.getJoinResponse()?.getSeats() as number;
                 setState(updateState);
+            }
+
+            if (listener) {
+                listener(response);
             }
         });
 
