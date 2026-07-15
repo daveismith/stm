@@ -615,18 +615,13 @@ export const GameProvider: React.FC<Props> = ({ children }) => {
     useEffect(() => {
         if (!state.playerName) return;
         if (!appState.joined) {
-            joinGame(id, state.playerName);
-        } else if (!registered) {
-            appState.stream.on('data', (notification: Notification) => {
+            setQueue(q => cleanInitialQueue);   // clean up the queue
+            joinGame(id, state.playerName, (notification: Notification) => {
                 //console.log("queueing notification sequence: " + notification.getSequence());
                 setQueue(q => ({ ...q, entries: [...q.entries, notification] }));
             });
-        
-            registered = true;
         }
-    }, [state.playerName, state.mySeat, state.takeSeat, state.eventEmitter, appState.joined, appState.stream, appState.connection, appState.metadata, joinGame, id, eventEmitter]);
-
-
+    }, [state.playerName, appState.joined, joinGame, id]);
 
     return (
         <GameContext.Provider value={ [state, setState] }>
