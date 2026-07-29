@@ -20,7 +20,6 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "downlevelIteration": true,
     "paths": {
       "@mui/styled-engine": ["./node_modules/@mui/styled-engine-sc"]
     }
