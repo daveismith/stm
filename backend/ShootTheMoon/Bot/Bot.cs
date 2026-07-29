@@ -36,20 +36,20 @@ namespace ShootTheMoon.Bot
         private readonly List<Card> LowCards = new List<Card>();
         private readonly BotProfile Profile;
 
-        private readonly Dictionary<Trump, HandBreakdown> Breakdowns = new Dictionary<Trump, HandBreakdown>();
-        private HandBreakdown? FinalBreakdown;
+        // private readonly Dictionary<Trump, HandBreakdown> Breakdowns = new Dictionary<Trump, HandBreakdown>();
+        // private HandBreakdown? FinalBreakdown;
 
         private const bool HIGH_LOW_BIDDING_ENABLED = true;
         private const bool DEBUG_MODE_BIDDING = false;
         private const bool DEBUG_MODE_PLAYING = false;
         private const bool TRACK_BOT_STATS = false;
 
-        private enum Status
-        {
-            LOGIN_SCREEN, LOBBY, LOOKING_FOR_SEAT, PREGAME_READY, PREGAME_NOT_READY, CHOOSING_BID, WAITING_FOR_BID, CHOOSING_TRANSFER_CARDS,
-            WAITING_FOR_TRANSFER, THROWING_AWAY_CARDS, WAITING_FOR_THROWAWAY, CHOOSING_CARD, WAITING_FOR_PLAY, SITTING_OUT, LOGGED_OUT, OBSERVING,
-            POSTGAME_READY, POSTGAME_NOT_READY
-        };
+        // private enum Status
+        // {
+        //     LOGIN_SCREEN, LOBBY, LOOKING_FOR_SEAT, PREGAME_READY, PREGAME_NOT_READY, CHOOSING_BID, WAITING_FOR_BID, CHOOSING_TRANSFER_CARDS,
+        //     WAITING_FOR_TRANSFER, THROWING_AWAY_CARDS, WAITING_FOR_THROWAWAY, CHOOSING_CARD, WAITING_FOR_PLAY, SITTING_OUT, LOGGED_OUT, OBSERVING,
+        //     POSTGAME_READY, POSTGAME_NOT_READY
+        // };
 
 
         private static readonly List<string> PossibleNames;
@@ -69,7 +69,7 @@ namespace ShootTheMoon.Bot
 
         private Dictionary<uint, Bid> Bids = new Dictionary<uint, Bid>();
 
-        private Status CurrentStatus = Status.LOGIN_SCREEN;
+        // private Status CurrentStatus = Status.LOGIN_SCREEN;
 
         private CardTracker Tracker;
 
@@ -115,7 +115,7 @@ namespace ShootTheMoon.Bot
             id = Bot.NextBot++;
             Bot_uuid = Guid.NewGuid().ToString();
             // Game = initGame;
-            CurrentStatus = Status.PREGAME_READY;
+            // CurrentStatus = Status.PREGAME_READY;
             Profile = initProfile;
             _grpcMetadata = new Metadata();
             Tracker = new CardTracker(this);
@@ -356,7 +356,7 @@ namespace ShootTheMoon.Bot
                         DeferNotification(notification);
                         break;
                     }
-                    CurrentStatus = Status.CHOOSING_BID;
+                    // CurrentStatus = Status.CHOOSING_BID;
                     ShootTheMoon.Network.Proto.Bid myBid = Bid.toProto(DecideBid());
                     if (_grpcClient is not null)
                     {
