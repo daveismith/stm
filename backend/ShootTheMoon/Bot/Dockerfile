@@ -2,8 +2,6 @@
 
 FROM mcr.microsoft.com/dotnet/aspnet:6.0-bullseye-slim AS base
 WORKDIR /app
-EXPOSE 80
-EXPOSE 443
 EXPOSE 30053
 
 FROM mcr.microsoft.com/dotnet/sdk:6.0-bullseye-slim AS build
