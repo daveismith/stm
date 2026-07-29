@@ -276,7 +276,7 @@ namespace ShootTheMoon.Bot
             FirstPartnerBid = null;
             SecondPartnerBid = null;
             SortedHand = null;
-            Breakdowns.Clear();
+            // Breakdowns.Clear();
             if (Game is not null)
             {
                 Game.CurrentBid = null;
