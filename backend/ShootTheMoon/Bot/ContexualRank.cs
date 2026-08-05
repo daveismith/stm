@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Bot
+namespace ShootTheMoon.Bot
 {
     public class ContextualRank
     {

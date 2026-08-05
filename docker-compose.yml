@@ -7,6 +7,7 @@ services:
       dockerfile: "ShootTheMoon/Dockerfile"
     ports: 
       - "8000:80"
+      - "30052:30052"
     environment:
       Serilog__MinimumLevel: "Debug"
   shoot-proxy:
@@ -26,3 +27,13 @@ services:
     ports:
       - "80:80"
       - "8001:80"
+  shoot-botserver:
+    container_name: "shoot-botserver"
+    build:
+      context: "./backend/ShootTheMoon"
+      dockerfile: "Bot/Dockerfile"
+    ports:
+      - "30053:30053"
+    environment:
+      BOT_REGISTRY_URL: "http://shoot-backend:30052"
+      GAME_SERVER_URL: "http://shoot-backend:30051"

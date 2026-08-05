@@ -2,23 +2,21 @@
 
 FROM mcr.microsoft.com/dotnet/aspnet:6.0-bullseye-slim AS base
 WORKDIR /app
-EXPOSE 80
-EXPOSE 443
-EXPOSE 30051
-EXPOSE 30052
+EXPOSE 30053
 
 FROM mcr.microsoft.com/dotnet/sdk:6.0-bullseye-slim AS build
 WORKDIR /src
+COPY ["Bot/Bot.csproj", "Bot/"]
 COPY ["ShootTheMoon/ShootTheMoon.csproj", "ShootTheMoon/"]
-RUN dotnet restore "ShootTheMoon/ShootTheMoon.csproj"
+RUN dotnet restore "Bot/Bot.csproj"
 COPY . .
-WORKDIR "/src/ShootTheMoon"
-RUN dotnet build "ShootTheMoon.csproj" -c Debug -o /app/build
+WORKDIR "/src/Bot"
+RUN dotnet build "Bot.csproj" -c Debug -o /app/build
 
 FROM build AS publish
-RUN dotnet publish "ShootTheMoon.csproj" -c Debug -o /app/publish
+RUN dotnet publish "Bot.csproj" -c Debug -o /app/publish
 
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "ShootTheMoon.dll"]
+ENTRYPOINT ["dotnet", "Bot.dll"]

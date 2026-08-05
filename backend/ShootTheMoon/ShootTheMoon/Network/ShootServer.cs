@@ -9,6 +9,7 @@ using ShootTheMoon.Game;
 using ShootTheMoon.Utils;
 using ShootTheMoon.Network.Proto;
 using Serilog;
+using ShootTheMoon.Bot.Proto;
 
 namespace ShootTheMoon.Network
 {
@@ -71,6 +72,13 @@ namespace ShootTheMoon.Network
         private const string GAME_ID = "x-game-id";
         private const string CLIENT_TOKEN = "x-game-token";
         private static JsonFormatter formatter = new JsonFormatter(JsonFormatter.Settings.Default.WithFormatDefaultValues(true));
+
+        private IBotRegistry _botServer;
+
+        public ShootServerImpl(IBotRegistry botServer = null)
+        {
+            _botServer = botServer;
+        }
 
         public virtual void OnCompleted() {
             // Nothing To Do Here
@@ -244,6 +252,7 @@ namespace ShootTheMoon.Network
 
             try
             {
+                Log.Debug("Client " + request.Name + " is attempting to join game " + request.Uuid);
                 game = games[request.Uuid];
             }
             catch (KeyNotFoundException)
@@ -708,6 +717,15 @@ namespace ShootTheMoon.Network
             r.Success = true;
             r.ErrorNum = (int)ErrorCode.SUCCESS;
             r.ErrorText = "";
+
+            Log.Debug("{0}: All Present Players {1}", game.Name, game.AllPresentPlayersReady ? "Ready" : "Not Ready");
+
+            if (game.AllPresentPlayersReady && _botServer != null)
+            {
+                Log.Debug("{0}: All Present Players Ready, Starting Game", game.Name);
+                uint numBotsToAdd = (uint)(game.NumPlayers - game.Clients.Count);
+                await _botServer.RequestBotsForGame(game.Name, "", numBotsToAdd);
+            }
 
             return r;
         }

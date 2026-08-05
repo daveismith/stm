@@ -1,8 +1,9 @@
 using Grpc.Core;
 using ShootTheMoon.Network.Proto;
 using Grpc.Net.Client;
+using Serilog;
 
-namespace Bot
+namespace ShootTheMoon.Bot
 {
     public class Bot
     {
@@ -24,6 +25,8 @@ namespace Bot
 
         public int id;
 
+        public string Bot_uuid { get; set; }
+
         private readonly Dictionary<Trump, double> TrumpScores = new Dictionary<Trump, double>();
         private Bid? FirstPartnerBid;
         private Bid? SecondPartnerBid;
@@ -33,20 +36,20 @@ namespace Bot
         private readonly List<Card> LowCards = new List<Card>();
         private readonly BotProfile Profile;
 
-        private readonly Dictionary<Trump, HandBreakdown> Breakdowns = new Dictionary<Trump, HandBreakdown>();
-        private HandBreakdown? FinalBreakdown;
+        // private readonly Dictionary<Trump, HandBreakdown> Breakdowns = new Dictionary<Trump, HandBreakdown>();
+        // private HandBreakdown? FinalBreakdown;
 
         private const bool HIGH_LOW_BIDDING_ENABLED = true;
         private const bool DEBUG_MODE_BIDDING = false;
         private const bool DEBUG_MODE_PLAYING = false;
         private const bool TRACK_BOT_STATS = false;
 
-        private enum Status
-        {
-            LOGIN_SCREEN, LOBBY, LOOKING_FOR_SEAT, PREGAME_READY, PREGAME_NOT_READY, CHOOSING_BID, WAITING_FOR_BID, CHOOSING_TRANSFER_CARDS,
-            WAITING_FOR_TRANSFER, THROWING_AWAY_CARDS, WAITING_FOR_THROWAWAY, CHOOSING_CARD, WAITING_FOR_PLAY, SITTING_OUT, LOGGED_OUT, OBSERVING,
-            POSTGAME_READY, POSTGAME_NOT_READY
-        };
+        // private enum Status
+        // {
+        //     LOGIN_SCREEN, LOBBY, LOOKING_FOR_SEAT, PREGAME_READY, PREGAME_NOT_READY, CHOOSING_BID, WAITING_FOR_BID, CHOOSING_TRANSFER_CARDS,
+        //     WAITING_FOR_TRANSFER, THROWING_AWAY_CARDS, WAITING_FOR_THROWAWAY, CHOOSING_CARD, WAITING_FOR_PLAY, SITTING_OUT, LOGGED_OUT, OBSERVING,
+        //     POSTGAME_READY, POSTGAME_NOT_READY
+        // };
 
 
         private static readonly List<string> PossibleNames;
@@ -66,9 +69,9 @@ namespace Bot
 
         private Dictionary<uint, Bid> Bids = new Dictionary<uint, Bid>();
 
-        private Status CurrentStatus = Status.LOGIN_SCREEN;
+        // private Status CurrentStatus = Status.LOGIN_SCREEN;
 
-        private readonly CardTracker Tracker = new CardTracker();
+        private CardTracker Tracker;
 
         private uint Team { get { return Seat % 2; } }
 
@@ -110,10 +113,12 @@ namespace Bot
         public Bot(BotProfile initProfile)
         {
             id = Bot.NextBot++;
+            Bot_uuid = Guid.NewGuid().ToString();
             // Game = initGame;
-            CurrentStatus = Status.PREGAME_READY;
+            // CurrentStatus = Status.PREGAME_READY;
             Profile = initProfile;
             _grpcMetadata = new Metadata();
+            Tracker = new CardTracker(this);
         }
 
         /// <summary>
@@ -130,7 +135,9 @@ namespace Bot
 
         public void JoinGame(string uuid)
         {
-            GrpcChannel channel = GrpcChannel.ForAddress("http://localhost:8080");
+            string gameUrl = Environment.GetEnvironmentVariable("GAME_SERVER_URL") ?? "http://localhost:8080";
+
+            GrpcChannel channel = GrpcChannel.ForAddress(gameUrl);
             ShootServer.ShootServerClient grpcClient = new ShootServer.ShootServerClient(channel);
             _grpcClient = grpcClient;
 
@@ -140,7 +147,7 @@ namespace Bot
 
             _grpcMetadata.Add("x-game-id", uuid);
 
-            Console.WriteLine($"JoinGameRequest: {joinGameRequest}");
+            Log.Debug($"JoinGameRequest: {joinGameRequest}");
 
             AsyncServerStreamingCall<Notification> response = grpcClient.JoinGame(joinGameRequest);
             NotificationStream = response;
@@ -148,11 +155,11 @@ namespace Bot
 
         public async Task GetNotifications()
         {
-            Console.WriteLine("BOT: Processing notifications");
+            Log.Debug("BOT: Processing notifications");
             // AsyncServerStreamingCall<Notification> stream = NotificationStream;
             // while (await stream.ResponseStream.MoveNext())
             // {
-            // Console.WriteLine("BOT: Processing notification");
+            // Log.Debug("BOT: Processing notification");
             // Notification notification = stream.ResponseStream.Current;
             // ProcessMessage(notification);
             // }
@@ -163,7 +170,7 @@ namespace Bot
                 {
                     while (await NotificationStream.ResponseStream.MoveNext())
                     {
-                        Console.WriteLine("BOT: Processing notification");
+                        Log.Debug("BOT: Processing notification");
                         var notification = NotificationStream.ResponseStream.Current;
                         notificationQueue.Enqueue(notification);
                         ProcessMessage(notificationQueue.Dequeue());
@@ -171,9 +178,9 @@ namespace Bot
                 }
                 catch (RpcException ex)
                 {
-                    Console.WriteLine($"Error: {{Code: {ex.StatusCode}, Status: {ex.Status.Detail}}}");
+                    Log.Debug($"Error: {{Code: {ex.StatusCode}, Status: {ex.Status.Detail}}}");
                 }
-                Console.WriteLine("BOT: Done processing notifications");
+                Log.Debug("BOT: Done processing notifications");
             }
         }
 
@@ -182,16 +189,16 @@ namespace Bot
             return seatA % 2 == seatB % 2;
         }
 
-        private void AdjustForContext(Status newStatus)
-        {
-            FinalBreakdown = new HandBreakdown();
-            CurrentStatus = newStatus;
+        // private void AdjustForContext(Status newStatus)
+        // {
+        //     FinalBreakdown = new HandBreakdown();
+        //     CurrentStatus = newStatus;
 
-            if (Game is not null)
-            {
-                if (Game.CurrentTrump == null) SortedHand = SortHandIntoSuits(Trump.High);
-                else SortedHand = SortHandIntoSuits(Game.CurrentTrump);
-            }
+        //     if (Game is not null)
+        //     {
+        //         if (Game.CurrentTrump == null) SortedHand = SortHandIntoSuits(Trump.High);
+        //         else SortedHand = SortHandIntoSuits(Game.CurrentTrump);
+        //     }
 
             // switch (status)
             // {
@@ -223,7 +230,7 @@ namespace Bot
             //     default:
             //         break;
             // }
-        }
+        // }
 
         private string GetRandomName()
         {
@@ -268,8 +275,8 @@ namespace Bot
             LoneAcesOrNines = 0;
             FirstPartnerBid = null;
             SecondPartnerBid = null;
-            SortedHand = SortHandIntoSuits(Trump.High);
-            Breakdowns.Clear();
+            SortedHand = null;
+            // Breakdowns.Clear();
             if (Game is not null)
             {
                 Game.CurrentBid = null;
@@ -303,7 +310,7 @@ namespace Bot
 
         private void DeferNotification(Notification notification)
         {
-            Console.WriteLine($"Deferring: {notification}");
+            Log.Debug($"Deferring: {notification}");
             Thread.Sleep(100);
             notificationQueue.Enqueue(notification);
             ProcessMessage(notificationQueue.Dequeue());
@@ -317,19 +324,19 @@ namespace Bot
             Card card;
             Card? leadCard;
 
-            Console.WriteLine($"ProcessMessage: {notification}");
+            Log.Debug($"ProcessMessage: {notification}");
 
             switch (notification.NotificationCase)
             {
                 case Notification.NotificationOneofCase.JoinResponse:
-                    System.Console.WriteLine("BOT: Received Join Response");
+                    Log.Debug("BOT: Received Join Response");
                     var token = notification.JoinResponse.Token;
                     _grpcMetadata.Add("x-game-token", token);
                     GameSettings gameSettings = GameSettings.GamePresets["TWOPLAYER"];
                     Game = new Game(gameSettings);
                     break;
                 case Notification.NotificationOneofCase.Hand:
-                    System.Console.WriteLine("BOT: RECEIVED HAND");
+                    Log.Debug("BOT: RECEIVED HAND");
                     List<ShootTheMoon.Network.Proto.Card> protoHand;
                     Hand.Clear();
                     protoHand = notification.Hand.Hand_.ToList();
@@ -342,14 +349,14 @@ namespace Bot
                     break;
 
                 case Notification.NotificationOneofCase.BidRequest:
-                    System.Console.WriteLine("BOT: RECEIVED BID REQUEST");
+                    Log.Debug("BOT: RECEIVED BID REQUEST");
                     // Make sure we've received a hand before choosing a bid
                     if (Hand == null)
                     {
                         DeferNotification(notification);
                         break;
                     }
-                    CurrentStatus = Status.CHOOSING_BID;
+                    // CurrentStatus = Status.CHOOSING_BID;
                     ShootTheMoon.Network.Proto.Bid myBid = Bid.toProto(DecideBid());
                     if (_grpcClient is not null)
                     {
@@ -358,7 +365,7 @@ namespace Bot
                     break;
 
                 case Notification.NotificationOneofCase.BidList:
-                    System.Console.WriteLine("BOT: RECEIVED BID LIST");
+                    Log.Debug("BOT: RECEIVED BID LIST");
                     List<ShootTheMoon.Network.Proto.Bid> protoBids;
                     protoBids = notification.BidList.Bids.ToList();
                     Bids = new Dictionary<uint, Bid>();
@@ -497,11 +504,11 @@ namespace Bot
                     break;
 
                 case Notification.NotificationOneofCase.PlayedCards:
-                    List<ShootTheMoon.Network.Proto.PlayedCard> playedCards = notification.PlayedCards.Cards.ToList();
+                    List<PlayedCard> playedCards = notification.PlayedCards.Cards.ToList();
                     if (Game is not null)
                     {
                         if (playedCards.Count == 0) Game.LeadCard = null;
-                        foreach (ShootTheMoon.Network.Proto.PlayedCard playedCard in playedCards)
+                        foreach (PlayedCard playedCard in playedCards)
                         {
                             if (playedCard.Order == 0) Game.LeadCard = playedCard;
                             //TODO: check if this is adding duplicates
@@ -530,7 +537,7 @@ namespace Bot
                 //     break;
 
                 default:
-                    // if (ServerMain.CONSOLE_OUTPUT_ON) System.Console.WriteLine("ER " + name + ":\t" + "Didn't understand message.");
+                    // Log.Debug("ER " + name + ":\t" + "Didn't understand message.");
                     break;
             }
         }
@@ -546,11 +553,6 @@ namespace Bot
             Trump? bestTrump = null;
             double bestTrumpBid = 0;
             double score;
-
-            // if (DEBUG_MODE_BIDDING)
-            // {
-            //     printHand();
-            // }
 
             foreach (Suit suit in Suit.Suits.Values)
             {
@@ -623,19 +625,15 @@ namespace Bot
 
                 if (score + LoneAcesOrNines * Profile.getOffsuitAceValue() >= Profile.getBidThreshold())
                 {
-                    // if (DEBUG_MODE_BIDDING)
-                    // {
-                    //     System.Console.WriteLine("\tSCORE OF " + score + " GREATER THAN BID THRESHOLD: BID = " + profile.getBidThreshold());
-                    // }
+                    Log.Debug("{0}: SCORE OF {1} GREATER THAN BID THRESHOLD: BID = {2}", Name, score, Profile.getBidThreshold());
+
                     score = Profile.getBidThreshold();
                 }
                 else if (SecondPartnerBid != null)
                 {
                     score += LoneAcesOrNines * Profile.getOffsuitAceValue();
-                //     if (DEBUG_MODE_BIDDING)
-                //     {
-                //         System.Console.WriteLine("\tLAST BIDDER - LONE ACES/NINES BONUS: " + loneAcesOrNines);
-                //     }
+
+                    Log.Debug("{0}: LAST BIDDER - LONE ACES/NINES BONUS: {1}", Name, LoneAcesOrNines);
                 }
 
                 if (bestTrump == null || score > bestTrumpBid)
@@ -654,8 +652,6 @@ namespace Bot
             //     finalBreakdown.trump = bestTrump.ToString();
             // }
 
-            // Thread.Sleep(BID_DELAY);
-
             if (Game != null && bestTrump != null && bestTrumpBid >= Profile.getShootThreshold())
             {
                 return Bid.makeShootBid(Seat, (uint)Game.NextShootNum, bestTrump);
@@ -663,18 +659,14 @@ namespace Bot
             // TO DO: Fix server message order... getting bid request before bid list
             if (bestTrump != null && (highBid == null || highBid.isPass() || (uint)bestTrumpBid > highBid.Number))
             {
-                // if (DEBUG_MODE_BIDDING)
-                // {
-                //     System.Console.WriteLine("Bid " + (int)bestTrumpBid + " " + bestTrump.ToString());
-                // }
+                Log.Debug("{0}: Bid {1} {2}", Name, (int)bestTrumpBid, bestTrump.ToString());
+
                 return Bid.makeNormalBid(Seat, (uint)bestTrumpBid, bestTrump);
             }
             else
             {
-                // if (DEBUG_MODE_BIDDING)
-                // {
-                //     System.Console.WriteLine("Pass");
-                // }
+                Log.Debug("{0}: Pass", Name);
+
                 return Bid.makePassBid(Seat);
             }
         }
@@ -722,19 +714,14 @@ namespace Bot
             int voidSuits = CountVoidSuits(trump);
             // if (TRACK_BOT_STATS) breakdowns[trump].voidSuits = voidSuits;
 
-            // if (DEBUG_MODE_BIDDING)
-            // {
-            //     System.Console.WriteLine("\nEvaluate " + trump.ToString() + ":");
-            // }
+            Log.Debug("{0}: Evaluate {1}:", Name, trump.ToString());
 
             if (TrumpScores.ContainsKey(trump))
             {
                 score = TrumpScores[trump];
             }
-            // if (DEBUG_MODE_BIDDING)
-            // {
-            //     System.Console.WriteLine("Starting at " + score);
-            // }
+
+            Log.Debug("{0}: Starting at {1}", Name, score);
 
             foreach (Suit suit in Suit.Suits.Values)
             {
@@ -749,28 +736,22 @@ namespace Bot
             }
 
             //		score += trumpCount * TRUMP_COUNT_MULTIPLIER;
-            //		if(DEBUG_MODE_BIDDING){
-            //			System.Console.WriteLine("\tTRUMP QUANTITY BONUS: +" + trumpCount * TRUMP_COUNT_MULTIPLIER);
-            //		}
+            //      Log.Debug("{0}: TRUMP QUANTITY BONUS: +{1}", Name, TrumpCount * TRUMP_COUNT_MULTIPLIER);
 
             score += Profile.getVoidBonus(voidSuits);
-            // if (DEBUG_MODE_BIDDING)
-            // {
-            //     System.Console.WriteLine("\tVOID SUIT BONUS: +" + profile.getVoidBonus(voidSuits));
-            // }
+
+            Log.Debug("{0}: VOID SUIT BONUS: +{1}", Name, Profile.getVoidBonus(voidSuits));
 
             //if (score >= profile.getShootThreshold())
             //{
             //    score = 9;
-            //    if (DEBUG_MODE_BIDDING)
-            //    {
-            //        System.Console.WriteLine("REACHED SHOOT THRESHOLD IN " + trump.ToString());
-            //    }
+
+                // Log.Debug("{0}: REACHED SHOOT THRESHOLD IN {1}", Name, trump.ToString());
             //}
 
             // if (DEBUG_MODE_BIDDING)
             // {
-            //     System.Console.WriteLine("Final score for " + trump.ToString() + ": " + score);
+            Log.Debug("{0}: Final score for {1}: {2}", Name, trump.ToString(), score);
             // }
             return score;
         }
@@ -888,10 +869,10 @@ namespace Bot
                 }
             }
 
-            // if (DEBUG_MODE_BIDDING && score > 0)
-            // {
-            //     System.Console.WriteLine(card.Rank.getFullName() + " of " + card.Suit.ToString() + ": +" + score);
-            // }
+            if (score > 0)
+            {
+                Log.Debug("{0}: {1} of {2}: +{3}", Name, card.Rank.LongName, card.Suit.ToString(), score);
+            }
             return score;
         }
 
@@ -1218,10 +1199,7 @@ namespace Bot
 
             if (highestScore == 1)
             {
-                // if (DEBUG_MODE_PLAYING)
-                // {
-                //     System.Console.WriteLine("No good card to lead - pick lowest to throw away.");
-                // }
+                Log.Debug("{0}: No good card to lead - pick lowest to throw away.", Name);
                 return PickLowestCard(); // no cards are high so leave it to PickLowestCard
             }
 
@@ -1237,10 +1215,8 @@ namespace Bot
                 }
             }
 
-            // if (DEBUG_MODE_PLAYING)
-            // {
-            //     System.Console.WriteLine("Found card to lead.");
-            // }
+            Log.Debug("{0}: Found card to lead.", Name);
+
             return candidateCards[0]; // return highest card
         }
 
@@ -1249,19 +1225,18 @@ namespace Bot
         /// </summary>
         private void PrintSortedHand()
         {
-            System.Console.WriteLine("Current Hand:");
+            Log.Debug("Current Hand:");
             if (SortedHand is not null) {
                 foreach (List<Card> cards in SortedHand.Values)
                 {
                     if (cards.Count > 0)
                     {
-                        System.Console.WriteLine("\t" + cards[0].Suit.ToString() + ":");
+                        Log.Debug("\t" + cards[0].Suit.ToString() + ":");
                     }
                     foreach (Card card in cards)
                     {
-                        System.Console.WriteLine(" " + card.Rank.ShortName);
+                        Log.Debug(" " + card.Rank.ShortName);
                     }
-                    System.Console.WriteLine();
                 }
             }
         }
@@ -1305,11 +1280,8 @@ namespace Bot
                 bool isLeader = Game.LeadCard is null;
                 Trump trump = Game.CurrentTrump;
 
-                // if (DEBUG_MODE_PLAYING)
-                // {
-                //     PrintSortedHand();
-                //     System.Console.WriteLine("Deciding card...");
-                // }
+                // PrintSortedHand();
+                Log.Debug("{0}: Deciding card...", Name);
 
                 if (isLeader)
                 {
@@ -1325,20 +1297,15 @@ namespace Bot
                         if (teamIsWinning && (winningCardIsHighestInSuit || (trump.isSuit() && winningCard.EffectiveSuit(trump).Equals(trump.Suit))))
                         {
                             cardToPlay = PickLowestCard();
-                            // if (DEBUG_MODE_PLAYING)
-                            // {
-                            //     System.Console.WriteLine("throwing off - team is winning.");
-                            // }
+                            Log.Debug("{0}: throwing off - team is winning.", Name);
                         }
                         else
                         {
                             if (Tracker.PlaysLast(Seat, Game.GameSettings.NumPlayers))
                             { // beat with lowest winning card
                                 cardToPlay = FindLowestWinningCard(legalCards, winningCard);
-                                // if (DEBUG_MODE_PLAYING)
-                                // {
-                                //     System.Console.WriteLine("last player - using lowest winning card if possible...");
-                                // }
+
+                                Log.Debug("{0}: last player - using lowest winning card if possible...", Name);
                             }
                             else
                             {
@@ -1351,24 +1318,20 @@ namespace Bot
                             if (Game.LeadCard is not null && !IsCardBetter(winningCard, cardToPlay, trump, Card.FromProto(Game.LeadCard.Card).EffectiveSuit(trump)))
                             {
                                 cardToPlay = PickLowestCard();
-                                // if (DEBUG_MODE_PLAYING)
-                                // {
-                                //     System.Console.WriteLine("throwing off.");
-                                // }
+
+                                Log.Debug("{0}: throwing off.", Name);
                             }
                             else
                             {
-                                // if (DEBUG_MODE_PLAYING)
-                                // {
-                                //     System.Console.WriteLine("trying to win.");
-                                // }
+                                Log.Debug("{0}: trying to win.", Name);
                             }
                         }
                     }
                 }
 
-                // Thread.Sleep(CARD_DELAY);
+                Log.Debug("{0}: decided to play ", Name, cardToPlay.ToString());
 
+                Hand.Remove(cardToPlay);
                 SortedHand[cardToPlay.EffectiveSuit(trump)].Remove(cardToPlay);
             }
 
@@ -1382,7 +1345,7 @@ namespace Bot
         private Dictionary<Suit, List<Card>> SortHandIntoSuits(Trump trump)
         {
             Dictionary<Suit, List<Card>> result = new Dictionary<Suit, List<Card>>();
-            List<Card> oneSuitsWorth = new List<Card>();
+            List<Card> oneSuitsWorth;
 
             foreach (Suit suit in Suit.Suits.Values)
             {
@@ -1468,8 +1431,6 @@ namespace Bot
                 }
             }
 
-            // Thread.Sleep(TRANSFER_DELAY);
-
             if (transferCard is null)
             {
                 throw new Exception("FATAL: couldn't find card to transfer.");
@@ -1483,10 +1444,10 @@ namespace Bot
         /// </summary>
         protected void PrintHand()
         {
-            System.Console.WriteLine(Name + "'s Hand:");
+            Log.Debug(Name + "'s Hand:");
             foreach (Card card in Hand)
             {
-                System.Console.WriteLine(card.Rank.LongName + " of " + card.Suit);
+                Log.Debug(card.Rank.LongName + " of " + card.Suit);
             }
         }
 
@@ -1790,8 +1751,17 @@ namespace Bot
             public int LeadPositionInCurrentTrick;
             public Card? BestInCurrentTrick;
             public int WinnerOfCurrentTrick;
+            private Bot Bot;
+            private int NumDuplicateCards = 0;
 
-            private const bool DEBUG_MODE = false;
+            public CardTracker(Bot bot)
+            {
+                Bot = bot;
+                if (bot.Game is not null)
+                {
+                    NumDuplicateCards = bot.Game.GameSettings.NumDuplicateCards;
+                }
+            }
 
             public void InitializeRound()
             {
@@ -1806,8 +1776,10 @@ namespace Bot
                 {
                     foreach (Rank rank in Rank.Ranks.Values)
                     {
-                        CardsLeft.Add(new Card(suit, rank));
-                        CardsLeft.Add(new Card(suit, rank));
+                        for (int i=0; i<NumDuplicateCards; i++)
+                        {
+                            CardsLeft.Add(new Card(suit, rank));
+                        }
                     }
                 }
             }
@@ -1822,14 +1794,14 @@ namespace Bot
 
             public bool PlaysLast(uint seat, int players)
             {
-                return (seat + 1) % (players) == LeadPositionInCurrentTrick;
+                return (seat + 1) % players == LeadPositionInCurrentTrick;
             }
 
             public void PlayCard(Card card, int seat)
             {
                 Card? newCard = null;
-                Rank? newRank = null;
-                Suit? newSuit = null;
+                Rank? newRank;
+                Suit? newSuit;
                 bool cardOK = false;
                 int numCardsLeft;
 
@@ -1851,15 +1823,13 @@ namespace Bot
                     }
 
                     CardsLeft.Remove(card);
-                    // if (DEBUG_MODE)
-                    // {
-                    //     System.Console.WriteLine(card.getRank().getShortName() + " of " + card.Suit.ToString() + " removed from Cards Left");
-                    // }
+
+                    Log.Debug("{0}: {1} of {2} {3}", Bot.Name, card.EffectiveRank(CurrentTrump).Name, card.Suit.LongName, "removed from Cards Left");
+
                     CardsPlayed.Add(card);
-                    // if (DEBUG_MODE)
-                    // {
-                    //     System.Console.WriteLine(card.getRank().getShortName() + " of " + card.Suit.ToString() + " added to Cards Played");
-                    // }
+
+                    Log.Debug("{0}: {1} of {2} {3}", Bot.Name, card.EffectiveRank(CurrentTrump).Name, card.Suit.LongName, "added to Cards Played");
+
                     numCardsLeft = NumTotalCardsLeft[cSuit];
                     NumTotalCardsLeft.Remove(cSuit);
                     NumTotalCardsLeft.Add(cSuit, numCardsLeft - 1);
@@ -1876,10 +1846,8 @@ namespace Bot
                         numCardsLeft = NumBestCardsLeft[cSuit];
                         NumBestCardsLeft.Remove(cSuit);
                         NumBestCardsLeft.Add(cSuit, numCardsLeft - 1);
-                        // if (DEBUG_MODE)
-                        // {
-                        //     System.Console.WriteLine(card.getRank().getShortName() + " of " + card.Suit.ToString() + " removed from Best Cards Left");
-                        // }
+
+                        Log.Debug("{0}: {1} of {2} {3}", Bot.Name, card.EffectiveRank(CurrentTrump).Name, card.Suit.LongName, "removed from Best Cards Left");
 
                         if (NumBestCardsLeft[cSuit] == 0)
                         {
@@ -1958,12 +1926,10 @@ namespace Bot
                                 BestCardsLeft.Remove(cSuit);
                                 BestCardsLeft.Add(cSuit, newCard);
                                 NumBestCardsLeft.Remove(cSuit);
-                                NumBestCardsLeft.Add(cSuit, 2);
+                                NumBestCardsLeft.Add(cSuit, NumDuplicateCards);
                             }
-                            // if (DEBUG_MODE)
-                            // {
-                            //     System.Console.WriteLine(newCard.Rank.ShortName + " of " + newCard.Suit.ToString() + " added to Best Cards Left (x2)");
-                            // }
+
+                            Log.Debug("{0}: {1} of {2} {3}", Bot.Name, card.EffectiveRank(CurrentTrump).Name, card.Suit.LongName, "added to Best Cards Left");
                         }
                     }
                 }
@@ -1998,11 +1964,9 @@ namespace Bot
                     }
 
                     BestCardsLeft.Add(suit, new Card(suit, rank));
-                    NumBestCardsLeft.Add(suit, 2);
-                    // if (DEBUG_MODE)
-                    // {
-                    //     System.Console.WriteLine(rank.ShortName + " of " + suit.ToString() + " added to Best Cards Left (x2)");
-                    // }
+                    NumBestCardsLeft.Add(suit, NumDuplicateCards);
+
+                    Log.Debug("{0}: {1} of {2} {3}", Bot.Name, rank.LongName, suit.LongName, "added to Best Cards Left");
                 }
             }
 

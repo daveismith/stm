@@ -4,7 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Bot
+namespace ShootTheMoon.Bot
 {
     public class Card : IEquatable<Card>
     {

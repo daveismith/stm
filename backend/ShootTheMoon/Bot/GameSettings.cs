@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System;
 
-namespace Bot
+namespace ShootTheMoon.Bot
 {
     public class GameSettings
     {

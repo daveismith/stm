@@ -8,6 +8,7 @@ using ShootTheMoon.Network.Proto;
 using Serilog;
 using Microsoft.Extensions.Configuration;
 using System.IO;
+using ShootTheMoon.Bot.Proto;
 
 namespace ShootTheMoon
 {
@@ -30,18 +31,30 @@ namespace ShootTheMoon
 
             try
             {
+                //TODO: The Bot Server Needs To Be Protected So That Only Local
+                // Bots Can Connect To It. For Now, Just Bind To Localhost.
+                var botRegistry = new BotRegistryImpl();
+                Server botServer = new Server
+                {
+                    Services = { BotRegistry.BindService(botRegistry) },
+                    Ports = { new ServerPort("[::]", Port + 1, ServerCredentials.Insecure) }
+                };
+                botServer.Start();
+
+                ShootServer.ShootServerBase shootServerImpl = new ShootServerImpl(botRegistry);
                 Server server = new Server
                 {
-                    Services = { ShootServer.BindService(new ShootServerImpl()) },
+                    Services = { ShootServer.BindService(shootServerImpl) },
                     Ports = { new ServerPort("[::]", Port, ServerCredentials.Insecure) }
                 };
                 server.Start();
 
-                Log.Information("Greeter server listening on port " + Port);
+                Log.Information("Game Server listening on port " + Port);
 
                 CreateHostBuilder(args).Build().Run();
 
                 server.ShutdownAsync().Wait();
+                botServer.ShutdownAsync().Wait();
 
                 Log.Information("Server is shut down.");
             }

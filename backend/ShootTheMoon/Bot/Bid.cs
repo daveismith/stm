@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using ShootTheMoon.Network.Proto;
 
-namespace Bot
+namespace ShootTheMoon.Bot
 {
     public class Bid
     {
