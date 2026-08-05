@@ -25,7 +25,6 @@ namespace ShootTheMoon.Network
             private static readonly ILogger Log = Serilog.Log.ForContext<BotInfo>();
 
             private BotServer.BotServerClient BotServerClient = null;
-            private AsyncServerStreamingCall<BotStatusUpdate> StatusStream = null;
             private Task StatusTask = null;
 
             public string Endpoint { get; }
