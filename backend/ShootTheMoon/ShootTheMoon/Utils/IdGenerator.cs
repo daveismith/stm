@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using Serilog;
 
 namespace ShootTheMoon.Utils
 {
@@ -20,12 +21,12 @@ namespace ShootTheMoon.Utils
             // Read The Adjectives
             string path = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), @"english-adjectives.txt");
             adjectives = File.ReadAllLines(path);
-            Console.Out.WriteLine("loaded {0} adjectives", adjectives.Length);
+            Log.Debug("loaded {0} adjectives", adjectives.Length);
 
             // Read The Nouns
             path = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), @"english-nouns.txt");
             nouns = File.ReadAllLines(path);
-            Console.Out.WriteLine("loaded {0} nouns", nouns.Length);
+            Log.Debug("loaded {0} nouns", nouns.Length);
 
             rand = new Random();
         }

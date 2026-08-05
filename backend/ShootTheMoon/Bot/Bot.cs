@@ -147,7 +147,7 @@ namespace ShootTheMoon.Bot
 
             _grpcMetadata.Add("x-game-id", uuid);
 
-            Console.WriteLine($"JoinGameRequest: {joinGameRequest}");
+            Log.Debug($"JoinGameRequest: {joinGameRequest}");
 
             AsyncServerStreamingCall<Notification> response = grpcClient.JoinGame(joinGameRequest);
             NotificationStream = response;
@@ -155,11 +155,11 @@ namespace ShootTheMoon.Bot
 
         public async Task GetNotifications()
         {
-            Console.WriteLine("BOT: Processing notifications");
+            Log.Debug("BOT: Processing notifications");
             // AsyncServerStreamingCall<Notification> stream = NotificationStream;
             // while (await stream.ResponseStream.MoveNext())
             // {
-            // Console.WriteLine("BOT: Processing notification");
+            // Log.Debug("BOT: Processing notification");
             // Notification notification = stream.ResponseStream.Current;
             // ProcessMessage(notification);
             // }
@@ -170,7 +170,7 @@ namespace ShootTheMoon.Bot
                 {
                     while (await NotificationStream.ResponseStream.MoveNext())
                     {
-                        Console.WriteLine("BOT: Processing notification");
+                        Log.Debug("BOT: Processing notification");
                         var notification = NotificationStream.ResponseStream.Current;
                         notificationQueue.Enqueue(notification);
                         ProcessMessage(notificationQueue.Dequeue());
@@ -178,9 +178,9 @@ namespace ShootTheMoon.Bot
                 }
                 catch (RpcException ex)
                 {
-                    Console.WriteLine($"Error: {{Code: {ex.StatusCode}, Status: {ex.Status.Detail}}}");
+                    Log.Debug($"Error: {{Code: {ex.StatusCode}, Status: {ex.Status.Detail}}}");
                 }
-                Console.WriteLine("BOT: Done processing notifications");
+                Log.Debug("BOT: Done processing notifications");
             }
         }
 
@@ -310,7 +310,7 @@ namespace ShootTheMoon.Bot
 
         private void DeferNotification(Notification notification)
         {
-            Console.WriteLine($"Deferring: {notification}");
+            Log.Debug($"Deferring: {notification}");
             Thread.Sleep(100);
             notificationQueue.Enqueue(notification);
             ProcessMessage(notificationQueue.Dequeue());
@@ -324,19 +324,19 @@ namespace ShootTheMoon.Bot
             Card card;
             Card? leadCard;
 
-            Console.WriteLine($"ProcessMessage: {notification}");
+            Log.Debug($"ProcessMessage: {notification}");
 
             switch (notification.NotificationCase)
             {
                 case Notification.NotificationOneofCase.JoinResponse:
-                    System.Console.WriteLine("BOT: Received Join Response");
+                    Log.Debug("BOT: Received Join Response");
                     var token = notification.JoinResponse.Token;
                     _grpcMetadata.Add("x-game-token", token);
                     GameSettings gameSettings = GameSettings.GamePresets["TWOPLAYER"];
                     Game = new Game(gameSettings);
                     break;
                 case Notification.NotificationOneofCase.Hand:
-                    System.Console.WriteLine("BOT: RECEIVED HAND");
+                    Log.Debug("BOT: RECEIVED HAND");
                     List<ShootTheMoon.Network.Proto.Card> protoHand;
                     Hand.Clear();
                     protoHand = notification.Hand.Hand_.ToList();
@@ -349,7 +349,7 @@ namespace ShootTheMoon.Bot
                     break;
 
                 case Notification.NotificationOneofCase.BidRequest:
-                    System.Console.WriteLine("BOT: RECEIVED BID REQUEST");
+                    Log.Debug("BOT: RECEIVED BID REQUEST");
                     // Make sure we've received a hand before choosing a bid
                     if (Hand == null)
                     {
@@ -365,7 +365,7 @@ namespace ShootTheMoon.Bot
                     break;
 
                 case Notification.NotificationOneofCase.BidList:
-                    System.Console.WriteLine("BOT: RECEIVED BID LIST");
+                    Log.Debug("BOT: RECEIVED BID LIST");
                     List<ShootTheMoon.Network.Proto.Bid> protoBids;
                     protoBids = notification.BidList.Bids.ToList();
                     Bids = new Dictionary<uint, Bid>();
@@ -537,7 +537,7 @@ namespace ShootTheMoon.Bot
                 //     break;
 
                 default:
-                    // if (ServerMain.CONSOLE_OUTPUT_ON) System.Console.WriteLine("ER " + name + ":\t" + "Didn't understand message.");
+                    // Log.Debug("ER " + name + ":\t" + "Didn't understand message.");
                     break;
             }
         }
@@ -1225,19 +1225,18 @@ namespace ShootTheMoon.Bot
         /// </summary>
         private void PrintSortedHand()
         {
-            System.Console.WriteLine("Current Hand:");
+            Log.Debug("Current Hand:");
             if (SortedHand is not null) {
                 foreach (List<Card> cards in SortedHand.Values)
                 {
                     if (cards.Count > 0)
                     {
-                        System.Console.WriteLine("\t" + cards[0].Suit.ToString() + ":");
+                        Log.Debug("\t" + cards[0].Suit.ToString() + ":");
                     }
                     foreach (Card card in cards)
                     {
-                        System.Console.WriteLine(" " + card.Rank.ShortName);
+                        Log.Debug(" " + card.Rank.ShortName);
                     }
-                    System.Console.WriteLine();
                 }
             }
         }
@@ -1445,10 +1444,10 @@ namespace ShootTheMoon.Bot
         /// </summary>
         protected void PrintHand()
         {
-            System.Console.WriteLine(Name + "'s Hand:");
+            Log.Debug(Name + "'s Hand:");
             foreach (Card card in Hand)
             {
-                System.Console.WriteLine(card.Rank.LongName + " of " + card.Suit);
+                Log.Debug(card.Rank.LongName + " of " + card.Suit);
             }
         }
 

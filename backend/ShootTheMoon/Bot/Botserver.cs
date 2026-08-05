@@ -48,8 +48,8 @@ namespace ShootTheMoon.Bot
             string botRegistryURL = Environment.GetEnvironmentVariable("BOT_REGISTRY_URL") ?? "http://localhost:30052";
             string hostName = System.Net.Dns.GetHostName();
 
-            Console.WriteLine("Registering bot server with bot registry at " + botRegistryURL);
-            Console.WriteLine("Host Name is " + hostName);
+            Log.Information("Registering bot server with bot registry at " + botRegistryURL);
+            Log.Information("Host Name is " + hostName);
 
             GrpcChannel channel = GrpcChannel.ForAddress(botRegistryURL);
             BotRegistry.BotRegistryClient grpcClient = new BotRegistry.BotRegistryClient(channel);
@@ -59,17 +59,17 @@ namespace ShootTheMoon.Bot
             botRegisterRequest.BotVersion = "1.0";
             botRegisterRequest.Endpoint = $"http://{hostName}:30053";
 
-            Console.WriteLine($"botRegisterRequest: {botRegisterRequest}");
+            Log.Debug($"botRegisterRequest: {botRegisterRequest}");
 
             BotRegisterResponse botRegisterResponse = _grpcClient.RegisterBot(botRegisterRequest, _grpcMetadata);
 
-            Console.WriteLine($"botRegisterResponse: {botRegisterResponse}");
+            Log.Debug($"botRegisterResponse: {botRegisterResponse}");
         }
 
         public override async Task<AddBotsToGameResponse> AddBotsToGame(AddBotsToGameRequest request, ServerCallContext context)
         {
             //TODO: Handle This
-            Console.WriteLine("Received request to add bots to game " + request.Uuid + " with profile: " + request.ProfileName + ", num bots: " + request.BotsRequested);
+            Log.Information("Received request to add bots to game " + request.Uuid + " with profile: " + request.ProfileName + ", num bots: " + request.BotsRequested);
 
             for (uint i = 0; i < request.BotsRequested; i++)
             {
@@ -96,7 +96,7 @@ namespace ShootTheMoon.Bot
             string botId = request.BotId;
             int ttl = (int)((request.Ttl / 2) * 1000); // Convert to ms and divide by 2 to get the period for status updates (we want to send updates at half the TTL)
 
-            Console.WriteLine("Received status update for bot: " + request.BotId + ", TTL: " + request.Ttl + " seconds, selected TTL of " + ttl + " ms");
+            Log.Debug("Received status update for bot: " + request.BotId + ", TTL: " + request.Ttl + " seconds, selected TTL of " + ttl + " ms");
 
             while (!context.CancellationToken.IsCancellationRequested)
             {
