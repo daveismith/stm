@@ -22,7 +22,7 @@
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-router": "^8.3.0",
-    "styled-components": "^6.4.2",
+    "styled-components": "^6.5.3",
     "tss-react": "^4.9.21",
     "web-vitals": "^5.1.0"
   },
