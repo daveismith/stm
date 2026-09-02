@@ -63,5 +63,10 @@
     "vite": "^8.2.2",
     "vite-plugin-svgr": "^5.2.0",
     "vite-tsconfig-paths": "^6.1.1"
+  },
+  "overrides": {
+    "vite-tsconfig-paths": {
+      "typescript": "$typescript"
+    }
   }
 }
