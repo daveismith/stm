@@ -790,6 +790,8 @@ namespace ShootTheMoon.Bot
             Suit cSuit = card.EffectiveSuit(trump);
             double score = 0;
 
+            Log.Debug("{0}: Scoring {1}", Name, card.ToString());
+
             if (SortedHand is not null)
             {
                 if (trump.isSuit())
@@ -842,19 +844,25 @@ namespace ShootTheMoon.Bot
                             HighCards.Remove(card);
                             if (cRank.Equals(ContextualRank.ACE) && !(SortedHand[card.Suit].Count > 1)) // lone ace
                             {
+                                Log.Debug("{0}: Found lone winner: {1}", Name, card.ToString());
+
                                 LoneAcesOrNines += 1;
 
                                 // if (TRACK_BOT_STATS) breakdowns[trump].loneAces++;
                             }
                             else
                             {
+                                Log.Debug("{0}: Found protected winner: {1}", Name, card.ToString());
+
                                 score = Profile.getBestCardValue(trump, card.Suit);
 
                                 // if (TRACK_BOT_STATS) breakdowns[trump].runLength++;
                             }
                             if (!HighCards.Contains(card) && !card.Rank.Equals(Rank.Nine)) // refill high cards list
                             {
-                                Card newCard = new Card(card.Suit, Rank.Ranks[card.Rank.Value - 1 - 9]);
+                                Log.Debug("{0}: Adding next-highest cards to HighCards", Name);
+
+                                Card newCard = new Card(card.Suit, Rank.Ranks[card.Rank.Value - 1]);
                                 HighCards.Add(newCard);
                                 HighCards.Add(newCard);
                             }
@@ -870,19 +878,25 @@ namespace ShootTheMoon.Bot
                             LowCards.Remove(card);
                             if (cRank.Equals(ContextualRank.NINE) && !(SortedHand[card.Suit].Count > 1))
                             {
+                                Log.Debug("{0}: Found lone winner: {1}", Name, card.ToString());
+
                                 LoneAcesOrNines += 1;
 
                                 // if (TRACK_BOT_STATS) breakdowns[trump].loneAces++;
                             }
                             else
                             {
+                                Log.Debug("{0}: Found protected winner: {1}", Name, card.ToString());
+
                                 score = Profile.getBestCardValue(trump, card.Suit);
 
                                 // if (TRACK_BOT_STATS) breakdowns[trump].runLength++;
                             }
                             if (!LowCards.Contains(card) && !card.Rank.Equals(Rank.Ace))
                             {
-                                Card newCard = new Card(card.Suit, Rank.Ranks[card.Rank.Value + 1 - 9]);
+                                Log.Debug("{0}: Adding next-lowest cards to LowCards", Name);
+
+                                Card newCard = new Card(card.Suit, Rank.Ranks[card.Rank.Value + 1]);
                                 LowCards.Add(newCard);
                                 LowCards.Add(newCard);
                             }
