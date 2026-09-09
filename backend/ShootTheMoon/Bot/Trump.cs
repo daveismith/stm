@@ -27,7 +27,7 @@
         public Suit SameColour { get; private set; } = Suit.Clubs;
 
         public bool isSuit() {
-            return Suit != null;
+            return Index <= 3;
         }
 
         public static Trump fromProto(ShootTheMoon.Network.Proto.Trump trump)
