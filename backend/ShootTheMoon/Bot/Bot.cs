@@ -539,6 +539,10 @@ namespace ShootTheMoon.Bot
                     }
                     break;
 
+                case Notification.NotificationOneofCase.Tricks:
+                    Tracker.InitializeTrick();
+                    break;
+
                 // case "CONFIRMTHROWAWAY":
                 //     playerIndex = int.Parse(content.Substring(0, 1));
                 //     bool finished = int.Parse(content.Substring(1, 1)) == 1;
@@ -1818,6 +1822,8 @@ namespace ShootTheMoon.Bot
                         }
                     }
                 }
+
+                InitializeTrick();
             }
 
             public void InitializeTrick()
