@@ -30,6 +30,7 @@
     "start": "node ngrok.js && VITE_CJS_TRACE=true vite --port=8001",
     "build": "tsc && vite build",
     "serve": "vite preview",
+    "test": "vitest",
     "grpc": "protoc -I ../../backend/ShootTheMoon/ShootTheMoon/schema shoot.proto --js_out=import_style=commonjs,binary:src/proto --grpc-web_out=import_style=typescript,mode=grpcwebtext:src/proto"
   },
   "eslintConfig": {
@@ -52,17 +53,19 @@
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^7.0.1",
-    "@testing-library/react": "^16.3.2",
+    "@testing-library/react": "^16.3.3",
     "@testing-library/user-event": "^14.6.6",
     "@types/events": "^3.0.3",
     "@types/jest": "^30.0.0",
     "@types/styled-components": "^5.1.36",
     "@vitejs/plugin-react": "^6.1.1",
     "cross-env": "^10.1.0",
+    "jsdom": "^30.0.1",
     "typescript": "^7.0.2",
     "vite": "^8.2.2",
     "vite-plugin-svgr": "^5.2.0",
-    "vite-tsconfig-paths": "^6.1.1"
+    "vite-tsconfig-paths": "^6.1.1",
+    "vitest": "^5.0.0"
   },
   "overrides": {
     "vite-tsconfig-paths": {
