@@ -3,25 +3,25 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@babylonjs/core": "^9.21.2",
-    "@babylonjs/gui": "^9.21.2",
-    "@babylonjs/loaders": "^9.21.2",
+    "@babylonjs/core": "^9.25.0",
+    "@babylonjs/gui": "^9.25.0",
+    "@babylonjs/loaders": "^9.25.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
-    "@mui/icons-material": "^9.3.1",
+    "@mui/icons-material": "^9.4.0",
     "@mui/material": "^9.0.1",
-    "@mui/styled-engine-sc": "^9.3.0",
+    "@mui/styled-engine-sc": "^9.4.0",
     "@mui/system": "^9.0.1",
-    "@types/node": "^26.2.0",
-    "@types/react": "^19.2.18",
-    "@types/react-dom": "^19.2.4",
+    "@types/node": "^26.6.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "google-protobuf": "^4.0.0",
     "grpc-web": "^2.0.2",
-    "immer": "^11.1.16",
+    "immer": "^11.1.18",
     "proto": "file:src/proto",
-    "react": "19.2.8",
-    "react-dom": "19.2.8",
-    "react-router": "^8.3.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-router": "^8.4.0",
     "styled-components": "^6.5.3",
     "tss-react": "^4.9.21",
     "web-vitals": "^6.1.1"
@@ -51,17 +51,22 @@
     ]
   },
   "devDependencies": {
-    "@testing-library/jest-dom": "^7.0.0",
+    "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.2",
-    "@testing-library/user-event": "^14.6.4",
+    "@testing-library/user-event": "^14.6.6",
     "@types/events": "^3.0.3",
     "@types/jest": "^30.0.0",
     "@types/styled-components": "^5.1.36",
-    "@vitejs/plugin-react": "^6.0.5",
+    "@vitejs/plugin-react": "^6.1.2",
     "cross-env": "^10.1.0",
     "typescript": "^7.0.2",
-    "vite": "^8.2.1",
+    "vite": "^8.3.4",
     "vite-plugin-svgr": "^5.2.0",
     "vite-tsconfig-paths": "^6.1.1"
+  },
+  "overrides": {
+    "vite-tsconfig-paths": {
+      "typescript": "$typescript"
+    }
   }
 }
