@@ -12,7 +12,7 @@
     "@mui/material": "^9.0.1",
     "@mui/styled-engine-sc": "^9.4.0",
     "@mui/system": "^9.0.1",
-    "@types/node": "^26.4.1",
+    "@types/node": "^26.6.5",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "google-protobuf": "^4.0.0",
