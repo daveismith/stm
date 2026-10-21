@@ -39,7 +39,7 @@
 
   <ItemGroup>
     <None Update="english-adjectives.txt" CopyToOutputDirectory="PreserveNewest" />
-    <None Update="english-nouns.txt" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="first-names.txt" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>
