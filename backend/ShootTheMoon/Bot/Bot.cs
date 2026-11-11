@@ -2016,9 +2016,12 @@ namespace ShootTheMoon.Bot
 
             public bool IsHighest(Card card)
             {
-                if (CurrentTrump is not null && BestCardsLeft[card.EffectiveSuit(CurrentTrump)].Equals(card))
-                {
-                    return true;
+                if (CurrentTrump is not null) {
+                    Suit effectiveSuit = card.EffectiveSuit(CurrentTrump);                
+                    if (BestCardsLeft.ContainsKey(effectiveSuit) && BestCardsLeft[effectiveSuit].Equals(card))
+                    {
+                        return true;
+                    }
                 }
                 return false;
             }
