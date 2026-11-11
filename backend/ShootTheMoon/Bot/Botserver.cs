@@ -18,6 +18,8 @@ namespace ShootTheMoon.Bot
 
         private Dictionary<string, Bot> BusyBots = new Dictionary<string, Bot>();
 
+        private List<Task> BotTasks = new List<Task>();
+
         private BotRegistry.BotRegistryClient? _grpcClient;
         
         private Metadata _grpcMetadata = new Metadata();
@@ -123,8 +125,16 @@ namespace ShootTheMoon.Bot
             
                 bot.JoinGame(game_uuid);
 
-                await bot.GetNotifications();
+                Log.Information("Activated bot " + bot.Bot_uuid + " for game " + game_uuid);
 
+                Task botTask = bot.GetNotifications();
+                BotTasks.Add(new Task(async () => {
+                    await botTask;
+                    Log.Information("Deactivating Activated bot " + bot.Bot_uuid + " for game " + game_uuid);    
+                    DeactivateBot(bot.Bot_uuid);
+                }));
+                BotTasks[^1].Start();
+            
                 return true;
             }
 
