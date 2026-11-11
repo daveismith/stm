@@ -138,7 +138,13 @@ namespace ShootTheMoon.Bot
         {
             string gameUrl = Environment.GetEnvironmentVariable("GAME_SERVER_URL") ?? "http://localhost:8080";
 
-            GrpcChannel channel = GrpcChannel.ForAddress(gameUrl);
+            GrpcChannel channel = GrpcChannel.ForAddress(gameUrl, new GrpcChannelOptions
+            {
+                HttpHandler = new SocketsHttpHandler
+                {
+                    EnableMultipleHttp2Connections = true
+                }
+            });
             ShootServer.ShootServerClient grpcClient = new ShootServer.ShootServerClient(channel);
             _grpcClient = grpcClient;
 
@@ -148,16 +154,17 @@ namespace ShootTheMoon.Bot
             joinGameRequest.Name = _name;
 
             _grpcMetadata.Add("x-game-id", uuid);
+            _grpcMetadata.Add("x-bot-uuid", Bot_uuid);
 
-            Log.Debug($"Bot[{Name}] | JoinGameRequest: {joinGameRequest}");
+            Log.Debug($"Bot[{Name}] | JoinGameRequest: {joinGameRequest}, UUID: {Bot_uuid}");
 
-            AsyncServerStreamingCall<Notification> response = grpcClient.JoinGame(joinGameRequest);
+            AsyncServerStreamingCall<Notification> response = grpcClient.JoinGame(joinGameRequest, _grpcMetadata);
             NotificationStream = response;
         }
 
         public async Task GetNotifications()
         {
-            Log.Debug("Bot[{0}] | BOT: Processing notifications", Name);
+            Log.Debug("Bot[{0}-{1}] | BOT: Processing notifications", Name, Bot_uuid);
             // AsyncServerStreamingCall<Notification> stream = NotificationStream;
             // while (await stream.ResponseStream.MoveNext())
             // {
@@ -172,7 +179,7 @@ namespace ShootTheMoon.Bot
                 {
                     while (await NotificationStream.ResponseStream.MoveNext())
                     {
-                        Log.Debug("Bot[{0}] | BOT: Processing notification", Name);
+                        Log.Debug("Bot[{0}-{1}] | BOT: Processing notification", Name, Bot_uuid);
                         var notification = NotificationStream.ResponseStream.Current;
                         notificationQueue.Enqueue(notification);
                         ProcessMessage(notificationQueue.Dequeue());
@@ -1878,7 +1885,7 @@ namespace ShootTheMoon.Bot
                         return;
                     }
 
-                    if (BestCardsLeft[cSuit].Equals(card))
+                    if (BestCardsLeft.ContainsKey(cSuit) && BestCardsLeft[cSuit].Equals(card))
                     {
                         numCardsLeft = NumBestCardsLeft[cSuit];
                         NumBestCardsLeft.Remove(cSuit);
@@ -2009,9 +2016,12 @@ namespace ShootTheMoon.Bot
 
             public bool IsHighest(Card card)
             {
-                if (CurrentTrump is not null && BestCardsLeft[card.EffectiveSuit(CurrentTrump)].Equals(card))
-                {
-                    return true;
+                if (CurrentTrump is not null) {
+                    Suit effectiveSuit = card.EffectiveSuit(CurrentTrump);                
+                    if (BestCardsLeft.ContainsKey(effectiveSuit) && BestCardsLeft[effectiveSuit].Equals(card))
+                    {
+                        return true;
+                    }
                 }
                 return false;
             }
