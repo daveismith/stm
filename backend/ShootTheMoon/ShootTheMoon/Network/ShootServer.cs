@@ -42,9 +42,10 @@ namespace ShootTheMoon.Network
                 await semaphore.WaitAsync();
                 try {
                     if (Connected) {
+                        Log.Debug("Sending message to client with name: {0}", _name);
                         await Stream.WriteAsync(message);
                     } else {
-                        Log.Debug("Dropping message as client is not connected");
+                        Log.Debug("Dropping message as client is not connected. Name: {0}", _name);
                     }
                 } catch {
                     Log.Debug("Write failed.  Releasing semaphore");
@@ -188,7 +189,7 @@ namespace ShootTheMoon.Network
             {
                 try {
                     string s = formatter.Format(notification);
-                    Log.Debug("{0}-{1}-{2}:{3}", client.Name, notification.Sequence, retriesAttempted, s);
+                    Log.Debug("{0}-{4}-{1}-{2}:{3}", client.Name, notification.Sequence, retriesAttempted, s, client.Token);
                     await client.WriteAsync(notification);
                     sent = true;
                 }
@@ -197,7 +198,7 @@ namespace ShootTheMoon.Network
                     if (retriesAttempted > MAX_RETRIES) return;
                     retriesAttempted++;
                     await Task.Delay(100);
-                    Log.Debug("{0}-{1}-{2}: Send failed.  Retrying.", client.Name, notification.Sequence, retriesAttempted);
+                    Log.Debug("{0}-{4}-{1}-{2}: Send failed.  Retrying.", client.Name, notification.Sequence, retriesAttempted, client.Token);
                 }
             }
         }
@@ -249,10 +250,10 @@ namespace ShootTheMoon.Network
             Game.Game game;
             Notification n = new Notification();
             RpcClient client = new RpcClient(responseStream, request.Name);
-
+            
             try
             {
-                Log.Debug("Client " + request.Name + " is attempting to join game " + request.Uuid);
+                Log.Debug("Client " + request.Name + " is attempting to join game " + request.Uuid + ", responseStream: " + responseStream.GetHashCode() + ", token: " + client.Token);
                 game = games[request.Uuid];
             }
             catch (KeyNotFoundException)
