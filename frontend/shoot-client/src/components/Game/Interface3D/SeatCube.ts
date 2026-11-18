@@ -58,6 +58,7 @@ class SeatCube {
         this.button = new MeshButton3D(this.mesh, "seatCubeButton");
         this.button.onPointerDownObservable.add(() => {
             SceneController.gameState = GameState.WaitingForSeatConfirmation;
+            console.log("seat button clicked");
             if (gameState.takeSeat) gameState.takeSeat(player);
 
             SceneController.awaitingServerResponse = true;

@@ -131,6 +131,7 @@ class ReadyCube {
 
         this.button.onPointerDownObservable.add(() => {
             SceneController.gameState = GameState.WaitingForReadyConfirmation;
+            console.log("seat button clicked");
                 
             if (this.gameState.setSeatReadyStatus) {
                 this.gameState.setSeatReadyStatus(!this.readyValue);
