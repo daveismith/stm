@@ -287,11 +287,15 @@ class SceneController {
 
         this.currentCardsInTrick = [];
 
-        this.awaitingAnimation = true;
-        setTimeout(() => {
-            Card3D.clearCards(this.scene);
-            this.awaitingAnimation = false;
-        }, 3000);
+        if (this.gameState > GameState.SeatedReady)
+        {
+            this.awaitingAnimation = true;
+            console.log("pausing 3000ms for animation");
+            setTimeout(() => {
+                Card3D.clearCards(this.scene);
+                this.awaitingAnimation = false;
+            }, 3000);
+        }
 
         if (this.gameState >= GameState.WaitingToPlay && tricksRemainingInHand > 0) // trick complete, ready for next trick
             this.gameState = GameState.WaitingToPlay;
@@ -374,6 +378,8 @@ class SceneController {
         }
 
         this.awaitingServerResponse = false;
+
+        this.processNextEvent();
     }
 
     // Server response to our ready-status request.
@@ -381,6 +387,7 @@ class SceneController {
         if (this.readyCubes[GameSettings.currentPlayer] && this.unreadyCubes[GameSettings.currentPlayer]) {
 
             if (success) {
+                console.log('set-ready-status request successful');
                 if (readyStatus && this.gameState === GameState.WaitingForReadyConfirmation)
                 {
                     this.unreadyCubes[GameSettings.currentPlayer].disable();
@@ -403,6 +410,8 @@ class SceneController {
         }
 
         this.awaitingServerResponse = false;
+
+        this.processNextEvent();
     }
 
     static startGameListener () {
@@ -440,12 +449,14 @@ class SceneController {
         arrangeCardsInDeck(this.scene, CardStack3D.deck);
 
         this.awaitingAnimation = true;
+        console.log("pausing 1000ms for animation");
         setTimeout(() => {
             Card3D.dealCards(this.scene);
             // don't reset awaitingAnimation because we want to go straight to picking up cards.
         }, 1000);
 
         this.awaitingAnimation = true;
+        console.log("pausing 7500ms for animation");
         setTimeout(() => {
             this.pickUpListener();
             this.awaitingAnimation = false;
@@ -459,6 +470,7 @@ class SceneController {
         for (let i: number = 0; i < GameSettings.players; i++)
             Card3D.pickUpCards(i, this.scene);
 
+        console.log("pausing 2000ms for animation");
         setTimeout(() => { this.fanListener() }, 2000);
     }
 
@@ -657,6 +669,7 @@ class SceneController {
                 if (i !== this.shootingPlayer && this.isPartner(this.shootingPlayer, i)) {
                     for (let throwawayCard of this.hand[i]) {
                         if (throwawayCard) throwawayCard.toggleGlow(false);
+                        console.log("pausing 1000ms for animation");
                         setTimeout(() => {
                             if (throwawayCard) throwawayCard.dropCardAnimation(i, this.scene, false);
                         }, 1000);
@@ -680,6 +693,7 @@ class SceneController {
         }
 
         function animate(card3D: Card3D, seat: number) {
+            console.log("pausing 1000ms for animation");
             setTimeout(() => {
                 card3D && card3D.playCardAnimation(seat, SceneController.scene, true);
                 SceneController.awaitingAnimation = false;
@@ -761,6 +775,7 @@ class SceneController {
             for (let card of this.hand[GameSettings.currentPlayer]) if (card) card.toggleGlow(false);
 
             this.awaitingAnimation = true;
+            console.log("pausing 1000ms for animation");
             setTimeout(() => {
                 card && card.pickUpCard(toSeat, this.scene);
                 card && card.fanCard(toSeat, this.scene);
@@ -787,6 +802,7 @@ class SceneController {
         card && card.playCardAnimation(fromSeat, this.scene, false);
 
         this.awaitingAnimation = true;
+        console.log("pausing 1000ms for animation");
         setTimeout(() => {
             card && card.pickUpCard(toSeat, this.scene);
             card && card.fanCard(toSeat, this.scene);
@@ -822,6 +838,7 @@ class SceneController {
             card3D && card3D.playCardAnimation(fromSeat, this.scene, false);
     
             this.awaitingAnimation = true;
+            console.log("pausing 1000ms for animation");
             setTimeout(() => {
                 card3D && card3D.pickUpCard(GameSettings.currentPlayer, this.scene);
                 card3D && card3D.fanCard(GameSettings.currentPlayer, this.scene);
